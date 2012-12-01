@@ -12,7 +12,7 @@ FEATURES:
 - Work with single SQLite database file
 - Single python file
 - Configurable port 
-  (default 11738 because looks like LITEB, as in sqliteboy)
+  (default 11738 because it looks like sqliteboy)
 - Browse table
   - Sort (asc/desc)
   - Download for BLOB type (if not NULL)
@@ -51,8 +51,8 @@ FEATURES:
   (only for delete selected confirmation and toggle select all)
 - Form support (simple data entry) in version 0.5
   (should be available before 2013)
-- Table nama limitation: 
-  could not handle table with whispace in name 
+- Table name limitation: 
+  could not handle table with whitespace in name 
   
 
 REQUIREMENTS:
@@ -63,6 +63,8 @@ REQUIREMENTS:
 
 RUN:
 - python sqliteboy.py <database_file> [port]
+  (then, using web browser, visit localhost:11738, 
+   or localhost:PORT, if PORT is specified)
 
 
 CUSTOM TEMPLATE
