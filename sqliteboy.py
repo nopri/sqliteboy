@@ -14,11 +14,14 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.01'
+VERSION = '0.02'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
-FORM_TBL = '__sqliteboy__form__'
+FORM_TBL = '_sqliteboy_'
+FORM_URL_INIT = '/sb/init'
+FORM_FIELDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+FORM_FIELD_TYPE = 'text'
 PRECISION = 4
 SORT = ('asc', 'desc')
 VSORT = ('&#9650;', '&#9660;')
@@ -67,6 +70,8 @@ CUSTOM_RT = {
                 'query': 4,
             } #command, rt 
 PK_SYM = '*'
+URL_README = ('/sb/readme', 'sb_readme', 'README.txt')
+URL_SOURCE = ('/sb/source', 'sb_source', __file__)
 
 
 #----------------------------------------------------------------------#
@@ -102,6 +107,9 @@ URLS = (
     '/table/row/(.*)', 'table_row',
     '/table/blob/(.*)', 'table_blob',
     '/table/save', 'table_save',
+    FORM_URL_INIT, 'sb_init',
+    URL_README[0], URL_README[1],
+    URL_SOURCE[0], URL_SOURCE[1],
     )
 
 app = None
@@ -197,6 +205,13 @@ LANGS = {
             'x_column_number': 'number of column',
             'x_table_name': 'table name',
             'x_yes': 'yes',
+            'x_no': 'no',
+            'x_enabled': 'enabled',
+            'x_not_enabled': 'not enabled',
+            'x_version': 'version',
+            'x_sqlite_version': 'SQLite version',
+            'x_web_version': 'web.py version',
+            'x_extended_features': 'extended features',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -204,6 +219,8 @@ LANGS = {
             'tt_drop': 'drop',
             'tt_query': 'query',
             'tt_create': 'create',
+            'tt_readme': 'readme',
+            'tt_source': 'source',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -219,6 +236,9 @@ LANGS = {
             'cmd_edit': 'edit',
             'cmd_add': 'add',
             'cmd_next': 'next',
+            'cmd_enable_sqliteboy': 'create %s table and enable extended features' %(FORM_TBL),
+            'cmd_readme': 'readme',
+            'cmd_source': 'source',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -228,6 +248,7 @@ LANGS = {
             'e_rename': 'ERROR: alter table (rename)',
             'e_drop': 'ERROR: drop table',
             'e_table_exists': 'ERROR: table already exists',
+            'e_open_file': 'ERROR: open file',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -498,6 +519,34 @@ def isblob(s):
         return ret
     return ret
     
+def sysinfo():
+    s_a = '%s %s %s' %(VERSION, link(URL_README[0], _['cmd_readme']), 
+        link(URL_SOURCE[0], _['cmd_source']))
+    #
+    s_sb0 = _['x_extended_features']
+    if not FORM_TBL in tables():
+        s_sb1 = _['x_not_enabled']
+        s_sb2 = link(FORM_URL_INIT, _['cmd_enable_sqliteboy'])
+    else:
+        s_sb1 = _['x_enabled']
+        s_sb2 = ''
+    s_sb = (s_sb0, '%s %s' %(s_sb1, s_sb2))
+    #
+    ret = (
+            (_['x_version'], s_a),
+            (_['x_sqlite_version'], db.db_module.sqlite_version),
+            (_['x_web_version'], web.__version__),
+            s_sb,
+        )
+    #
+    return ret
+
+def s_init():
+    af = [x + ' ' + FORM_FIELD_TYPE for x in FORM_FIELDS]
+    cmd = 'CREATE TABLE %s(%s)' %(FORM_TBL, ','.join(af))
+    db.query(cmd)
+    prepsess()
+
 
 #----------------------------------------------------------------------#
 # TEMPLATE                                                             #
@@ -991,6 +1040,20 @@ $elif data['command'] == 'create2':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'home':
+    $:content[0]
+    <br>
+    <table>
+    $for i in content[1]:
+        <tr>
+        <td width='20%'>$i[0]</td>
+        <td>$i[1]</td>
+        </tr>
+    </table>
+$elif data['command'] in ['readme', 'source']:
+    <pre>
+    $:content
+    </pre>
 $else:
     $:content
 </body>
@@ -1025,8 +1088,11 @@ class index:
     def GET(self):
         start()
         stop()
-        data = {'title': '', 'command': ''}
-        content = '%s <a href="%s">%s</a>' %(_['x_welcome2'], WSITE, NAME)
+        data = {'title': '', 'command': 'home'}
+        content = (
+                    '%s <a href="%s">%s</a>' %(_['x_welcome2'], WSITE, NAME),
+                    sysinfo(),
+                )
         return T(data, content)
 
 
@@ -1698,6 +1764,42 @@ class table_create:
                 raise web.seeother('/table/create?step=b&count=%s&table=%s' %(count, table))
         #
         dflt()
+
+
+class sb_init:
+    def GET(self):
+        s_init()
+        dflt()
+     
+        
+class sb_readme:
+    def GET(self):
+        start()
+        data = {
+                'title': _['tt_readme'],
+                'command': 'readme',
+            }
+        #
+        try:
+            content = open(os.path.join(CURDIR, URL_README[2])).read()
+        except:
+            content = _['e_open_file']
+        #
+        stop()
+        return T(data, content)
+
+
+class sb_source:
+    def GET(self):
+        start()
+        data = {
+                'title': _['tt_source'],
+                'command': 'source',
+            }
+        content = web.htmlquote(open(os.path.join(CURDIR, URL_SOURCE[2])).read())
+        stop()
+        return T(data, content)
+
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #

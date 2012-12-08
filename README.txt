@@ -43,13 +43,13 @@ FEATURES:
   - Free form SQL Query
   - Automatically view query output (as integer or table)
 - Easy to translate
-- Allow for local connection only (configurable once forms are done)
+- Allow for local connection only (configurable once user account is done)
 - Human readable database size (GB, MB, KB, B)
 - Load time
 - Custom Template
 - Minimum use of Javascript in default/builtin template
   (only for delete selected confirmation and toggle select all)
-- Form support (simple data entry) in version 0.5
+- Form support (simple data entry) in version 0.05
   (should be available before 2013)
 - Table name limitation: 
   could not handle table with whitespace in name 
