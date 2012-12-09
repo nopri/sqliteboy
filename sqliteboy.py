@@ -14,14 +14,15 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.02'
+VERSION = '0.03'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
 FORM_TBL = '_sqliteboy_'
-FORM_URL_INIT = '/sb/init'
+FORM_URL_INIT = '/sqliteboy/init'
 FORM_FIELDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
 FORM_FIELD_TYPE = 'text'
+FORM_SPLIT = '.'
 PRECISION = 4
 SORT = ('asc', 'desc')
 VSORT = ('&#9650;', '&#9660;')
@@ -32,6 +33,8 @@ DEFAULT_LANG = 'default'
 DEFAULT_TABLE = 'sqlite_master'
 DEFAULT_LIMIT = 50
 DEFAULT_T_BASE = '%s.html' %(NAME)
+DEFAULT_ADMIN_USER = 'admin'
+DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DFLT_VALUE = 'dflt_value'
 MARK_CURRENT = '&#9658' #unused
 NAME_SELECT = 'select'
@@ -54,6 +57,8 @@ SKT_M_RENAME = 'rename'
 SKT_M_DROP = 'drop'
 SKQ = 'query'
 SK_CREATE = 'create'
+SK_LOGIN = 'login'
+SK_PASSWORD = 'password'
 COLUMN_TYPES = (
                 ('integer primary key', 0),
                 ('integer primary key autoincrement', 0),
@@ -70,8 +75,8 @@ CUSTOM_RT = {
                 'query': 4,
             } #command, rt 
 PK_SYM = '*'
-URL_README = ('/sb/readme', 'sb_readme', 'README.txt')
-URL_SOURCE = ('/sb/source', 'sb_source', __file__)
+URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.txt')
+URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', __file__)
 
 
 #----------------------------------------------------------------------#
@@ -86,6 +91,11 @@ import decimal
 import random
 import string
 import socket
+
+try: 
+   from hashlib import md5
+except ImportError:
+   from md5 import md5
 
 import web
 web.config.debug = False
@@ -107,9 +117,12 @@ URLS = (
     '/table/row/(.*)', 'table_row',
     '/table/blob/(.*)', 'table_blob',
     '/table/save', 'table_save',
-    FORM_URL_INIT, 'sb_init',
+    FORM_URL_INIT, 'sqliteboy_init',
     URL_README[0], URL_README[1],
     URL_SOURCE[0], URL_SOURCE[1],
+    '/login', 'login',
+    '/logout', 'logout',
+    '/password', 'password',
     )
 
 app = None
@@ -127,7 +140,9 @@ rowid = '_%s___%s___%s___%s_' %(
 #
 sess = None
 sess_init = {
-        'table': {}
+        'table': {},
+        'user': '',
+        'admin': 0,
     }
 allow = ''
 
@@ -212,6 +227,12 @@ LANGS = {
             'x_sqlite_version': 'SQLite version',
             'x_web_version': 'web.py version',
             'x_extended_features': 'extended features',
+            'x_user': 'user',
+            'x_password': 'password',
+            'x_admin': 'admin',
+            'x_password_old': 'old password',
+            'x_password_new': 'new password',
+            'x_password_new_repeat': 'repeat new password',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -221,6 +242,8 @@ LANGS = {
             'tt_create': 'create',
             'tt_readme': 'readme',
             'tt_source': 'source',
+            'tt_login': 'login',
+            'tt_password': 'password',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -239,6 +262,9 @@ LANGS = {
             'cmd_enable_sqliteboy': 'create %s table and enable extended features' %(FORM_TBL),
             'cmd_readme': 'readme',
             'cmd_source': 'source',
+            'cmd_login': 'login',
+            'cmd_logout': 'logout',
+            'cmd_password': 'password',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -249,10 +275,16 @@ LANGS = {
             'e_drop': 'ERROR: drop table',
             'e_table_exists': 'ERROR: table already exists',
             'e_open_file': 'ERROR: open file',
+            'e_login': 'ERROR: unknown user or incorrect password',
+            'e_password_general': 'ERROR: could not change password',
+            'e_password_auth': 'ERROR: authentication failed',
+            'e_password_mismatch': 'ERROR: passwords mismatch',
+            'e_password_blank': 'ERROR: please enter new password',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
             'o_rename': 'OK: alter table (rename)',
+            'o_password': 'OK: password changed',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -291,6 +323,23 @@ def proc_access(handle):
         return handle()
     #
     return _['e_access_forbidden']
+
+def proc_admin_check(handle):
+    path = web.ctx.fullpath.lower()
+    if not isnosb() and not sess.admin == 1:
+        if path.startswith('/query') or path.startswith('/table'):
+            return _['e_access_forbidden']
+    #
+    return handle()
+
+def proc_login(handle):
+    path = web.ctx.fullpath.lower()
+    #
+    if not isnosb() and not sess.user:
+        if not path == '/login':
+            raise web.seeother('/login')
+    #
+    return handle()
 
 def allows():
     #NOTIMPL: quick hack as of 30-nov-2012
@@ -456,30 +505,33 @@ def smsgq(key, clear=True, default=[]):
     return ret
 
 def menugen():
+    if not isnosb() and not sess.user: return []
+    #
+    ret = []
+    #
     f = web.form.Dropdown(
         name='table', 
         args=tables(first_blank=True), 
         )
     #
-    ret = (
-        [
-            '/table/action',
-            'get',
-            _['x_table'],
-            f, 
-            (
-                ['browse', _['cmd_browse']],
-                ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse'] + ' (%s)' %(DEFAULT_LIMIT)],
-                ['insert', _['cmd_insert']],
-                ['column', _['cmd_column']],
-                ['rename', _['cmd_rename']],
-                ['table_drop', _['cmd_table_drop']],
-                ['table_create', _['cmd_table_create']],
-                ['query', _['cmd_query']],
-            )
-        ],
-
-    )
+    if (isnosb()) or (not isnosb() and sess.admin == 1):
+        ret.append(
+            [
+                '/table/action',
+                'get',
+                _['x_table'],
+                f, 
+                (
+                    ['browse', _['cmd_browse']],
+                    ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse'] + ' (%s)' %(DEFAULT_LIMIT)],
+                    ['insert', _['cmd_insert']],
+                    ['column', _['cmd_column']],
+                    ['rename', _['cmd_rename']],
+                    ['table_drop', _['cmd_table_drop']],
+                    ['table_create', _['cmd_table_create']],
+                    ['query', _['cmd_query']],
+                )
+            ])
     #
     return ret
 
@@ -519,12 +571,25 @@ def isblob(s):
         return ret
     return ret
     
+def user():
+    return sess.user
+
+def isadmin():
+    try:
+        return sess.admin == 1
+    except:
+        pass
+    return False
+    
+def isnosb():
+    return not FORM_TBL in tables()
+    
 def sysinfo():
     s_a = '%s %s %s' %(VERSION, link(URL_README[0], _['cmd_readme']), 
         link(URL_SOURCE[0], _['cmd_source']))
     #
     s_sb0 = _['x_extended_features']
-    if not FORM_TBL in tables():
+    if isnosb():
         s_sb1 = _['x_not_enabled']
         s_sb2 = link(FORM_URL_INIT, _['cmd_enable_sqliteboy'])
     else:
@@ -532,12 +597,18 @@ def sysinfo():
         s_sb2 = ''
     s_sb = (s_sb0, '%s %s' %(s_sb1, s_sb2))
     #
-    ret = (
+    s_adm = _['x_no']
+    if isadmin(): s_adm = _['x_yes']
+    if isnosb(): s_adm = ''
+    #
+    ret = [
             (_['x_version'], s_a),
             (_['x_sqlite_version'], db.db_module.sqlite_version),
             (_['x_web_version'], web.__version__),
             s_sb,
-        )
+            (_['x_admin'], s_adm),
+            (_['x_allow'], allows()),
+        ]
     #
     return ret
 
@@ -546,7 +617,30 @@ def s_init():
     cmd = 'CREATE TABLE %s(%s)' %(FORM_TBL, ','.join(af))
     db.query(cmd)
     prepsess()
+    db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER, 
+        e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), f='1')
 
+def s_select(p):
+    pr = p.split(FORM_SPLIT)
+    st = []
+    sd = {}
+    for i in range(len(pr)):
+        fi = FORM_FIELDS[i]
+        s = '%s=$%s' %(fi, fi)
+        if pr[i]:
+            pri = pr[i]
+            sd[fi] = pri
+            st.append(s)
+    #
+    r = db.select(FORM_TBL, where = ' and '.join(st), vars=sd)
+    ret = []
+    for i in r:
+        d = {}
+        for k in i.keys(): d[k] = i[k]
+        ret.append(d)
+    #
+    return ret
+    
 
 #----------------------------------------------------------------------#
 # TEMPLATE                                                             #
@@ -614,7 +708,11 @@ function toggle(src, dst)
 <table>
 <tr>
 <td>$title(data['title'])</td>
-<td align='right' width='12%'>$_['x_allow']: $allows()</td>
+<td align='right' width='25%'>
+$if user():
+    $user() <a href='/password'>$_['cmd_password']</a>
+    <a href='/logout'>$_['cmd_logout']</a>
+</td>
 <td align='right' width='12%'>$size()</td>
 <td align='right' width='18%'>
 $if data['command'] in crt.keys():
@@ -1041,6 +1139,7 @@ $elif data['command'] == 'create2':
     </table>
     </form>
 $elif data['command'] == 'home':
+    <br>
     $:content[0]
     <br>
     <table>
@@ -1051,9 +1150,56 @@ $elif data['command'] == 'home':
         </tr>
     </table>
 $elif data['command'] in ['readme', 'source']:
-    <pre>
+    <br>
+    <textarea style="width: 100%;" rows=20 readonly>
     $:content
-    </pre>
+    </textarea>
+$elif data['command'] == 'login':
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    <table>
+    $for i in data['input']:
+        <tr>
+        <td width='25%'>$i[1]</td>
+        <td>$i[0].render()
+        </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
+$elif data['command'] == 'password':
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    <table>
+    $for i in data['input']:
+        <tr>
+        <td width='25%'>$i[1]</td>
+        <td>$i[0].render()
+        </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -1076,7 +1222,7 @@ GLBL = {
     'crt'       : CUSTOM_RT,
     'isblob'    : isblob,
     'pk_sym'    : PK_SYM,
-    'allows'    : allows,
+    'user'      : user,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -1766,13 +1912,15 @@ class table_create:
         dflt()
 
 
-class sb_init:
+class sqliteboy_init:
     def GET(self):
-        s_init()
+        if isnosb():
+            s_init()
+        #
         dflt()
      
         
-class sb_readme:
+class sqliteboy_readme:
     def GET(self):
         start()
         data = {
@@ -1789,17 +1937,130 @@ class sb_readme:
         return T(data, content)
 
 
-class sb_source:
+class sqliteboy_source:
     def GET(self):
         start()
         data = {
                 'title': _['tt_source'],
                 'command': 'source',
             }
-        content = web.htmlquote(open(os.path.join(CURDIR, URL_SOURCE[2])).read())
+        #
+        try:
+            content = web.htmlquote(open(os.path.join(CURDIR, URL_SOURCE[2])).read())
+        except:
+            content = _['e_open_file'] 
+        #
         stop()
         return T(data, content)
 
+
+class login:
+    def GET(self):
+        start()
+        #
+        data = {
+                'title': _['tt_login'],
+                'command': 'login',
+                'action_url': '/login',
+                'action_method': 'post',
+                'action_button': (
+                                    ('login', _['cmd_login'], False, '', 'submit'),
+                                ),
+                'input': (
+                            (web.form.Textbox('user'), _['x_user'],),
+                            (web.form.Password('password'), _['x_password'],),
+                        ),
+                'message': smsgq(SK_LOGIN, default=''),
+            }
+        content = ''
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        input = web.input(user='', password='')
+        user = input.user.strip()
+        password = input.password.strip()
+        if not user or not password:
+            raise web.seeother('/login')
+        #
+        all = s_select('user.account')
+        for a in all:
+            if a['d'] == user and a['e'] == md5(password).hexdigest():
+                sess.user = user
+                if a['f'] == '1': 
+                    sess.admin = 1
+        #
+        if not sess.user:
+            sess[SK_LOGIN] = _['e_login']
+            raise web.seeother('/login')
+        #
+        dflt()
+        
+
+class logout:
+    def GET(self):
+        sess.user = ''
+        sess.admin = 0
+        dflt()
+
+
+class password:
+    def GET(self):
+        start()
+        #
+        data = {
+                'title': _['tt_password'],
+                'command': 'password',
+                'action_url': '/password',
+                'action_method': 'post',
+                'action_button': (
+                                    ('password', _['cmd_password'], False, '', 'submit'),
+                                ),
+                'input': (
+                            (web.form.Password('old'), _['x_password_old'],),
+                            (web.form.Password('password1'), _['x_password_new'],),
+                            (web.form.Password('password2'), _['x_password_new_repeat'],),
+                        ),
+                'message': smsgq(SK_PASSWORD, default=''),
+            }
+        content = ''
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        input = web.input(old='', password1='', password2='')
+        old = input.old.strip()
+        password1 = input.password1.strip()
+        password2 = input.password2.strip()
+        q = 'user.account..%s' %(sess.user)
+        me = s_select(q)
+        #
+        if not len(me) == 1:
+            raise web.seeother('/password')
+        #
+        me0 = me[0]
+        if me0['e'] == md5(old).hexdigest():
+            if password1 != password2:
+                sess[SK_PASSWORD] = _['e_password_mismatch']
+            else:
+                if not password1:
+                    sess[SK_PASSWORD] = _['e_password_blank']
+                else:
+                    try:
+                        db.update(FORM_TBL, where='a=$a and b=$b and d=$d', 
+                            e = md5(password1).hexdigest(), 
+                            vars = {'a': 'user', 'b': 'account', 'd': sess.user}
+                        )
+                        sess[SK_PASSWORD] = _['o_password']
+                    except:
+                        sess[SK_PASSWORD] = _['e_password_general']
+        else:
+            sess[SK_PASSWORD] = _['e_password_auth']
+        #
+        raise web.seeother('/password')
+        
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
@@ -1830,10 +2091,12 @@ if __name__ == '__main__':
     app = web.application(URLS, globals())
     app.notfound = notfound
     #
-    app.add_processor(proc_access)
-    #
     sess = web.session.Session(app, MemSession(), initializer = sess_init)
     prepsess()
+    #
+    app.add_processor(proc_access)
+    app.add_processor(proc_admin_check)
+    app.add_processor(proc_login)
     #
     web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
     

@@ -42,14 +42,19 @@ FEATURES:
 - Query
   - Free form SQL Query
   - Automatically view query output (as integer or table)
+- User account
+  - Type: admin (full access), 
+    standard (limited or configurable form access)
+  - Change password
+  - User management (v0.04)
 - Easy to translate
-- Allow for local connection only (configurable once user account is done)
+- Allow for local connection only (configurable in v0.04)
 - Human readable database size (GB, MB, KB, B)
 - Load time
 - Custom Template
 - Minimum use of Javascript in default/builtin template
   (only for delete selected confirmation and toggle select all)
-- Form support (simple data entry) in version 0.05
+- Form support (simple data entry) (v0.05)
   (should be available before 2013)
 - Table name limitation: 
   could not handle table with whitespace in name 
@@ -59,6 +64,9 @@ REQUIREMENTS:
 - python
 - web.py
 - SQLite module (included as sqlite3, in python 2.5+)
+
+
+DEFAULT ADMIN USER/PASSWORD: admin
 
 
 RUN:
