@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.05'
+VERSION = '0.06'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -250,6 +250,7 @@ LANGS = {
             'x_deleted': 'deleted',
             'x_password_changed': 'password changed',
             'x_admin_changed': 'admin changed',
+            'x_not_applicable': 'not applicable',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -364,48 +365,68 @@ def s_select(p):
 
 def proc_access(handle):
     allowed = DEFAULT_HOSTS_ALLOWED
-    #
-    saved = s_select('security.hosts')
-    if not saved: 
-        db.insert(FORM_TBL, a='security', b='hosts', d=HOST_LOCAL, e=json.dumps([]))
-    #
-    saved = s_select('security.hosts')
-    saved = saved[0]
-    #
     ip = web.ctx.ip
-    if saved['d'] == HOST_ALL: 
-        return handle()
-    else:
-        if saved['d'] == HOST_CUSTOM:
-            try:
-                add = saved['e']
-                addh = json.loads(add)
-                allowed = allowed + addh
-            except:
-                pass
-        #
+    #
+    if isnosb():
         if ip in allowed:
             return handle()
+    else:
+        saved = s_select('security.hosts')
+        if not saved: 
+            db.insert(FORM_TBL, a='security', b='hosts', d=HOST_LOCAL, e=json.dumps([]))
+        #
+        saved = s_select('security.hosts')
+        saved = saved[0]
+        #
+        if saved['d'] == HOST_ALL: 
+            return handle()
+        else:
+            if saved['d'] == HOST_CUSTOM:
+                try:
+                    add = saved['e']
+                    addh = json.loads(add)
+                    allowed = allowed + addh
+                except:
+                    pass
+            #
+            if ip in allowed:
+                return handle()
     #
     return _['e_access_forbidden']
 
 def proc_admin_check(handle):
     path = web.ctx.fullpath.lower()
-    if not isnosb() and not sess.admin == 1:
-        if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin'):
-            if sess.user:
-                return _['e_access_forbidden']
-            else:
-                raise web.seeother('/login')
+    if not isnosb():
+        if not sess.admin == 1:
+            if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin'):
+                if sess.user:
+                    return _['e_access_forbidden']
+                else:
+                    raise web.seeother('/login')
     #
     return handle()
 
 def proc_login(handle):
     path = web.ctx.fullpath.lower()
     #
-    if not isnosb() and not sess.user:
-        if not path == '/login':
-            raise web.seeother('/login')
+    if not isnosb():
+        if not sess.user:
+            if not path == '/login':
+                raise web.seeother('/login')
+        else:
+            if path == '/login':
+                raise web.seeother('/')
+    #
+    return handle()
+
+def proc_nosb(handle):
+    path = web.ctx.fullpath.lower()
+    if isnosb():
+        if path.startswith('/login') or  \
+            path.startswith('/logout') or \
+            path.startswith('/password') or \
+            path.startswith('/admin'):
+                raise web.seeother('/')
     #
     return handle()
 
@@ -419,15 +440,18 @@ def allows():
                 HOST_ALL: _['a_all'],
                 HOST_CUSTOM: _['a_custom'],
         }
-    saved = s_select('security.hosts')
-    if not saved: 
-        return ret
-    #
-    try:
-        saved = saved[0]['d']
-        ret = hosts[saved]
-    except:
-        pass
+    if isnosb():
+        ret = hosts[HOST_LOCAL]
+    else:
+        saved = s_select('security.hosts')
+        if not saved: 
+            return ret
+        #
+        try:
+            saved = saved[0]['d']
+            ret = hosts[saved]
+        except:
+            pass
     #
     return ret
 
@@ -688,7 +712,7 @@ def sysinfo():
             link('/admin/users', _['cmd_users']),
             link('/admin/hosts', _['cmd_hosts']),
             )
-    if isnosb(): s_adm = ''
+    if isnosb(): s_adm = _['x_not_applicable']
     #
     ret = [
             (_['x_version'], s_a),
@@ -2438,6 +2462,7 @@ if __name__ == '__main__':
     app.add_processor(proc_access)
     app.add_processor(proc_admin_check)
     app.add_processor(proc_login)
+    app.add_processor(proc_nosb)
     app.add_processor(proc_misc)
     #
     web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
