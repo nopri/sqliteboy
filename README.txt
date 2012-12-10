@@ -46,15 +46,15 @@ FEATURES:
   - Type: admin (full access), 
     standard (limited or configurable form access)
   - Change password
-  - User management (v0.04)
+  - User management
 - Easy to translate
-- Allow for local connection only (configurable in v0.04)
+- Allow for local connection only (configurable in v0.05)
 - Human readable database size (GB, MB, KB, B)
 - Load time
 - Custom Template
 - Minimum use of Javascript in default/builtin template
   (only for delete selected confirmation and toggle select all)
-- Form support (simple data entry) (v0.05)
+- Form support (simple data entry) (v0.06)
   (should be available before 2013)
 - Table name limitation: 
   could not handle table with whitespace in name 

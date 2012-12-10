@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.03'
+VERSION = '0.04'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -59,6 +59,7 @@ SKQ = 'query'
 SK_CREATE = 'create'
 SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
+SK_USERS = 'users'
 COLUMN_TYPES = (
                 ('integer primary key', 0),
                 ('integer primary key autoincrement', 0),
@@ -77,6 +78,7 @@ CUSTOM_RT = {
 PK_SYM = '*'
 URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.txt')
 URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', __file__)
+PROTECTED_USERS = ['admin']
 
 
 #----------------------------------------------------------------------#
@@ -123,6 +125,7 @@ URLS = (
     '/login', 'login',
     '/logout', 'logout',
     '/password', 'password',
+    '/admin/users', 'admin_users',
     )
 
 app = None
@@ -228,11 +231,17 @@ LANGS = {
             'x_web_version': 'web.py version',
             'x_extended_features': 'extended features',
             'x_user': 'user',
+            'x_delete': 'delete',
             'x_password': 'password',
             'x_admin': 'admin',
+            'x_note': 'note',
             'x_password_old': 'old password',
             'x_password_new': 'new password',
             'x_password_new_repeat': 'repeat new password',
+            'x_added': 'added',
+            'x_deleted': 'deleted',
+            'x_password_changed': 'password changed',
+            'x_admin_changed': 'admin changed',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -244,6 +253,7 @@ LANGS = {
             'tt_source': 'source',
             'tt_login': 'login',
             'tt_password': 'password',
+            'tt_users': 'users',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -265,6 +275,8 @@ LANGS = {
             'cmd_login': 'login',
             'cmd_logout': 'logout',
             'cmd_password': 'password',
+            'cmd_users': 'users',
+            'cmd_save': 'save',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -293,6 +305,7 @@ LANGS = {
             'h_query': 'hint: only one statement at a time is supported',
             'h_create': 'hint: please do not put whitespace in table name',
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key". Use primary key column instead. Currently, default value(s) must be constant (sorry).',
+            'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -327,7 +340,7 @@ def proc_access(handle):
 def proc_admin_check(handle):
     path = web.ctx.fullpath.lower()
     if not isnosb() and not sess.admin == 1:
-        if path.startswith('/query') or path.startswith('/table'):
+        if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin'):
             return _['e_access_forbidden']
     #
     return handle()
@@ -598,7 +611,11 @@ def sysinfo():
     s_sb = (s_sb0, '%s %s' %(s_sb1, s_sb2))
     #
     s_adm = _['x_no']
-    if isadmin(): s_adm = _['x_yes']
+    if isadmin(): 
+        s_adm = '%s %s' %(
+            _['x_yes'], 
+            link('/admin/users', _['cmd_users'])
+            )
     if isnosb(): s_adm = ''
     #
     ret = [
@@ -1198,6 +1215,73 @@ $elif data['command'] == 'password':
             <input type='$b[4]' name='$b[0]' value='$b[1]'>    
     </td>
     </tr>
+    </table>
+    </form>
+$elif data['command'] == 'users':
+    <p>
+    $data['hint'].capitalize()
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $m[0]: $m[1]<br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $i
+        </th>
+    $for u in content:
+        <tr>
+        <td width='12%' align='center'>
+            $if not u['d'] in data['protected']:
+                <input type='checkbox' name="$data['select']" value="$u['d']">
+            $else:
+                &nbsp;
+        </td>
+        <td>
+            <input type='text' name='d' value="$u['d']" readonly>
+        </td>
+        <td>
+            <input type='text' name='e'>
+        </td>
+        <td>
+            $ sel = ''
+            $if u['f'] == '1':
+                $ sel = ' selected'
+            <select name='f'>
+                <option value=''>$_['x_no']</option>
+                <option value='1'$sel>$_['x_yes']</option>
+            </select>
+        </td>
+        </tr>
+    $for u in range(data['max']):
+        <tr>
+        <td width='12%' align='center'>
+            &nbsp;
+        </td>
+        <td>
+            <input type='text' name='d'>
+        </td>
+        <td>
+            <input type='text' name='e'>
+        </td>
+        <td>
+            <select name='f'>
+                <option value=''>$_['x_no']</option>
+                <option value='1'>$_['x_yes']</option>
+            </select>
+        </td>
+        </tr>
     </table>
     </form>
 $else:
@@ -2060,7 +2144,119 @@ class password:
             sess[SK_PASSWORD] = _['e_password_auth']
         #
         raise web.seeother('/password')
-        
+
+
+class admin_users:
+    def GET(self):
+        start()
+        #
+        protected = PROTECTED_USERS + [sess.user]
+        data = {
+                'title': _['tt_users'],
+                'command': 'users',
+                'action_url': '/admin/users',
+                'action_method': 'post',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns': (
+                            _['x_delete'], 
+                            _['x_user'], 
+                            _['x_password_new'], 
+                            _['x_admin'],
+                        ),
+                'protected': protected,
+                'select': 'select',
+                'max': 3,
+                'message': smsgq(SK_USERS),
+                'hint': _['h_users'],
+            }
+        content = s_select('user.account')
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        protected = PROTECTED_USERS + [sess.user]
+        input = web.input(select=[], d=[], e=[], f=[])
+        select = input.select
+        d = input.d
+        e = input.e
+        f = input.f
+        msg = []
+        #
+        #delete
+        all = s_select('user.account')
+        alld = [x['d'] for x in all]
+        for s in select:
+            if s in alld and not s in protected:
+                try:
+                    db.delete(FORM_TBL, where='a=$a and b=$b and d=$d', 
+                        vars={'a': 'user', 'b': 'account', 'd': s}
+                    )
+                    m = (_['x_deleted'], s)
+                    msg.append(m)
+                except:
+                    pass
+        #password
+        all = s_select('user.account')
+        alld = [x['d'] for x in all]
+        for i in range(len(d)):
+            di = d[i]
+            ei = e[i].strip()
+            if (di in alld) and (not di in select) and ei:
+                try:
+                    db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
+                        e=md5(ei).hexdigest(),
+                        vars = {'a': 'user', 'b': 'account', 'd': di}
+                    )
+                    m = (_['x_password_changed'], di)
+                    msg.append(m)
+                except:
+                    pass
+        #admin
+        all = s_select('user.account')
+        alld = [x['d'] for x in all]
+        for i in range(len(d)):
+            di = d[i]
+            fi = f[i].strip()
+            old = {}
+            for o in all:
+                if o['d'] == di:
+                    old = o
+                    break
+            if (di in alld) and (not di in select) and (not di in protected) and (fi in ['', '1']):
+                oldfi = old['f']
+                if fi == oldfi: continue
+                try:
+                    db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
+                        f=fi,
+                        vars = {'a': 'user', 'b': 'account', 'd': di}
+                    )
+                    m = (_['x_admin_changed'], di)
+                    msg.append(m)
+                except:
+                    pass
+        #new
+        all = s_select('user.account')
+        alld = [x['d'] for x in all]
+        for i in range(len(d)):
+            di = d[i].strip().lower()
+            ei = e[i]
+            fi = f[i].strip()
+            if (di) and (not di in alld) and (not di in select) and (not di in protected) and (not hasws(di)) and (ei) and (fi in ['', '1']):
+                try:
+                    db.insert(FORM_TBL, a='user', b='account', d=di, 
+                        e=md5(ei).hexdigest(), f=fi
+                    )
+                    m = (_['x_added'], di)
+                    msg.append(m)
+                except:
+                    pass
+        #
+        sess[SK_USERS] = msg
+        raise web.seeother('/admin/users')
+                
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
