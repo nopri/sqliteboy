@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.06'
+VERSION = '0.07'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -36,6 +36,8 @@ DEFAULT_T_BASE = '%s.html' %(NAME)
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
+DEFAULT_TEXTAREA_COLS = 40
+DEFAULT_TEXTAREA_ROWS = 15
 HOST_LOCAL = '0'
 HOST_ALL = '1'
 HOST_CUSTOM = '2'
@@ -65,6 +67,7 @@ SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
+SKF_CREATE = 'form.create'
 COLUMN_TYPES = (
                 ('integer primary key', 0),
                 ('integer primary key autoincrement', 0),
@@ -106,6 +109,7 @@ except ImportError:
    from md5 import md5
 
 import json
+import urllib
 
 import web
 web.config.debug = False
@@ -135,6 +139,9 @@ URLS = (
     '/password', 'password',
     '/admin/users', 'admin_users',
     '/admin/hosts', 'admin_hosts',
+    '/form/action', 'form_action',
+    '/form/run/(.*)', 'form_run',
+    '/form/edit', 'form_edit',
     )
 
 app = None
@@ -251,6 +258,9 @@ LANGS = {
             'x_password_changed': 'password changed',
             'x_admin_changed': 'admin changed',
             'x_not_applicable': 'not applicable',
+            'x_form': 'form',
+            'x_code': 'code',
+            'x_form_name': 'form name',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -264,6 +274,9 @@ LANGS = {
             'tt_password': 'password',
             'tt_users': 'users',
             'tt_hosts': 'hosts',
+            'tt_form_run': 'form run',
+            'tt_form_edit': 'form edit',
+            'tt_form_create': 'form create',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -288,6 +301,8 @@ LANGS = {
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
             'cmd_save': 'save',
+            'cmd_run': 'run',
+            'cmd_form_create': 'create',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -304,6 +319,9 @@ LANGS = {
             'e_password_mismatch': 'ERROR: passwords mismatch',
             'e_password_blank': 'ERROR: please enter new password',
             'e_hosts': 'ERROR: could not update hosts',
+            'e_form_edit_whitespace': 'ERROR: could not handle form with whitespace in name',
+            'e_form_edit_exists': 'ERROR: form already exists',
+            'e_form_edit_syntax' : 'ERROR: form code error',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -320,6 +338,7 @@ LANGS = {
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key". Use primary key column instead. Currently, default value(s) must be constant (sorry).',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
+            'h_form_create': 'hint: please do not put whitespace in form name. Form name will be converted to lowercase. Form code in JSON format. Please read README.txt for form code reference.',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -398,7 +417,7 @@ def proc_admin_check(handle):
     path = web.ctx.fullpath.lower()
     if not isnosb():
         if not sess.admin == 1:
-            if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin'):
+            if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin') or path.startswith('/form/edit'):
                 if sess.user:
                     return _['e_access_forbidden']
                 else:
@@ -425,6 +444,7 @@ def proc_nosb(handle):
         if path.startswith('/login') or  \
             path.startswith('/logout') or \
             path.startswith('/password') or \
+            path.startswith('/form') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -581,6 +601,19 @@ def columns(table, name_only=False):
     #
     return ret
 
+def forms(first_blank=False):
+    ret = []
+    if first_blank == True: ret.append('')
+    #
+    all = s_select('form.code')
+    for i in all:
+        try:
+            ret.append(i['d'])
+        except:
+            pass
+    #
+    return ret
+
 def smsg(table, key, clear=True):
     ret = ''
     try:
@@ -639,6 +672,28 @@ def menugen():
                     ['table_create', _['cmd_table_create']],
                     ['query', _['cmd_query']],
                 )
+            ])
+    #
+    if not isnosb() and sess.user:
+        f2 = web.form.Dropdown(
+            name='form', 
+            args=forms(first_blank=True), 
+            )
+        #
+        formact =  [
+                    ['run', _['cmd_run']],
+                ]
+        if isadmin(): 
+            formact.append(['edit', _['cmd_edit']])
+            formact.append(['create', _['cmd_form_create']])
+        #
+        ret.append(
+            [
+                '/form/action',
+                'get',
+                _['x_form'],
+                f2, 
+                formact,
             ])
     #
     return ret
@@ -824,12 +879,14 @@ $for i in menugen():
     <form action='$i[0]' method='$i[1]'>
     <table>
     <tr>
-    <td>
+    <td width='10%'>
     $i[2].capitalize()
     </td>
     <td width='25%'>
     $if data.has_key('table'):
         $i[3].set_value(data['table'])
+    $if data.has_key('form'):
+        $i[3].set_value(data['form'])
     $i[3].render()
     </td>
     <td>
@@ -1294,7 +1351,7 @@ $elif data['command'] == 'password':
     </form>
 $elif data['command'] == 'users':
     <p>
-    $data['hint'].capitalize()
+    <i>$data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -1361,7 +1418,7 @@ $elif data['command'] == 'users':
     </form>
 $elif data['command'] == 'hosts':
     <p>
-    $data['hint'].capitalize()
+    <i>$data['hint'].capitalize()</i>
     </p>    
     $if data['message']:
         <div>
@@ -1380,6 +1437,35 @@ $elif data['command'] == 'hosts':
     $data['input_custom'].render()
     </td>
     </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
+$elif data['command'] == 'form.edit':
+    <p>
+    $ hint = data['hint'][0].upper() + data['hint'][1:]
+    <i>$hint</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    $for i in data['input']:
+        <tr>
+        <td width='15%'>$i[1]</td>
+        <td>$i[0].render()</td>
+        </tr>
     <tr>
     <td colspan='2'>
     $for b in data['action_button']:
@@ -2387,7 +2473,10 @@ class admin_hosts:
                                 ),
                 'custom': custom,
                 'input_host': web.form.Radio('host', args=hosts, value=saved['d']),
-                'input_custom': web.form.Textarea('custom'),
+                'input_custom': web.form.Textarea('custom', 
+                                    cols=DEFAULT_TEXTAREA_COLS, 
+                                    rows=DEFAULT_TEXTAREA_ROWS
+                                ),
                 'message': smsgq(SK_HOSTS, default=''),
                 'hint': _['h_hosts'],
             }
@@ -2426,6 +2515,155 @@ class admin_hosts:
         #
         raise web.seeother('/admin/hosts')
 
+
+class form_action:
+    def GET(self):
+        input = web.input()
+        if not input.has_key('form'):
+            dflt()
+        #
+        form = input.form.strip()
+        redir = (
+            ('run', '/form/run/' + form),
+            ('edit', '/form/edit?form=' + form),
+            ('create', '/form/edit?mode=' + MODE_INSERT),
+        )
+        for i in redir:
+            if input.has_key(i[0]):
+                raise web.seeother(i[1])
+        #
+        dflt()
+
+
+class form_run:
+    def GET(self, form):
+        start()
+        data = {'title': 'form run', 'command': 'form.run'}
+        content = 'form run not implemented yet'
+        stop()
+        return T(data, content)
+
+
+class form_edit:
+    def GET(self):
+        start()
+        input = web.input(name='', code='', mode='', form='')
+        name = input.name
+        code = input.code
+        code = urllib.unquote(code)
+        mode = input.mode
+        form = input.form
+        #
+        title = _['tt_form_edit']
+        if mode == MODE_INSERT:
+            title = _['tt_form_create']
+        else:
+            #
+            if not form.strip():
+                dflt()
+            #
+            fo = s_select('form.code..%s' %(form))
+            if not fo:
+                dflt()
+            #
+            fo = fo[0]
+            if not name:
+                name = fo['d']
+            if not code:
+                code = fo['e']
+        #
+        data = {
+                'title': title,
+                'command': 'form.edit',
+                'action_url': '/form/edit',
+                'action_method': 'post',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'input': (
+                            (web.form.Textbox('name', value=name), _['x_form_name']),
+                            (web.form.Textarea('code', value=code, 
+                                    cols=DEFAULT_TEXTAREA_COLS*2, 
+                                    rows=DEFAULT_TEXTAREA_ROWS
+                                ), _['x_code']),
+                        ),
+                'message': smsgq(SKF_CREATE, default=''),
+                'hint': _['h_form_create'],
+            }
+        #
+        if mode == MODE_INSERT:
+            data['hidden'] = (('mode', mode),)
+        else:
+            data['hidden'] = (('form', form),)
+        #
+        content = ''
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        input = web.input(name='', code='', mode='', form='')
+        name = input.name.lower().strip()
+        code = input.code.strip()
+        mode = input.mode.strip()
+        form = input.form.lower().strip()
+        #
+        if mode == MODE_INSERT:
+            if hasws(name):
+                sess[SKF_CREATE] = _['e_form_edit_whitespace']
+                raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            if not name or not code:
+                raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            all = s_select('form.code')
+            allf = [x['d'] for x in all]
+            if name in allf:
+                sess[SKF_CREATE] = _['e_form_edit_exists']
+                raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            ocode = code
+            try:
+                code = json.loads(code)
+                code = json.dumps(code)
+                db.insert(FORM_TBL, a='form', b='code', d=name, e=code)
+            except:
+                sess[SKF_CREATE] = _['e_form_edit_syntax']
+                raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(ocode), MODE_INSERT))
+        else:
+            if hasws(name):
+                sess[SKF_CREATE] = _['e_form_edit_whitespace']
+                raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
+                        name, urllib.quote(code), form))
+            #
+            if not name or not code:
+                raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
+                        name, urllib.quote(code), form))
+            #
+            all = s_select('form.code')
+            allf = [x['d'] for x in all]
+            if (name != form) and (name in allf):
+                sess[SKF_CREATE] = _['e_form_edit_exists']
+                raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
+                        name, urllib.quote(code), form))
+            #
+            ocode = code
+            try:
+                code = json.loads(code)
+                code = json.dumps(code)
+                db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
+                    vars={'a': 'form', 'b': 'code', 'd': form}, d=name, e=code)
+            except:
+                sess[SKF_CREATE] = _['e_form_edit_syntax']
+                raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
+                        name, urllib.quote(ocode), form))
+        #
+        dflt()
+        
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
