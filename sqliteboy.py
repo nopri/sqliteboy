@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.04'
+VERSION = '0.05'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -35,6 +35,10 @@ DEFAULT_LIMIT = 50
 DEFAULT_T_BASE = '%s.html' %(NAME)
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
+DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
+HOST_LOCAL = '0'
+HOST_ALL = '1'
+HOST_CUSTOM = '2'
 DFLT_VALUE = 'dflt_value'
 MARK_CURRENT = '&#9658' #unused
 NAME_SELECT = 'select'
@@ -60,6 +64,7 @@ SK_CREATE = 'create'
 SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
 SK_USERS = 'users'
+SK_HOSTS = 'hosts'
 COLUMN_TYPES = (
                 ('integer primary key', 0),
                 ('integer primary key autoincrement', 0),
@@ -93,11 +98,14 @@ import decimal
 import random
 import string
 import socket
+DEFAULT_HOSTS_ALLOWED.append(socket.gethostbyname(socket.gethostname()))
 
 try: 
    from hashlib import md5
 except ImportError:
    from md5 import md5
+
+import json
 
 import web
 web.config.debug = False
@@ -126,6 +134,7 @@ URLS = (
     '/logout', 'logout',
     '/password', 'password',
     '/admin/users', 'admin_users',
+    '/admin/hosts', 'admin_hosts',
     )
 
 app = None
@@ -147,7 +156,6 @@ sess_init = {
         'user': '',
         'admin': 0,
     }
-allow = ''
 
 
 #----------------------------------------------------------------------#
@@ -254,6 +262,7 @@ LANGS = {
             'tt_login': 'login',
             'tt_password': 'password',
             'tt_users': 'users',
+            'tt_hosts': 'hosts',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -276,6 +285,7 @@ LANGS = {
             'cmd_logout': 'logout',
             'cmd_password': 'password',
             'cmd_users': 'users',
+            'cmd_hosts': 'hosts',
             'cmd_save': 'save',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
@@ -292,11 +302,13 @@ LANGS = {
             'e_password_auth': 'ERROR: authentication failed',
             'e_password_mismatch': 'ERROR: passwords mismatch',
             'e_password_blank': 'ERROR: please enter new password',
+            'e_hosts': 'ERROR: could not update hosts',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
             'o_rename': 'OK: alter table (rename)',
             'o_password': 'OK: password changed',
+            'o_hosts': 'OK: hosts updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -306,6 +318,7 @@ LANGS = {
             'h_create': 'hint: please do not put whitespace in table name',
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key". Use primary key column instead. Currently, default value(s) must be constant (sorry).',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
+            'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -328,12 +341,51 @@ _ = res(LANGS, DEFAULT_LANG)
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
 #----------------------------------------------------------------------#
+def s_select(p):
+    pr = p.split(FORM_SPLIT)
+    st = []
+    sd = {}
+    for i in range(len(pr)):
+        fi = FORM_FIELDS[i]
+        s = '%s=$%s' %(fi, fi)
+        if pr[i]:
+            pri = pr[i]
+            sd[fi] = pri
+            st.append(s)
+    #
+    r = db.select(FORM_TBL, where = ' and '.join(st), vars=sd)
+    ret = []
+    for i in r:
+        d = {}
+        for k in i.keys(): d[k] = i[k]
+        ret.append(d)
+    #
+    return ret
+
 def proc_access(handle):
-    #NOTIMPL: quick hack as of 30-nov-2012
-    allowed = ['127.0.0.1', socket.gethostbyname(socket.gethostname())]
+    allowed = DEFAULT_HOSTS_ALLOWED
+    #
+    saved = s_select('security.hosts')
+    if not saved: 
+        db.insert(FORM_TBL, a='security', b='hosts', d=HOST_LOCAL, e=json.dumps([]))
+    #
+    saved = s_select('security.hosts')
+    saved = saved[0]
+    #
     ip = web.ctx.ip
-    if ip in allowed:
+    if saved['d'] == HOST_ALL: 
         return handle()
+    else:
+        if saved['d'] == HOST_CUSTOM:
+            try:
+                add = saved['e']
+                addh = json.loads(add)
+                allowed = allowed + addh
+            except:
+                pass
+        #
+        if ip in allowed:
+            return handle()
     #
     return _['e_access_forbidden']
 
@@ -341,7 +393,10 @@ def proc_admin_check(handle):
     path = web.ctx.fullpath.lower()
     if not isnosb() and not sess.admin == 1:
         if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin'):
-            return _['e_access_forbidden']
+            if sess.user:
+                return _['e_access_forbidden']
+            else:
+                raise web.seeother('/login')
     #
     return handle()
 
@@ -354,11 +409,27 @@ def proc_login(handle):
     #
     return handle()
 
+def proc_misc(handle):
+    return handle()
+
 def allows():
-    #NOTIMPL: quick hack as of 30-nov-2012
-    global allow
-    allow = _['a_local']
-    return allow
+    ret = ''
+    hosts = {
+                HOST_LOCAL: _['a_local'],
+                HOST_ALL: _['a_all'],
+                HOST_CUSTOM: _['a_custom'],
+        }
+    saved = s_select('security.hosts')
+    if not saved: 
+        return ret
+    #
+    try:
+        saved = saved[0]['d']
+        ret = hosts[saved]
+    except:
+        pass
+    #
+    return ret
 
 def start():
     rendertime[0] = time.time()
@@ -612,9 +683,10 @@ def sysinfo():
     #
     s_adm = _['x_no']
     if isadmin(): 
-        s_adm = '%s %s' %(
+        s_adm = '%s %s %s' %(
             _['x_yes'], 
-            link('/admin/users', _['cmd_users'])
+            link('/admin/users', _['cmd_users']),
+            link('/admin/hosts', _['cmd_hosts']),
             )
     if isnosb(): s_adm = ''
     #
@@ -636,27 +708,6 @@ def s_init():
     prepsess()
     db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER, 
         e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), f='1')
-
-def s_select(p):
-    pr = p.split(FORM_SPLIT)
-    st = []
-    sd = {}
-    for i in range(len(pr)):
-        fi = FORM_FIELDS[i]
-        s = '%s=$%s' %(fi, fi)
-        if pr[i]:
-            pri = pr[i]
-            sd[fi] = pri
-            st.append(s)
-    #
-    r = db.select(FORM_TBL, where = ' and '.join(st), vars=sd)
-    ret = []
-    for i in r:
-        d = {}
-        for k in i.keys(): d[k] = i[k]
-        ret.append(d)
-    #
-    return ret
     
 
 #----------------------------------------------------------------------#
@@ -1282,6 +1333,38 @@ $elif data['command'] == 'users':
             </select>
         </td>
         </tr>
+    </table>
+    </form>
+$elif data['command'] == 'hosts':
+    <p>
+    $data['hint'].capitalize()
+    </p>    
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    <table>
+    <tr>
+    <td>$data['input_host'].render()
+    </td>
+    </tr>
+    <tr>
+    <td>
+    $ custom = '\\n'.join(data['custom'])
+    $data['input_custom'].set_value(custom)
+    $data['input_custom'].render()
+    </td>
+    </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
     </table>
     </form>
 $else:
@@ -2258,6 +2341,68 @@ class admin_users:
         raise web.seeother('/admin/users')
                 
 
+class admin_hosts:
+    def GET(self):
+        start()
+        #
+        saved = s_select('security.hosts')
+        saved = saved[0]
+        hosts = (
+                    (HOST_LOCAL, _['a_local']),
+                    (HOST_ALL, _['a_all']),
+                    (HOST_CUSTOM, _['a_custom']),
+                )
+        custom = json.loads(saved['e'])
+        data = {
+                'title': _['tt_hosts'],
+                'command': 'hosts',
+                'action_url': '/admin/hosts',
+                'action_method': 'post',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'custom': custom,
+                'input_host': web.form.Radio('host', args=hosts, value=saved['d']),
+                'input_custom': web.form.Textarea('custom'),
+                'message': smsgq(SK_HOSTS, default=''),
+                'hint': _['h_hosts'],
+            }
+        content = ''
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        input = web.input(host='', custom='')
+        host = input.host.strip()
+        custom = input.custom.strip()
+        #
+        shost = HOST_LOCAL
+        #
+        if host in [HOST_LOCAL, HOST_ALL, HOST_CUSTOM]:
+           shost = host
+        #
+        scustom = custom.split()
+        if not scustom:
+            scustom = []
+        scustom = [x.strip() for x in scustom if x.strip()]
+        scustom = json.dumps(scustom)
+        #
+        try:
+            saved = s_select('security.hosts')
+            if not saved:
+                db.insert(FORM_TBL, a='security', b='hosts', d=shost, e=scustom)
+            else:
+                db.update(FORM_TBL, where='a=$a and b=$b', d=shost, e=scustom,
+                    vars = {'a': 'security', 'b': 'hosts'}
+                )
+            sess[SK_HOSTS] = _['o_hosts']
+        except:
+            sess[SK_HOSTS] = _['e_hosts']
+        #
+        raise web.seeother('/admin/hosts')
+
+
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
 #----------------------------------------------------------------------#
@@ -2293,6 +2438,7 @@ if __name__ == '__main__':
     app.add_processor(proc_access)
     app.add_processor(proc_admin_check)
     app.add_processor(proc_login)
+    app.add_processor(proc_misc)
     #
     web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
     

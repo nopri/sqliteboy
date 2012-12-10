@@ -48,7 +48,7 @@ FEATURES:
   - Change password
   - User management
 - Easy to translate
-- Allow for local connection only (configurable in v0.05)
+- Configurable hosts allowed (default: local)
 - Human readable database size (GB, MB, KB, B)
 - Load time
 - Custom Template
@@ -64,6 +64,7 @@ REQUIREMENTS:
 - python
 - web.py
 - SQLite module (included as sqlite3, in python 2.5+)
+- JSON module (included as json, in python 2.6+)
 
 
 DEFAULT ADMIN USER/PASSWORD: admin
