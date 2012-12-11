@@ -3,9 +3,11 @@ Simple Web SQLite Manager/Form Application
 (c) Noprianto <nop@tedut.com>
 2012 
 GPL
+version 0.08
 
 
 SCREENSHOTS: https://github.com/nopri/sqliteboy/wiki
+(not up-to-date)
 
 
 FEATURES:
@@ -39,6 +41,8 @@ FEATURES:
   - Support type, primary key, default value
   - Single or multiple primary key
   - Support for integer primary key autoincrement
+  - Default value can be non-constant
+    (for example: current_time, current_timestamp)
 - Query
   - Free form SQL Query
   - Automatically view query output (as integer or table)
@@ -47,6 +51,11 @@ FEATURES:
     standard (limited or configurable form access)
   - Change password
   - User management
+- User-defined function
+  - Prefix: sqliteboy_
+  - Can be used in Query or Form
+  - Please read USER-DEFINED FUNCTION below
+  - Will be added regularly (or by your request)
 - Easy to translate
 - Configurable hosts allowed (default: local)
 - Human readable database size (GB, MB, KB, B)
@@ -54,7 +63,7 @@ FEATURES:
 - Custom Template
 - Minimum use of Javascript in default/builtin template
   (only for delete selected confirmation and toggle select all)
-- Form support (simple data entry) (v0.08)
+- Form support (simple data entry) (v0.10)
   (should be available before 2013)
 - Table name limitation: 
   could not handle table with whitespace in name 
@@ -79,6 +88,18 @@ RUN:
 CUSTOM TEMPLATE
 - sqliteboy.html, if found in current directory
 - For template example: T_BASE variable
+
+
+USER-DEFINED FUNCTION
+- sqliteboy_md5(s)
+- sqliteboy_sha1(s)
+- sqliteboy_sha224(s)
+- sqliteboy_sha256(s)
+- sqliteboy_sha384(s)
+- sqliteboy_sha512(s)
+- sqliteboy_b64encode(s)
+- sqliteboy_b64decode(s)
+- sqliteboy_randrange(a, b)
 
 
 THANK YOU :)

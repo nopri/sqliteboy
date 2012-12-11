@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.07'
+VERSION = '0.08'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -110,6 +110,8 @@ except ImportError:
 
 import json
 import urllib
+import hashlib
+import base64
 
 import web
 web.config.debug = False
@@ -335,7 +337,7 @@ LANGS = {
             'h_drop': '',
             'h_query': 'hint: only one statement at a time is supported',
             'h_create': 'hint: please do not put whitespace in table name',
-            'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key". Use primary key column instead. Currently, default value(s) must be constant (sorry).',
+            'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key", use primary key column instead. For date/time type, please use integer. If date/time default is needed, please use current_time, current_date or current_timestamp. To use non-constant literally, please surround with quote(\'), for example \'current_time\'.',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
             'h_form_create': 'hint: please do not put whitespace in form name. Form name will be converted to lowercase. Form code in JSON format. Please read README.txt for form code reference.',
@@ -357,6 +359,51 @@ def res(all, type, default=DEFAULT_LANG):
 
 _ = res(LANGS, DEFAULT_LANG)
 
+
+#----------------------------------------------------------------------#
+# SQLITE UDF                                                           #
+#----------------------------------------------------------------------#
+SQLITE_UDF = []
+
+def sqliteboy_md5(s):
+    return md5(str(s)).hexdigest()
+SQLITE_UDF.append(('sqliteboy_md5', 1, sqliteboy_md5))
+
+def sqliteboy_sha1(s):
+    return hashlib.sha1(str(s)).hexdigest()
+SQLITE_UDF.append(('sqliteboy_sha1', 1, sqliteboy_sha1))
+
+def sqliteboy_sha224(s):
+    return hashlib.sha224(str(s)).hexdigest()
+SQLITE_UDF.append(('sqliteboy_sha224', 1, sqliteboy_sha224))
+
+def sqliteboy_sha256(s):
+    return hashlib.sha256(str(s)).hexdigest()
+SQLITE_UDF.append(('sqliteboy_sha256', 1, sqliteboy_sha256))
+
+def sqliteboy_sha384(s):
+    return hashlib.sha384(str(s)).hexdigest()
+SQLITE_UDF.append(('sqliteboy_sha384', 1, sqliteboy_sha384))
+
+def sqliteboy_sha512(s):
+    return hashlib.sha512(str(s)).hexdigest()
+SQLITE_UDF.append(('sqliteboy_sha512', 1, sqliteboy_sha512))
+
+def sqliteboy_b64encode(s):
+    return base64.b64encode(str(s))
+SQLITE_UDF.append(('sqliteboy_b64encode', 1, sqliteboy_b64encode))
+
+def sqliteboy_b64decode(s):
+    return base64.b64decode(str(s))
+SQLITE_UDF.append(('sqliteboy_b64decode', 1, sqliteboy_b64decode))
+
+def sqliteboy_randrange(a, b):
+    vt = type(1)
+    if not type(a) == vt or not type(b) == vt: return 0
+    if a == b: return a
+    #
+    return random.randrange(a, b)
+SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
 
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
@@ -447,6 +494,12 @@ def proc_nosb(handle):
             path.startswith('/form') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
+    #
+    return handle()
+
+def proc_udf(handle):
+    for f in SQLITE_UDF:
+        db._db_cursor().connection.create_function(f[0], f[1], f[2])
     #
     return handle()
 
@@ -2152,6 +2205,8 @@ class table_create:
                     defs = default[i]
                     if hasws(defs):
                         defs = web.db.sqlquote(defs)
+                    else:
+                        defs = web.sqlliteral(defs)
                     if defs:
                         defs2 = 'default %s' %(defs)
                 #
@@ -2701,6 +2756,7 @@ if __name__ == '__main__':
     app.add_processor(proc_admin_check)
     app.add_processor(proc_login)
     app.add_processor(proc_nosb)
+    app.add_processor(proc_udf)
     app.add_processor(proc_misc)
     #
     web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
