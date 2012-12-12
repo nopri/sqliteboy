@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.08'
+VERSION = '0.09'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -23,6 +23,7 @@ FORM_URL_INIT = '/sqliteboy/init'
 FORM_FIELDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
 FORM_FIELD_TYPE = 'text'
 FORM_SPLIT = '.'
+FORM_VALID = None
 PRECISION = 4
 SORT = ('asc', 'desc')
 VSORT = ('&#9650;', '&#9660;')
@@ -68,6 +69,7 @@ SK_PASSWORD = 'password'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SKF_CREATE = 'form.create'
+SKF_RUN = 'form.run'
 COLUMN_TYPES = (
                 ('integer primary key', 0),
                 ('integer primary key autoincrement', 0),
@@ -87,6 +89,24 @@ PK_SYM = '*'
 URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.txt')
 URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', __file__)
 PROTECTED_USERS = ['admin']
+FORM_ALL = ''
+FORM_KEY_TITLE = 'title'
+FORM_KEY_INFO = 'info'
+FORM_KEY_DATA = 'data'
+FORM_KEY_DATA_TABLE = 'table'
+FORM_KEY_DATA_COLUMN = 'column'
+FORM_KEY_DATA_LABEL = 'label'
+FORM_KEY_DATA_REFERENCE = 'reference'
+FORM_KEY_DATA_DEFAULT = 'default'
+FORM_KEY_DATA_REQUIRED = 'required'
+FORM_KEY_DATA_READONLY = 'readonly'
+FORM_KEY_SECURITY = 'security'
+FORM_KEY_SECURITY_RUN = 'run'
+FORM_KEY_ONSAVE = 'onsave'
+FORM_REQ = (FORM_KEY_DATA,)
+FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
+                    FORM_KEY_DATA_COLUMN,
+                )
 
 
 #----------------------------------------------------------------------#
@@ -100,6 +120,9 @@ import time
 import decimal
 import random
 import string
+FORM_VALID = [x for x in string.ascii_lowercase] + [x for x in string.digits]
+FORM_VALID.append('_')
+
 import socket
 DEFAULT_HOSTS_ALLOWED.append(socket.gethostbyname(socket.gethostname()))
 
@@ -144,6 +167,7 @@ URLS = (
     '/form/action', 'form_action',
     '/form/run/(.*)', 'form_run',
     '/form/edit', 'form_edit',
+    '/form/insert', 'form_insert',
     )
 
 app = None
@@ -324,6 +348,8 @@ LANGS = {
             'e_form_edit_whitespace': 'ERROR: could not handle form with whitespace in name',
             'e_form_edit_exists': 'ERROR: form already exists',
             'e_form_edit_syntax' : 'ERROR: form code error',
+            'e_form_edit_name': 'ERROR: invalid form name',
+            'e_form_run_syntax_or_required': 'ERROR: form code error or required keys are not set',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -340,7 +366,8 @@ LANGS = {
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key", use primary key column instead. For date/time type, please use integer. If date/time default is needed, please use current_time, current_date or current_timestamp. To use non-constant literally, please surround with quote(\'), for example \'current_time\'.',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
-            'h_form_create': 'hint: please do not put whitespace in form name. Form name will be converted to lowercase. Form code in JSON format. Please read README.txt for form code reference.',
+            'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read README.txt for form code reference.',
+            'h_form_run': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -408,6 +435,13 @@ SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
 #----------------------------------------------------------------------#
+def isadmin():
+    try:
+        return sess.admin == 1
+    except:
+        pass
+    return False
+
 def s_select(p):
     pr = p.split(FORM_SPLIT)
     st = []
@@ -426,6 +460,30 @@ def s_select(p):
         d = {}
         for k in i.keys(): d[k] = i[k]
         ret.append(d)
+    #
+    return ret
+
+def canform(key, form):
+    ret = False
+    #
+    if isadmin(): 
+        ret = True
+    else:
+        try:
+            fo = s_select('form.code..%s' %(form))
+            fo = fo[0]
+            fe = json.loads(fo['e'])
+            if fe.has_key(FORM_KEY_SECURITY):
+                fes = fe[FORM_KEY_SECURITY]
+                if fes.has_key(key):
+                    fesr = fes[key]
+                    if fesr == FORM_ALL:
+                        ret = True
+                    else:
+                        if sess.user in fesr:
+                            ret = True
+        except:
+            pass
     #
     return ret
 
@@ -618,6 +676,15 @@ def size():
         s2 = str(nrfloat(s)) + ' ' + _['pf_b']
     return s2
 
+def validfname(s):
+    ret = True
+    for i in s:
+        if not i in FORM_VALID:
+            ret = False
+            break
+    #
+    return ret
+
 def tables(first_blank=False, exclude=EXCLUDE_TABLE):
     ret = []
     if first_blank == True: ret.append('')
@@ -661,7 +728,8 @@ def forms(first_blank=False):
     all = s_select('form.code')
     for i in all:
         try:
-            ret.append(i['d'])
+            if validfname(i['d']):
+                ret.append(i['d'])
         except:
             pass
     #
@@ -728,17 +796,24 @@ def menugen():
             ])
     #
     if not isnosb() and sess.user:
-        f2 = web.form.Dropdown(
-            name='form', 
-            args=forms(first_blank=True), 
-            )
+        aform = forms(first_blank=True)
+        aform1 = aform[1:]
         #
         formact =  [
                     ['run', _['cmd_run']],
                 ]
+        for af in aform1:
+            if not canform(FORM_KEY_SECURITY_RUN, af):
+                aform.remove(af)
+        #
         if isadmin(): 
             formact.append(['edit', _['cmd_edit']])
             formact.append(['create', _['cmd_form_create']])
+        #
+        f2 = web.form.Dropdown(
+            name='form', 
+            args=aform, 
+            )
         #
         ret.append(
             [
@@ -789,13 +864,6 @@ def isblob(s):
     
 def user():
     return sess.user
-
-def isadmin():
-    try:
-        return sess.admin == 1
-    except:
-        pass
-    return False
     
 def isnosb():
     return not FORM_TBL in tables()
@@ -832,6 +900,24 @@ def sysinfo():
         ]
     #
     return ret
+
+def reqform(form):
+    try:
+        fo = s_select('form.code..%s' %(form))
+        fo = fo[0]
+        fe = json.loads(fo['e'])
+        for k in FORM_REQ:
+            if not fe.has_key(k):
+                return False
+        fed = fe[FORM_KEY_DATA]
+        for k in FORM_REQ_DATA:
+            for d in fed:
+                if not d.has_key(k):
+                    return False
+    except:
+        return False
+    #
+    return True
 
 def s_init():
     af = [x + ' ' + FORM_FIELD_TYPE for x in FORM_FIELDS]
@@ -1518,6 +1604,50 @@ $elif data['command'] == 'form.edit':
         <tr>
         <td width='15%'>$i[1]</td>
         <td>$i[0].render()</td>
+        </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
+$elif data['command'] == 'form.run':
+    <p>
+    $ hint = data['hint']
+    <i>$hint</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    $if data['ftitle']:
+        <h3>
+            $data['ftitle']
+        </h3>
+    $if data['finfo']:
+        <div>
+            $data['finfo']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    $for i in data['input']:
+        <tr>
+        <td width='15%'>$i[0]</td>
+        <td>
+        $if i[2] in data['blob_type']:
+            <input type='file' name="$i[1]">
+        $elif i[2] in data['text_type']:
+            <textarea name="$i[1]" rows=5 style='width:100%;'></textarea>
+        $else:
+            <input type='text' name="$i[1]" style='width:100%;'>        
+        </td>
         </tr>
     <tr>
     <td colspan='2'>
@@ -2593,11 +2723,74 @@ class form_action:
 class form_run:
     def GET(self, form):
         start()
-        data = {'title': 'form run', 'command': 'form.run'}
-        content = 'form run not implemented yet'
+        #
+        if not canform(FORM_KEY_SECURITY_RUN, form):
+            dflt()
+        #
+        input = ()
+        action_button = (
+                            ('save', _['cmd_save'], False, '', 'submit'),
+                        )
+        ftitle = ''
+        finfo = ''
+        if not reqform(form):
+            input = ()
+            action_button = ()
+            sess[SKF_RUN] = _['e_form_run_syntax_or_required']
+        else:
+            fo = s_select('form.code..%s' %(form))
+            fo = fo[0]['e']
+            fo = json.loads(fo)
+            #
+            ftitle = fo.get(FORM_KEY_TITLE, form)
+            finfo = fo.get(FORM_KEY_INFO, '')
+            #single table
+            fdata = fo.get(FORM_KEY_DATA)
+            input = []
+            if fdata:
+                table = fdata[0][FORM_KEY_DATA_TABLE]
+                cols = columns(table)
+                for fd in fdata:
+                    if fd.get(FORM_KEY_DATA_TABLE,'') == table:
+                        col = fd.get(FORM_KEY_DATA_COLUMN,'')
+                        if col:
+                            label = fd.get(FORM_KEY_DATA_LABEL, col)
+                            type = ''
+                            for c in cols:
+                                if c['name'] == col:
+                                    type = c['type']
+                            input.append((label, col, type))
+        #
+        message = smsgq(SKF_RUN, default='')
+        #
+        data = {
+                'title': '%s - %s' %(_['tt_form_run'], form), 
+                'command': 'form.run',
+                'form': form,
+                'message': message,
+                'input': input,
+                'hidden': (('form', form),),
+                'action_url': '/form/insert',
+                'action_method': 'post',
+                'action_button': action_button,
+                'hint': _['h_form_run'],
+                'ftitle': ftitle,
+                'finfo': finfo,
+                'blob_type': BLOB_TYPE,
+                'text_type': TEXT_TYPE,
+                }
+        content = ''
         stop()
         return T(data, content)
 
+
+class form_insert:
+    def GET(self):
+        dflt()
+        
+    def POST(self):
+        return web.input()
+        
 
 class form_edit:
     def GET(self):
@@ -2609,6 +2802,7 @@ class form_edit:
         mode = input.mode
         form = input.form
         #
+        dform = ''
         title = _['tt_form_edit']
         if mode == MODE_INSERT:
             title = _['tt_form_create']
@@ -2616,6 +2810,8 @@ class form_edit:
             #
             if not form.strip():
                 dflt()
+            #
+            dform = form
             #
             fo = s_select('form.code..%s' %(form))
             if not fo:
@@ -2642,6 +2838,7 @@ class form_edit:
                                     rows=DEFAULT_TEXTAREA_ROWS
                                 ), _['x_code']),
                         ),
+                'form': dform,
                 'message': smsgq(SKF_CREATE, default=''),
                 'hint': _['h_form_create'],
             }
@@ -2664,6 +2861,11 @@ class form_edit:
         form = input.form.lower().strip()
         #
         if mode == MODE_INSERT:
+            if not validfname(name):
+                sess[SKF_CREATE] = _['e_form_edit_name']
+                raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
             if hasws(name):
                 sess[SKF_CREATE] = _['e_form_edit_whitespace']
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
@@ -2690,6 +2892,11 @@ class form_edit:
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(ocode), MODE_INSERT))
         else:
+            if not validfname(name):
+                sess[SKF_CREATE] = _['e_form_edit_name']
+                raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
+                        name, urllib.quote(code), form))
+            #
             if hasws(name):
                 sess[SKF_CREATE] = _['e_form_edit_whitespace']
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
@@ -2759,5 +2966,5 @@ if __name__ == '__main__':
     app.add_processor(proc_udf)
     app.add_processor(proc_misc)
     #
-    web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
+    web.httpserver.runsimple(app.wsgifunc(), (DEFAULT_ADDR, port))
     
