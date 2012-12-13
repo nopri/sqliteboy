@@ -63,7 +63,7 @@ FEATURES:
 - Custom Template
 - Minimum use of Javascript in default/builtin template
   (only for delete selected confirmation and toggle select all)
-- Form support (simple data entry) (v0.10)
+- Form support (simple data entry) (v0.12)
   (should be available before 2013)
 - Table name limitation: 
   could not handle table with whitespace in name 

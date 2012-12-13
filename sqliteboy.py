@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.09'
+VERSION = '0.10'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -107,6 +107,8 @@ FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
                     FORM_KEY_DATA_COLUMN,
                 )
+FORM_REFERENCE_SQL_0 = 'a'
+FORM_REFERENCE_SQL_1 = 'b'
 
 
 #----------------------------------------------------------------------#
@@ -2727,6 +2729,9 @@ class form_run:
         if not canform(FORM_KEY_SECURITY_RUN, form):
             dflt()
         #
+        if not validfname(form):
+            dflt()
+        #
         input = ()
         action_button = (
                             ('save', _['cmd_save'], False, '', 'submit'),
@@ -2739,8 +2744,11 @@ class form_run:
             sess[SKF_RUN] = _['e_form_run_syntax_or_required']
         else:
             fo = s_select('form.code..%s' %(form))
-            fo = fo[0]['e']
-            fo = json.loads(fo)
+            try:
+                fo = fo[0]['e']
+                fo = json.loads(fo)
+            except:
+                fo = {}
             #
             ftitle = fo.get(FORM_KEY_TITLE, form)
             finfo = fo.get(FORM_KEY_INFO, '')
@@ -2748,18 +2756,71 @@ class form_run:
             fdata = fo.get(FORM_KEY_DATA)
             input = []
             if fdata:
-                table = fdata[0][FORM_KEY_DATA_TABLE]
+                try:
+                    table = fdata[0].get(FORM_KEY_DATA_TABLE, '')
+                except:
+                    table = ''
+                #
                 cols = columns(table)
+                colsn = columns(table, name_only=True)
+                #
                 for fd in fdata:
+                    if not type(fd) == type({}):
+                        continue
+                    #
                     if fd.get(FORM_KEY_DATA_TABLE,'') == table:
                         col = fd.get(FORM_KEY_DATA_COLUMN,'')
-                        if col:
+                        if col and (col in colsn):
                             label = fd.get(FORM_KEY_DATA_LABEL, col)
-                            type = ''
+                            readonly = fd.get(FORM_KEY_DATA_READONLY, False)
+                            required = fd.get(FORM_KEY_DATA_REQUIRED, False)
+                            reference = fd.get(FORM_KEY_DATA_REFERENCE, 0)
+                            default = fd.get(FORM_KEY_DATA_DEFAULT, None)
+                            ftype = ''
                             for c in cols:
                                 if c['name'] == col:
-                                    type = c['type']
-                            input.append((label, col, type))
+                                    ftype = c['type']
+                            #
+                            reference2 = 0
+                            if (type(reference) == type('')) and reference:#query
+                                reference2 = []
+                                try:
+                                    res = db.query(reference)
+                                    for r in res:
+                                        reference2.append(
+                                            [
+                                                r.get(FORM_REFERENCE_SQL_0, ''), 
+                                                r.get(FORM_REFERENCE_SQL_1, '')
+                                            ]
+                                        )
+                                except:
+                                    pass
+                            elif (type(reference) in [type([]), type(())]) and reference: #list
+                                reference2 = []
+                                try:
+                                    for r in reference:
+                                        reference2.append([r[0], r[1]])
+                                except:
+                                    pass
+                            else:
+                                reference2 = 0
+                            #
+                            reference3 = None
+                            if type(reference2) == type([]):
+                                reference3 = web.form.Dropdown('reference', args=reference2)
+                            #
+                            input.append(
+                                (
+                                    label, 
+                                    col, 
+                                    ftype, 
+                                    readonly, 
+                                    required, 
+                                    reference2, 
+                                    reference3, 
+                                    default
+                                )
+                            )
         #
         message = smsgq(SKF_RUN, default='')
         #
