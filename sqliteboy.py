@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.10'
+VERSION = '0.11'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1641,14 +1641,26 @@ $elif data['command'] == 'form.run':
     <table>
     $for i in data['input']:
         <tr>
-        <td width='15%'>$i[0]</td>
+        $ lbl = i[0]
+        $if i[4]:
+            $ lbl = '<b>' + i[0] + '</b>'
+        <td width='15%'>$lbl</td>
         <td>
+        $ ro = ''
+        $if i[3]:
+            $ ro = ' readonly'
+        
+        $ defv = ''
+        $if i[6]:
+            $ defv = i[6]
         $if i[2] in data['blob_type']:
-            <input type='file' name="$i[1]">
+            <input type='file' name="$i[1]"$ro>
         $elif i[2] in data['text_type']:
-            <textarea name="$i[1]" rows=5 style='width:100%;'></textarea>
+            <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
+        $elif i[5]:
+            $i[5].render()
         $else:
-            <input type='text' name="$i[1]" style='width:100%;'>        
+            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
         </td>
         </tr>
     <tr>
@@ -2772,17 +2784,17 @@ class form_run:
                         col = fd.get(FORM_KEY_DATA_COLUMN,'')
                         if col and (col in colsn):
                             label = fd.get(FORM_KEY_DATA_LABEL, col)
-                            readonly = fd.get(FORM_KEY_DATA_READONLY, False)
-                            required = fd.get(FORM_KEY_DATA_REQUIRED, False)
+                            readonly = fd.get(FORM_KEY_DATA_READONLY, 0)
+                            required = fd.get(FORM_KEY_DATA_REQUIRED, 0)
                             reference = fd.get(FORM_KEY_DATA_REFERENCE, 0)
-                            default = fd.get(FORM_KEY_DATA_DEFAULT, None)
+                            default = fd.get(FORM_KEY_DATA_DEFAULT, '')
                             ftype = ''
                             for c in cols:
                                 if c['name'] == col:
                                     ftype = c['type']
                             #
                             reference2 = 0
-                            if (type(reference) == type('')) and reference:#query
+                            if (type(reference) in [type(''), type(u'')]) and reference:#query
                                 reference2 = []
                                 try:
                                     res = db.query(reference)
@@ -2809,16 +2821,48 @@ class form_run:
                             if type(reference2) == type([]):
                                 reference3 = web.form.Dropdown('reference', args=reference2)
                             #
+                            default2 = default
+                            if not default2:
+                                default2 = ''
+                            #
+                            if (type(default) in [type([])]) and default:
+                                default2 = ''
+                                #
+                                deff = default[0]
+                                default.pop(0)
+                                defs = []
+                                try:
+                                    for dd in default:
+                                        dq = web.sqlquote(dd)
+                                        defs.append(dq)
+                                    #
+                                    if defs:
+                                        defsq = web.sqlquote('').join(defs, ',')
+                                    else:
+                                        defsq = ''
+                                    #
+                                    defq = 'select %s(%s) as f' %(deff, defsq)
+                                    defr = db.query(defq).list()
+                                    if defr:
+                                        default2 = defr[0]['f']
+                                except:
+                                    pass
+                            #
+                            if reference3:
+                                try:
+                                    reference3.set_value(default2)
+                                except:
+                                    pass
+                            #
                             input.append(
                                 (
                                     label, 
                                     col, 
                                     ftype, 
                                     readonly, 
-                                    required, 
-                                    reference2, 
+                                    required,  
                                     reference3, 
-                                    default
+                                    default2,
                                 )
                             )
         #

@@ -3,7 +3,7 @@ Simple Web SQLite Manager/Form Application
 (c) Noprianto <nop@tedut.com>
 2012 
 GPL
-version 0.08
+version 0.11
 
 
 SCREENSHOTS: https://github.com/nopri/sqliteboy/wiki
@@ -100,6 +100,94 @@ USER-DEFINED FUNCTION
 - sqliteboy_b64encode(s)
 - sqliteboy_b64decode(s)
 - sqliteboy_randrange(a, b)
+
+
+FORM CODE REFERENCE
+- Must be valid JSON syntax
+- String (including keys below) must be double-quoted 
+  (between " and ")
+- No trailling comma in dict or list
+- Python dict
+- Keys:
+  - title   : form title [str] [optional]
+              example: "My Form"
+  - info    : form information [str] [optional]
+              example: "Form Information"
+  - data    : form data [list of dict] <required>
+    - table    : table name [str] <required>
+                 example: "table1"
+    - column   : column [str] <required>
+                 example: "col1"
+    - label    : label [str] [optional]
+                 example: "column 1"
+    - required : is required [int] [optional]
+                 (0 = not required, 1 = required)
+                 example: 1
+    - readonly : is readonly [int] [optional]
+                 (0 = not readonly, 1 = readonly)
+                 example: 0
+    - reference: predefined value(s) [optional]
+                 can be str, list or int
+                 - str: SQL query, 
+                        returns 2 columns: a and b
+                   rendered as HTML select
+                   example: "select col1 as a, col2 as b from table1"
+                 - list: static value(s),
+                         contains list(s), which
+                         contains two members
+                   rendered as HTML select
+                   example: [ ["0", "NO"], ["1", "YES"] ]
+                 - int: ignored
+                   example: 0
+    - default  : default value [optional]
+                 can be str, int, or list
+                 - str or int: use as is
+                 - list: SQL function call,
+                         at least one member
+                         first member must be str (function name)
+                         return value will be used as default
+                         format: [function_name, arg1, ...]
+                         do not put () in function_name
+                   example: ["sqliteboy_md5", "hello"]
+                   example: ["sqlite_version"]
+  - security: form security [dict] <required>
+    - run      : can run form <required>
+                 admin(s): always can run form
+                 can be "" or list
+                 - "": all users can run this form
+                 - list: only users in this list can run this form
+                   example: []
+                   example: ["user1", "user2"]
+  - onsave  : function call on save event [NOT IMPLEMENTED YET]
+
+- Example:
+{
+  "title" : "My Form 1",
+  "info"  : "Form Information", 
+  "data"  : [
+              {
+                "table"    : "table3",
+                "column"   : "a",
+                "label"    : "column a",
+                "required" : 1,
+                "reference": [ ["0", "NO"], ["1", "YES"] ],
+                "default"  : "1"
+              },
+              {
+                "table"    : "table3",
+                "column"   : "ee",
+                "reference": "select rootpage as a, name as b from sqlite_master"
+              },
+              {
+                "table"    : "table3",
+                "column"   : "b",
+                "default"  : ["sqliteboy_md5", "hello"]  
+              }
+            ],
+  "security" : {
+                 "run" : ""
+               }
+}
 
 
 THANK YOU :)
