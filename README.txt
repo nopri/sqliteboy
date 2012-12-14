@@ -3,7 +3,7 @@ Simple Web SQLite Manager/Form Application
 (c) Noprianto <nop@tedut.com>
 2012 
 GPL
-version 0.11
+version 0.12
 
 
 SCREENSHOTS: https://github.com/nopri/sqliteboy/wiki
@@ -15,6 +15,22 @@ FEATURES:
 - Single python file
 - Configurable port 
   (default 11738 because it looks like sqliteboy)
+- Form Support (Extended feature, new in v0.12)
+  - Simple data entry
+  - Simple syntax (JSON)
+  - Please read FORM CODE REFERENCE section (below)
+  - Readonly field
+  - Required field
+  - Predefined values (field options) from SQL Query 
+    or Python list
+  - Default value: function call or static value
+  - Constraint: check before save, 
+    prevent saving invalid value
+    (possible to call function before comparison)
+  - Simple security setting
+  - onsave event (NOT IMPLEMENTED YET)
+- Report Support (Extended feature, 
+  will be implemented in v0.20)
 - Browse table
   - Sort (asc/desc)
   - Download for BLOB type (if not NULL)
@@ -63,8 +79,6 @@ FEATURES:
 - Custom Template
 - Minimum use of Javascript in default/builtin template
   (only for delete selected confirmation and toggle select all)
-- Form support (simple data entry) (v0.12)
-  (should be available before 2013)
 - Table name limitation: 
   could not handle table with whitespace in name 
   
@@ -91,6 +105,7 @@ CUSTOM TEMPLATE
 
 
 USER-DEFINED FUNCTION
+- sqliteboy_len(s)
 - sqliteboy_md5(s)
 - sqliteboy_sha1(s)
 - sqliteboy_sha224(s)
@@ -100,10 +115,11 @@ USER-DEFINED FUNCTION
 - sqliteboy_b64encode(s)
 - sqliteboy_b64decode(s)
 - sqliteboy_randrange(a, b)
+- sqliteboy_time()
 
 
 FORM CODE REFERENCE
-- Must be valid JSON syntax
+- Must be valid JSON syntax (json.org)
 - String (including keys below) must be double-quoted 
   (between " and ")
 - No trailling comma in dict or list
@@ -115,6 +131,8 @@ FORM CODE REFERENCE
               example: "Form Information"
   - data    : form data [list of dict] <required>
     - table    : table name [str] <required>
+                 only single table is supported, and first table found
+                 will be used, other table(s) will be ignored
                  example: "table1"
     - column   : column [str] <required>
                  example: "col1"
@@ -150,6 +168,32 @@ FORM CODE REFERENCE
                          do not put () in function_name
                    example: ["sqliteboy_md5", "hello"]
                    example: ["sqlite_version"]
+    - constraint: check before save [list] [optional]
+                  must be list of four members
+                  ["function_name", as_str, "condition", "error_message"]
+                  function_name might be empty
+                  as_str must be 1 (treat input as string) or 0
+                  condition must not empty
+                  condition must contain boolean comparison
+                  error_message might be empty
+                  if function_name is not empty, 
+                    function_name will be called
+                    with column value as an argument
+                    function result will be compared with condition
+                  if function_name is empty,
+                    column value will compared with condition
+                  example: ["", 0, "> 10", "must be larger than 10"]
+                    check if column value is > 10
+                  example: ["sqliteboy_len", 1, "> 10", ""]
+                    check if sqliteboy_len(column value) is > 10
+                  if comparison result is 0 (false),
+                    form saving will be cancelled
+                    if error_message is specified,
+                      error_message will be displayed
+                    else,
+                      generic error message with 
+                      column name, function_name (if any) and 
+                      condition will be displayed
   - security: form security [dict] <required>
     - run      : can run form <required>
                  admin(s): always can run form
@@ -166,22 +210,30 @@ FORM CODE REFERENCE
   "info"  : "Form Information", 
   "data"  : [
               {
-                "table"    : "table3",
-                "column"   : "a",
-                "label"    : "column a",
-                "required" : 1,
-                "reference": [ ["0", "NO"], ["1", "YES"] ],
-                "default"  : "1"
+                "table"     : "table1",
+                "column"    : "a",
+                "label"     : "column a",
+                "required"  : 1,
+                "reference" : [ ["0", "NO"], ["1", "YES"] ],
+                "default"   : "1"
               },
               {
-                "table"    : "table3",
-                "column"   : "ee",
-                "reference": "select rootpage as a, name as b from sqlite_master"
+                "table"     : "table1",
+                "column"    : "b",
+                "reference" : "select sqliteboy_randrange(1, 100000000000) as a, 'hello ' || sqliteboy_time() as b from _sqliteboy_"
               },
               {
-                "table"    : "table3",
-                "column"   : "b",
-                "default"  : ["sqliteboy_md5", "hello"]  
+                "table"     : "table1",
+                "column"    : "c",
+                "default"   : ["sqliteboy_md5", "hello"],  
+                "constraint": ["sqliteboy_len", 1, "= 32", ""]
+              },
+              {
+                "table"     : "table1",
+                "column"    : "d",
+                "label"     : "d (larger than 100)",
+                "required"  : 1,
+                "constraint": ["", 0, "> 100", "must be larger than 100"]
               }
             ],
   "security" : {

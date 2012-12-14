@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.11'
+VERSION = '0.12'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -51,6 +51,7 @@ SIZE_MB = 1024 * SIZE_KB
 SIZE_GB = 1024 * SIZE_MB
 BLOB_TYPE = ['blob']
 TEXT_TYPE = ['text', 'clob']
+NOQUOTE_TYPE = ['integer', 'real']
 BLOB_VAR = 'rowid'
 BLOB_COLUMN = 'column'
 BLOB_CTYPE = 'application/octet-stream'
@@ -100,6 +101,7 @@ FORM_KEY_DATA_REFERENCE = 'reference'
 FORM_KEY_DATA_DEFAULT = 'default'
 FORM_KEY_DATA_REQUIRED = 'required'
 FORM_KEY_DATA_READONLY = 'readonly'
+FORM_KEY_DATA_CONSTRAINT = 'constraint'
 FORM_KEY_SECURITY = 'security'
 FORM_KEY_SECURITY_RUN = 'run'
 FORM_KEY_ONSAVE = 'onsave'
@@ -352,12 +354,16 @@ LANGS = {
             'e_form_edit_syntax' : 'ERROR: form code error',
             'e_form_edit_name': 'ERROR: invalid form name',
             'e_form_run_syntax_or_required': 'ERROR: form code error or required keys are not set',
+            'e_form_run_required': 'ERROR: required',
+            'e_form_run_constraint': 'ERROR: constraint',
+            'e_form_insert_general': 'ERROR: processing form',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
             'o_rename': 'OK: alter table (rename)',
             'o_password': 'OK: password changed',
             'o_hosts': 'OK: hosts updated',
+            'o_form_run': 'OK: data saved',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -394,6 +400,10 @@ _ = res(LANGS, DEFAULT_LANG)
 #----------------------------------------------------------------------#
 SQLITE_UDF = []
 
+def sqliteboy_len(s):
+    return len(str(s))
+SQLITE_UDF.append(('sqliteboy_len', 1, sqliteboy_len))
+
 def sqliteboy_md5(s):
     return md5(str(s)).hexdigest()
 SQLITE_UDF.append(('sqliteboy_md5', 1, sqliteboy_md5))
@@ -427,12 +437,17 @@ def sqliteboy_b64decode(s):
 SQLITE_UDF.append(('sqliteboy_b64decode', 1, sqliteboy_b64decode))
 
 def sqliteboy_randrange(a, b):
-    vt = type(1)
-    if not type(a) == vt or not type(b) == vt: return 0
+    vt = [type(1), type(1L)]
+    if not type(a) in vt or not type(b) in vt: return 0
     if a == b: return a
     #
     return random.randrange(a, b)
 SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
+
+def sqliteboy_time():
+    return time.time()
+SQLITE_UDF.append(('sqliteboy_time', 0, sqliteboy_time))
+
 
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
@@ -735,6 +750,7 @@ def forms(first_blank=False):
         except:
             pass
     #
+    ret.sort()
     return ret
 
 def smsg(table, key, clear=True):
@@ -920,6 +936,140 @@ def reqform(form):
         return False
     #
     return True
+
+def parseform(form):
+    fo = s_select('form.code..%s' %(form))
+    try:
+        fo = fo[0]['e']
+        fo = json.loads(fo)
+    except:
+        fo = {}
+    #
+    ftitle = fo.get(FORM_KEY_TITLE, form)
+    finfo = fo.get(FORM_KEY_INFO, '')
+    #single table
+    fdata = fo.get(FORM_KEY_DATA)
+    input = []
+    colstb = {}
+    if fdata:
+        try:
+            table = fdata[0].get(FORM_KEY_DATA_TABLE, '')
+            colstb[table] = []
+        except:
+            table = ''
+        #
+        cols = columns(table)
+        colsn = columns(table, name_only=True)
+        #
+        for fd in fdata:
+            if not type(fd) == type({}):
+                continue
+            #
+            if fd.get(FORM_KEY_DATA_TABLE,'') == table:
+                col = fd.get(FORM_KEY_DATA_COLUMN,'')
+                if col and (col in colsn) and (not col in colstb.get(table,[])):
+                    label = fd.get(FORM_KEY_DATA_LABEL, col)
+                    readonly = fd.get(FORM_KEY_DATA_READONLY, 0)
+                    required = fd.get(FORM_KEY_DATA_REQUIRED, 0)
+                    reference = fd.get(FORM_KEY_DATA_REFERENCE, 0)
+                    default = fd.get(FORM_KEY_DATA_DEFAULT, '')
+                    constraint = fd.get(FORM_KEY_DATA_CONSTRAINT, [])
+                    ftype = ''
+                    for c in cols:
+                        if c['name'] == col:
+                            ftype = c['type']
+                    #
+                    reference2 = 0
+                    if (type(reference) in [type(''), type(u'')]) and reference:#query
+                        reference2 = []
+                        try:
+                            res = db.query(reference)
+                            for r in res:
+                                reference2.append(
+                                    [
+                                        r.get(FORM_REFERENCE_SQL_0, ''), 
+                                        r.get(FORM_REFERENCE_SQL_1, '')
+                                    ]
+                                )
+                        except:
+                            pass
+                    elif (type(reference) in [type([]), type(())]) and reference: #list
+                        reference2 = []
+                        try:
+                            for r in reference:
+                                reference2.append([r[0], r[1]])
+                        except:
+                            pass
+                    else:
+                        reference2 = 0
+                    #
+                    reference3 = None
+                    if type(reference2) == type([]):
+                        reference3 = web.form.Dropdown(col, args=reference2)
+                    #
+                    default2 = default
+                    if not default2:
+                        default2 = ''
+                    #
+                    if (type(default) in [type([])]) and default:
+                        default2 = ''
+                        #
+                        deff = default[0]
+                        default.pop(0)
+                        defs = []
+                        try:
+                            for dd in default:
+                                dq = web.sqlquote(dd)
+                                defs.append(dq)
+                            #
+                            if defs:
+                                defsq = web.sqlquote('').join(defs, ',')
+                            else:
+                                defsq = ''
+                            #
+                            defq = 'select %s(%s) as f' %(deff, defsq)
+                            defr = db.query(defq).list()
+                            if defr:
+                                default2 = defr[0]['f']
+                        except:
+                            pass
+                    #
+                    if reference3:
+                        try:
+                            reference3.set_value(default2)
+                        except:
+                            pass
+                    #
+                    constraint2 = []
+                    try:
+                        constf = constraint[0].strip()
+                        consta = constraint[1]
+                        constc = constraint[2]
+                        conste = constraint[3]
+                        constraint2 = constraint
+                    except:
+                        pass
+                    #
+                    colstb.get(table, []).append(col)
+                    #
+                    input.append(
+                        (
+                            label, 
+                            col, 
+                            ftype, 
+                            readonly, 
+                            required,  
+                            reference3, 
+                            default2,
+                            constraint2,
+                            table,
+                        )
+                    )
+    #
+    return [ftitle, finfo, input]
+
+def nqtype(ftype):
+    return ftype.lower() in NOQUOTE_TYPE
 
 def s_init():
     af = [x + ' ' + FORM_FIELD_TYPE for x in FORM_FIELDS]
@@ -1625,7 +1775,8 @@ $elif data['command'] == 'form.run':
     </p>    
     $if data['message']:
         <div>
-            $data['message']
+            $for m in data['message']:
+                $': '.join(m)<br>
         </div>
     $if data['ftitle']:
         <h3>
@@ -1635,7 +1786,7 @@ $elif data['command'] == 'form.run':
         <div>
             $data['finfo']
         </div>
-    <form action="$data['action_url']" method="$data['action_method']">
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
     $for h in data['hidden']:
         <input type='hidden' name='$h[0]' value='$h[1]'>
     <table>
@@ -2753,120 +2904,20 @@ class form_run:
         if not reqform(form):
             input = ()
             action_button = ()
-            sess[SKF_RUN] = _['e_form_run_syntax_or_required']
+            sess[SKF_RUN] = [
+                                _['e_form_run_syntax_or_required'],
+                            ]
         else:
-            fo = s_select('form.code..%s' %(form))
             try:
-                fo = fo[0]['e']
-                fo = json.loads(fo)
+                pform = parseform(form)
             except:
-                fo = {}
+                pform = [ftitle, finfo, input]
             #
-            ftitle = fo.get(FORM_KEY_TITLE, form)
-            finfo = fo.get(FORM_KEY_INFO, '')
-            #single table
-            fdata = fo.get(FORM_KEY_DATA)
-            input = []
-            if fdata:
-                try:
-                    table = fdata[0].get(FORM_KEY_DATA_TABLE, '')
-                except:
-                    table = ''
-                #
-                cols = columns(table)
-                colsn = columns(table, name_only=True)
-                #
-                for fd in fdata:
-                    if not type(fd) == type({}):
-                        continue
-                    #
-                    if fd.get(FORM_KEY_DATA_TABLE,'') == table:
-                        col = fd.get(FORM_KEY_DATA_COLUMN,'')
-                        if col and (col in colsn):
-                            label = fd.get(FORM_KEY_DATA_LABEL, col)
-                            readonly = fd.get(FORM_KEY_DATA_READONLY, 0)
-                            required = fd.get(FORM_KEY_DATA_REQUIRED, 0)
-                            reference = fd.get(FORM_KEY_DATA_REFERENCE, 0)
-                            default = fd.get(FORM_KEY_DATA_DEFAULT, '')
-                            ftype = ''
-                            for c in cols:
-                                if c['name'] == col:
-                                    ftype = c['type']
-                            #
-                            reference2 = 0
-                            if (type(reference) in [type(''), type(u'')]) and reference:#query
-                                reference2 = []
-                                try:
-                                    res = db.query(reference)
-                                    for r in res:
-                                        reference2.append(
-                                            [
-                                                r.get(FORM_REFERENCE_SQL_0, ''), 
-                                                r.get(FORM_REFERENCE_SQL_1, '')
-                                            ]
-                                        )
-                                except:
-                                    pass
-                            elif (type(reference) in [type([]), type(())]) and reference: #list
-                                reference2 = []
-                                try:
-                                    for r in reference:
-                                        reference2.append([r[0], r[1]])
-                                except:
-                                    pass
-                            else:
-                                reference2 = 0
-                            #
-                            reference3 = None
-                            if type(reference2) == type([]):
-                                reference3 = web.form.Dropdown('reference', args=reference2)
-                            #
-                            default2 = default
-                            if not default2:
-                                default2 = ''
-                            #
-                            if (type(default) in [type([])]) and default:
-                                default2 = ''
-                                #
-                                deff = default[0]
-                                default.pop(0)
-                                defs = []
-                                try:
-                                    for dd in default:
-                                        dq = web.sqlquote(dd)
-                                        defs.append(dq)
-                                    #
-                                    if defs:
-                                        defsq = web.sqlquote('').join(defs, ',')
-                                    else:
-                                        defsq = ''
-                                    #
-                                    defq = 'select %s(%s) as f' %(deff, defsq)
-                                    defr = db.query(defq).list()
-                                    if defr:
-                                        default2 = defr[0]['f']
-                                except:
-                                    pass
-                            #
-                            if reference3:
-                                try:
-                                    reference3.set_value(default2)
-                                except:
-                                    pass
-                            #
-                            input.append(
-                                (
-                                    label, 
-                                    col, 
-                                    ftype, 
-                                    readonly, 
-                                    required,  
-                                    reference3, 
-                                    default2,
-                                )
-                            )
+            ftitle = pform[0]
+            finfo = pform[1]
+            input = pform[2]
         #
-        message = smsgq(SKF_RUN, default='')
+        message = smsgq(SKF_RUN, default=[])
         #
         data = {
                 'title': '%s - %s' %(_['tt_form_run'], form), 
@@ -2877,6 +2928,7 @@ class form_run:
                 'hidden': (('form', form),),
                 'action_url': '/form/insert',
                 'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
                 'action_button': action_button,
                 'hint': _['h_form_run'],
                 'ftitle': ftitle,
@@ -2894,7 +2946,125 @@ class form_insert:
         dflt()
         
     def POST(self):
-        return web.input()
+        input = web.input(form='')
+        form = input.form.strip()
+        #
+        if not form:
+            dflt()
+        #
+        if not canform(FORM_KEY_SECURITY_RUN, form):
+            dflt()
+        #
+        if not validfname(form):
+            dflt()
+        #
+        finput = None
+        try:
+            pform = parseform(form)
+            finput = pform[2]
+        except:
+            pform = None
+        #
+        if not pform or not finput:
+            dflt()
+        #
+        errors = []
+        ecols = []
+        ocols = {}
+        stable = ''
+        #
+        for f in finput:
+            try:
+                label = f[0] 
+                col = f[1]
+                ftype = f[2]
+                readonly = f[3]
+                required = f[4]
+                reference3 = f[5]
+                default2 = f[6]
+                constraint2 = f[7]
+                table = f[8]
+                stable = table
+                #
+                cv = input.get(col).strip()
+            except:
+                sess[SKF_RUN] = [ [_['e_form_insert_general']] ]
+                raise web.seeother('/form/run/%s' %(form))
+            #
+            if required == 1 and not cv:
+                ecols.append(col)
+                errors.append( [ _['e_form_run_required'], label] )
+            #
+            if constraint2:
+                try:
+                    constf = constraint2[0].strip()
+                    consta = constraint2[1]
+                    constc = constraint2[2]
+                    conste = constraint2[3].strip()
+                    #
+                    if not conste:
+                        constm = [
+                                    _['e_form_run_constraint'], 
+                                    label, 
+                                    constf, 
+                                    constc
+                                ]
+                    else:
+                        constm = [
+                                    _['e_form_run_constraint'],
+                                    label,
+                                    conste,
+                                ]
+                    #
+                    if (consta == 1) or hasws(cv):
+                        cvq = web.sqlquote(cv)
+                    else:
+                        if cv:
+                            cvq = cv
+                        else:
+                            cvq = 0
+                    #
+                    if constf:
+                        constq = 'select %s(%s) %s as c' %(constf, cvq, constc)
+                    else:
+                        constq = 'select %s %s as c' %(cvq, constc)
+                    #
+                    constr = db.query(constq).list()
+                    if constr[0]['c'] != 1:
+                        ecols.append(col)
+                        errors.append(constm)
+                except:
+                    ecols.append(col)
+                    errors.append( [ _['e_form_run_constraint'], label] )
+            #
+            if nqtype(ftype) and not hasws(cv):
+                cvv = cv
+            else:
+                cvv = str(web.sqlquote(cv))
+            ocols[col] = cvv
+            #
+        #
+        if not stable:
+            dflt()
+        #
+        if errors:
+            sess[SKF_RUN] = errors
+        else:
+            try:
+                okeys = ocols.keys()
+                okeys2 = ['$'+x for x in okeys]
+                q = 'insert into %s(%s) values(%s)' %(
+                        table,
+                        ','.join(okeys),
+                        ','.join(okeys2),
+                    )
+                db.query(q, vars=ocols)
+                sess[SKF_RUN] = [ [_['o_form_run']] ]
+            except:
+                sess[SKF_RUN] = [ [_['e_form_insert_general']] ]
+                raise web.seeother('/form/run/%s' %(form))
+        #
+        raise web.seeother('/form/run/%s' %(form))
         
 
 class form_edit:
@@ -2991,7 +3161,7 @@ class form_edit:
             try:
                 code = json.loads(code)
                 code = json.dumps(code)
-                db.insert(FORM_TBL, a='form', b='code', d=name, e=code)
+                db.insert(FORM_TBL, a='form', b='code', d=name, e=ocode)
             except:
                 sess[SKF_CREATE] = _['e_form_edit_syntax']
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
@@ -3023,7 +3193,7 @@ class form_edit:
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
-                    vars={'a': 'form', 'b': 'code', 'd': form}, d=name, e=code)
+                    vars={'a': 'form', 'b': 'code', 'd': form}, d=name, e=ocode)
             except:
                 sess[SKF_CREATE] = _['e_form_edit_syntax']
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
