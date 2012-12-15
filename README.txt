@@ -3,11 +3,11 @@ Simple Web SQLite Manager/Form Application
 (c) Noprianto <nop@tedut.com>
 2012 
 GPL
-version 0.12
+version 0.13
 
 
 SCREENSHOTS: https://github.com/nopri/sqliteboy/wiki
-(not up-to-date)
+(possibly not up-to-date)
 
 
 FEATURES:
@@ -203,6 +203,10 @@ FORM CODE REFERENCE
                    example: []
                    example: ["user1", "user2"]
   - onsave  : function call on save event [NOT IMPLEMENTED YET]
+
+- note:
+  - if you are using primary key column in form data, 
+    '*' character will be added to column label
 
 - Example:
 {

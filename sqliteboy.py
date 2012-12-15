@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.12'
+VERSION = '0.13'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -694,6 +694,12 @@ def size():
     return s2
 
 def validfname(s):
+    try:
+        if not s.strip(): 
+            return False
+    except:
+        return False
+    #
     ret = True
     for i in s:
         if not i in FORM_VALID:
@@ -978,6 +984,9 @@ def parseform(form):
                     for c in cols:
                         if c['name'] == col:
                             ftype = c['type']
+                            #
+                            if c.get('pk', 0) == 1:
+                                label = '%s%s' %(label, PK_SYM)
                     #
                     reference2 = 0
                     if (type(reference) in [type(''), type(u'')]) and reference:#query
@@ -1069,7 +1078,13 @@ def parseform(form):
     return [ftitle, finfo, input]
 
 def nqtype(ftype):
-    return ftype.lower() in NOQUOTE_TYPE
+    ret = False
+    ftype = ftype.lower()
+    #
+    if ftype in NOQUOTE_TYPE or 'int' in ftype:
+        ret = True
+    #
+    return ret 
 
 def s_init():
     af = [x + ' ' + FORM_FIELD_TYPE for x in FORM_FIELDS]
@@ -1802,16 +1817,17 @@ $elif data['command'] == 'form.run':
             $ ro = ' readonly'
         
         $ defv = ''
-        $if i[6]:
-            $ defv = i[6]
-        $if i[2] in data['blob_type']:
-            <input type='file' name="$i[1]"$ro>
-        $elif i[2] in data['text_type']:
-            <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
-        $elif i[5]:
+        $if i[5]:
             $i[5].render()
         $else:
-            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
+            $if i[6]:
+                $ defv = i[6]
+            $if i[2] in data['blob_type']:
+                <input type='file' name="$i[1]"$ro>
+            $elif i[2] in data['text_type']:
+                <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
+            $else:
+                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
         </td>
         </tr>
     <tr>
@@ -1858,8 +1874,16 @@ T = web.template.Template(T_BASE, globals=GLBL)
 class index:
     def GET(self):
         start()
+        #
+        input = web.input(form='')
+        form = input.form.lower().strip()
+        xform = ''
+        if form in forms():
+            if canform(FORM_KEY_SECURITY_RUN, form):
+                xform = form
+        #
         stop()
-        data = {'title': '', 'command': 'home'}
+        data = {'title': '', 'command': 'home', 'form': xform}
         content = (
                     '%s <a href="%s">%s</a>' %(_['x_welcome2'], WSITE, NAME),
                     sysinfo(),
@@ -2889,6 +2913,9 @@ class form_run:
     def GET(self, form):
         start()
         #
+        if not form.strip() or not form.strip() in forms():
+            dflt()
+        #
         if not canform(FORM_KEY_SECURITY_RUN, form):
             dflt()
         #
@@ -2905,7 +2932,7 @@ class form_run:
             input = ()
             action_button = ()
             sess[SKF_RUN] = [
-                                _['e_form_run_syntax_or_required'],
+                                [_['e_form_run_syntax_or_required']],
                             ]
         else:
             try:
@@ -3037,7 +3064,9 @@ class form_insert:
                     ecols.append(col)
                     errors.append( [ _['e_form_run_constraint'], label] )
             #
-            if nqtype(ftype) and not hasws(cv):
+            if ftype in BLOB_TYPE:
+                cvv = db.db_module.Binary(cv)
+            elif nqtype(ftype) and not hasws(cv):
                 cvv = cv
             else:
                 cvv = str(web.sqlquote(cv))
@@ -3060,8 +3089,8 @@ class form_insert:
                     )
                 db.query(q, vars=ocols)
                 sess[SKF_RUN] = [ [_['o_form_run']] ]
-            except:
-                sess[SKF_RUN] = [ [_['e_form_insert_general']] ]
+            except Exception, e:
+                sess[SKF_RUN] = [ [_['e_form_insert_general'], str(e)] ]
                 raise web.seeother('/form/run/%s' %(form))
         #
         raise web.seeother('/form/run/%s' %(form))
@@ -3135,6 +3164,7 @@ class form_edit:
         mode = input.mode.strip()
         form = input.form.lower().strip()
         #
+        xform = ''
         if mode == MODE_INSERT:
             if not validfname(name):
                 sess[SKF_CREATE] = _['e_form_edit_name']
@@ -3159,6 +3189,7 @@ class form_edit:
             #
             ocode = code
             try:
+                xform = name
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.insert(FORM_TBL, a='form', b='code', d=name, e=ocode)
@@ -3190,6 +3221,7 @@ class form_edit:
             #
             ocode = code
             try:
+                xform = form
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
@@ -3198,6 +3230,9 @@ class form_edit:
                 sess[SKF_CREATE] = _['e_form_edit_syntax']
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
                         name, urllib.quote(ocode), form))
+        #
+        if xform:
+            raise web.seeother('/?form=%s' %(xform))
         #
         dflt()
         
