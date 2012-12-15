@@ -1,20 +1,47 @@
 sqliteboy.py
-Simple Web SQLite Manager/Form Application
+Simple Web SQLite Manager/Form/Report Application
 (c) Noprianto <nop@tedut.com>
 2012 
 GPL
-version 0.13
+version 0.14
 
 
 SCREENSHOTS: https://github.com/nopri/sqliteboy/wiki
 (possibly not up-to-date)
 
 
+WHY:
+- Easy to use, python and web.py based, Web SQLite Manager
+  (Free/open source)
+- If Extended feature is enabled: 
+  Multi user, simple (yet flexible) form (data entry) and 
+  reporting can be created by admin (simple JSON syntax), 
+  and can be run by admin/user (configurable).
+  
+  Form field supports predefined values (options) from 
+  SQL Query or Python list. Also, default value can be 
+  result of function call or static value. Constraint
+  is also supported, to do checking before save, to 
+  prevent saving invalid value (and, it's possible to
+  call function before comparison)
+- I need simple form (data entry) and reporting solution. 
+  This application is under active development. I use it
+  at work and home. 
+  
+
 FEATURES:
 - Work with single SQLite database file
 - Single python file
 - Configurable port 
   (default 11738 because it looks like sqliteboy)
+- Basic/Extended Feature
+  - Basic: Database management
+  - Extended: Form, Report, User/Login, etc
+    - Completely optional
+    - Can be enabled in menu
+    - If enabled, one table, _sqliteboy_, 
+      will be created. You can delete this table 
+      and extended feature will be disabled
 - Form Support (Extended feature, new in v0.12)
   - Simple data entry
   - Simple syntax (JSON)
@@ -244,6 +271,12 @@ FORM CODE REFERENCE
                  "run" : ""
                }
 }
+
+
+DONATE
+- If you use this application, or find it useful, or want to support 
+  the development, please consider to donate :)
+- Any form of donation will be happily accepted
 
 
 THANK YOU :)

@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.13'
+VERSION = '0.14'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -71,6 +71,8 @@ SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
+SKR_CREATE = 'report.create'
+SKR_RUN = 'report.run'
 COLUMN_TYPES = (
                 ('integer primary key', 0),
                 ('integer primary key autoincrement', 0),
@@ -111,6 +113,10 @@ FORM_REQ_DATA = (FORM_KEY_DATA_TABLE,
                 )
 FORM_REFERENCE_SQL_0 = 'a'
 FORM_REFERENCE_SQL_1 = 'b'
+#
+REPORT_ALL = FORM_ALL
+REPORT_KEY_SECURITY = FORM_KEY_SECURITY
+REPORT_KEY_SECURITY_RUN = FORM_KEY_SECURITY_RUN
 
 
 #----------------------------------------------------------------------#
@@ -172,6 +178,10 @@ URLS = (
     '/form/run/(.*)', 'form_run',
     '/form/edit', 'form_edit',
     '/form/insert', 'form_insert',
+    '/report/action', 'report_action',
+    '/report/run/(.*)', 'report_run',
+    '/report/edit', 'report_edit',
+    '/report/insert', 'report_insert',
     )
 
 app = None
@@ -291,6 +301,8 @@ LANGS = {
             'x_form': 'form',
             'x_code': 'code',
             'x_form_name': 'form name',
+            'x_report': 'report',
+            'x_report_name': 'report name',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -307,6 +319,9 @@ LANGS = {
             'tt_form_run': 'form run',
             'tt_form_edit': 'form edit',
             'tt_form_create': 'form create',
+            'tt_report_run': 'report run',
+            'tt_report_edit': 'report edit',
+            'tt_report_create': 'report create',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -333,6 +348,7 @@ LANGS = {
             'cmd_save': 'save',
             'cmd_run': 'run',
             'cmd_form_create': 'create',
+            'cmd_report_create': 'create',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -357,6 +373,12 @@ LANGS = {
             'e_form_run_required': 'ERROR: required',
             'e_form_run_constraint': 'ERROR: constraint',
             'e_form_insert_general': 'ERROR: processing form',
+            'e_report_edit_whitespace': 'ERROR: could not handle report with whitespace in name',
+            'e_report_edit_exists': 'ERROR: report already exists',
+            'e_report_edit_syntax' : 'ERROR: report code error',
+            'e_report_edit_name': 'ERROR: invalid report name',
+            'e_report_run_syntax_or_required': 'ERROR: report code error or required keys are not set',
+            'e_report_run_general': 'ERROR: processing report',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -376,6 +398,8 @@ LANGS = {
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
             'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read README.txt for form code reference.',
             'h_form_run': '',
+            'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read README.txt for report code reference.',
+            'h_report_run': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -480,14 +504,14 @@ def s_select(p):
     #
     return ret
 
-def canform(key, form):
+def canform(key, form, obj='form.code..'):
     ret = False
     #
     if isadmin(): 
         ret = True
     else:
         try:
-            fo = s_select('form.code..%s' %(form))
+            fo = s_select('%s%s' %(obj, form))
             fo = fo[0]
             fe = json.loads(fo['e'])
             if fe.has_key(FORM_KEY_SECURITY):
@@ -503,6 +527,9 @@ def canform(key, form):
             pass
     #
     return ret
+    
+def canreport(key, report):
+    return canform(key, report, 'report.code..')
 
 def proc_access(handle):
     allowed = DEFAULT_HOSTS_ALLOWED
@@ -539,7 +566,7 @@ def proc_admin_check(handle):
     path = web.ctx.fullpath.lower()
     if not isnosb():
         if not sess.admin == 1:
-            if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin') or path.startswith('/form/edit'):
+            if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin') or path.startswith('/form/edit') or path.startswith('/report/edit'):
                 if sess.user:
                     return _['e_access_forbidden']
                 else:
@@ -567,6 +594,7 @@ def proc_nosb(handle):
             path.startswith('/logout') or \
             path.startswith('/password') or \
             path.startswith('/form') or \
+            path.startswith('/report') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -744,11 +772,11 @@ def columns(table, name_only=False):
     #
     return ret
 
-def forms(first_blank=False):
+def forms(first_blank=False, obj='form.code'):
     ret = []
     if first_blank == True: ret.append('')
     #
-    all = s_select('form.code')
+    all = s_select(obj)
     for i in all:
         try:
             if validfname(i['d']):
@@ -758,6 +786,9 @@ def forms(first_blank=False):
     #
     ret.sort()
     return ret
+    
+def reports(first_blank=False):
+    return forms(first_blank, 'report.code')
 
 def smsg(table, key, clear=True):
     ret = ''
@@ -846,6 +877,35 @@ def menugen():
                 _['x_form'],
                 f2, 
                 formact,
+            ])
+    #
+    if not isnosb() and sess.user:
+        arep = reports(first_blank=True)
+        arep1 = arep[1:]
+        #
+        repact =  [
+                    ['run', _['cmd_run']],
+                ]
+        for af in arep1:
+            if not canreport(REPORT_KEY_SECURITY_RUN, af):
+                arep.remove(af)
+        #
+        if isadmin(): 
+            repact.append(['edit', _['cmd_edit']])
+            repact.append(['create', _['cmd_report_create']])
+        #
+        f3 = web.form.Dropdown(
+            name='report', 
+            args=arep, 
+            )
+        #
+        ret.append(
+            [
+                '/report/action',
+                'get',
+                _['x_report'],
+                f3, 
+                repact,
             ])
     #
     return ret
@@ -1189,10 +1249,15 @@ $for i in menugen():
     $i[2].capitalize()
     </td>
     <td width='25%'>
-    $if data.has_key('table'):
-        $i[3].set_value(data['table'])
-    $if data.has_key('form'):
-        $i[3].set_value(data['form'])
+    $if i[0] == '/table/action':
+        $if data.has_key('table'):
+            $i[3].set_value(data['table'])
+    $elif i[0] == '/form/action':
+        $if data.has_key('form'):
+            $i[3].set_value(data['form'])
+    $elif i[0] == '/report/action':
+        $if data.has_key('report'):
+            $i[3].set_value(data['report'])
     $i[3].render()
     </td>
     <td>
@@ -1841,6 +1906,35 @@ $elif data['command'] == 'form.run':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'report.edit':
+    <p>
+    $ hint = data['hint'][0].upper() + data['hint'][1:]
+    <i>$hint</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    $for i in data['input']:
+        <tr>
+        <td width='15%'>$i[1]</td>
+        <td>$i[0].render()</td>
+        </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -1875,15 +1969,22 @@ class index:
     def GET(self):
         start()
         #
-        input = web.input(form='')
+        input = web.input(form='', report='')
+        #
         form = input.form.lower().strip()
         xform = ''
         if form in forms():
             if canform(FORM_KEY_SECURITY_RUN, form):
                 xform = form
         #
+        report = input.report.lower().strip()
+        xreport = ''
+        if report in reports():
+            if canreport(REPORT_KEY_SECURITY_RUN, report):
+                xreport = report
+        #
         stop()
-        data = {'title': '', 'command': 'home', 'form': xform}
+        data = {'title': '', 'command': 'home', 'form': xform, 'report': xreport}
         content = (
                     '%s <a href="%s">%s</a>' %(_['x_welcome2'], WSITE, NAME),
                     sysinfo(),
@@ -3222,6 +3323,8 @@ class form_edit:
             ocode = code
             try:
                 xform = form
+                if form != name:
+                    xform = name
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
@@ -3235,7 +3338,181 @@ class form_edit:
             raise web.seeother('/?form=%s' %(xform))
         #
         dflt()
+
+
+class report_action:
+    def GET(self):
+        input = web.input()
+        if not input.has_key('report'):
+            dflt()
+        #
+        report = input.report.strip()
+        redir = (
+            ('run', '/report/run/' + report),
+            ('edit', '/report/edit?report=' + report),
+            ('create', '/report/edit?mode=' + MODE_INSERT),
+        )
+        for i in redir:
+            if input.has_key(i[0]):
+                raise web.seeother(i[1])
+        #
+        dflt()
+
+
+class report_edit:
+    def GET(self):
+        start()
+        input = web.input(name='', code='', mode='', report='')
+        name = input.name
+        code = input.code
+        code = urllib.unquote(code)
+        mode = input.mode
+        report = input.report
+        #
+        dreport = ''
+        title = _['tt_report_edit']
+        if mode == MODE_INSERT:
+            title = _['tt_report_create']
+        else:
+            #
+            if not report.strip():
+                dflt()
+            #
+            dreport = report
+            #
+            fo = s_select('report.code..%s' %(report))
+            if not fo:
+                dflt()
+            #
+            fo = fo[0]
+            if not name:
+                name = fo['d']
+            if not code:
+                code = fo['e']
+        #
+        data = {
+                'title': title,
+                'command': 'report.edit',
+                'action_url': '/report/edit',
+                'action_method': 'post',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'input': (
+                            (web.form.Textbox('name', value=name), _['x_report_name']),
+                            (web.form.Textarea('code', value=code, 
+                                    cols=DEFAULT_TEXTAREA_COLS*2, 
+                                    rows=DEFAULT_TEXTAREA_ROWS
+                                ), _['x_code']),
+                        ),
+                'report': dreport,
+                'message': smsgq(SKR_CREATE, default=''),
+                'hint': _['h_report_create'],
+            }
+        #
+        if mode == MODE_INSERT:
+            data['hidden'] = (('mode', mode),)
+        else:
+            data['hidden'] = (('report', report),)
+        #
+        content = ''
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        input = web.input(name='', code='', mode='', report='')
+        name = input.name.lower().strip()
+        code = input.code.strip()
+        mode = input.mode.strip()
+        report = input.report.lower().strip()
+        #
+        xreport = ''
+        if mode == MODE_INSERT:
+            if not validfname(name):
+                sess[SKR_CREATE] = _['e_report_edit_name']
+                raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            if hasws(name):
+                sess[SKR_CREATE] = _['e_report_edit_whitespace']
+                raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            if not name or not code:
+                raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            all = s_select('report.code')
+            allf = [x['d'] for x in all]
+            if name in allf:
+                sess[SKR_CREATE] = _['e_report_edit_exists']
+                raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(code), MODE_INSERT))
+            #
+            ocode = code
+            try:
+                xreport = name
+                code = json.loads(code)
+                code = json.dumps(code)
+                db.insert(FORM_TBL, a='report', b='code', d=name, e=ocode)
+            except:
+                sess[SKR_CREATE] = _['e_report_edit_syntax']
+                raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
+                        name, urllib.quote(ocode), MODE_INSERT))
+        else:
+            if not validfname(name):
+                sess[SKR_CREATE] = _['e_report_edit_name']
+                raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
+                        name, urllib.quote(code), report))
+            #
+            if hasws(name):
+                sess[SKR_CREATE] = _['e_report_edit_whitespace']
+                raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
+                        name, urllib.quote(code), report))
+            #
+            if not name or not code:
+                raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
+                        name, urllib.quote(code), report))
+            #
+            all = s_select('report.code')
+            allf = [x['d'] for x in all]
+            if (name != report) and (name in allf):
+                sess[SKR_CREATE] = _['e_report_edit_exists']
+                raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
+                        name, urllib.quote(code), report))
+            #
+            ocode = code
+            try:
+                xreport = report
+                if report != name:
+                    xreport = name
+                code = json.loads(code)
+                code = json.dumps(code)
+                db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
+                    vars={'a': 'report', 'b': 'code', 'd': report}, d=name, e=ocode)
+            except:
+                sess[SKR_CREATE] = _['e_report_edit_syntax']
+                raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
+                        name, urllib.quote(ocode), report))
+        #
+        if xreport:
+            raise web.seeother('/?report=%s' %(xreport))
+        #
+        dflt()
         
+        
+class report_run:
+    def GET(self, report):
+        start()
+        data = {
+                    'title' : _['tt_report_run'],
+                    'command': 'report.run',
+                }
+        content = 'not implemented yet'
+        stop()
+        return T(data, content)
+
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
