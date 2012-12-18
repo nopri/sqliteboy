@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.15'
+VERSION = '0.16'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -340,6 +340,7 @@ LANGS = {
             'tt_report_run': 'report run',
             'tt_report_edit': 'report edit',
             'tt_report_create': 'report create',
+            'tt_report_run_result': 'report run (result)',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -444,6 +445,28 @@ _ = res(LANGS, DEFAULT_LANG)
 # SQLITE UDF                                                           #
 #----------------------------------------------------------------------#
 SQLITE_UDF = []
+
+def sqliteboy_as_integer(s):
+    ret = 0
+    #
+    try:
+        ret = int(s)
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_as_integer', 1, sqliteboy_as_integer))
+
+def sqliteboy_as_float(s):
+    ret = 0
+    #
+    try:
+        ret = float(s)
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_as_float', 1, sqliteboy_as_float))
 
 def sqliteboy_len(s):
     return len(str(s))
@@ -1290,6 +1313,9 @@ def parsereport(report):
             #
             keyadd.append(key)
             #
+            #as of 18-December-2012, required always 1
+            required = 1
+            #
             input.append(
                 (
                     label,
@@ -2128,26 +2154,21 @@ $elif data['command'] == 'report.run':
     $for i in data['input']:
         <tr>
         $ lbl = i[0]
-        $if i[4]:
+        $if i[3]:
             $ lbl = '<b>' + i[0] + '</b>'
         <td width='15%'>$lbl</td>
         <td>
         $ ro = ''
-        $if i[3]:
+        $if i[2]:
             $ ro = ' readonly'
         
         $ defv = ''
-        $if i[5]:
-            $i[5].render()
+        $if i[4]:
+            $i[4].render()
         $else:
-            $if i[6]:
-                $ defv = i[6]
-            $if i[2] in data['blob_type']:
-                <input type='file' name="$i[1]"$ro>
-            $elif i[2] in data['text_type']:
-                <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
-            $else:
-                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
+            $if i[5]:
+                $ defv = i[5]
+            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
         </td>
         </tr>
     <tr>
@@ -2162,8 +2183,47 @@ $elif data['command'] == 'report.run':
     </table>
     </form>
 $elif data['command'] == 'report.run.result':
-    $for c in content:
-        $c
+    <h3>
+    $data['report2']
+    </h3>
+    $if data['search']:
+        <table>
+        $for s in data['search']:
+            <tr>
+            <td width='30%'>
+            $s[0]
+            </td>
+            <td>
+            $s[1]
+            </td>
+            </tr>
+        </table>
+    <br>
+    $ ctr = 0
+    $if content:
+        $ keys = []
+        <table>
+        $for re in content:
+            $if ctr == 0:
+                $if not data['header']:
+                    $ keys = re.keys()
+                $else:
+                    $ keys = data['header']
+                $for k in keys:
+                    <th>$k
+                    </th>
+            <tr>
+            $for k in keys:
+                $ rek = re.get(k, '')
+                $if isblob(rek):
+                    <td>$_['z_view_blob']</td>
+                $else:
+                    <td>$rek
+                    </td>
+            </tr>
+            $ ctr = ctr + 1
+        </table>    
+    $ctr $_['x_row']
 $else:
     $:content
 </body>
@@ -3394,7 +3454,7 @@ class form_run:
             elif nqtype(ftype) and not hasws(cv):
                 cvv = cv
             else:
-                cvv = str(web.sqlquote(cv))
+                cvv = cv #nqtype above is no longer needed
             ocols[col] = cvv
             #
         #
@@ -3818,6 +3878,8 @@ class report_run:
         errors = []
         ecols = []
         ocols = {}
+        rreport = []
+        rsearch = []
         #
         for f in finput:
             try:
@@ -3836,7 +3898,7 @@ class report_run:
                 raise web.seeother('/report/run/%s' %(report))
             #
             if required == 1 and not cv:
-                ecols.append(col)
+                ecols.append(key)
                 errors.append( [ _['e_report_run_required'], label] )
             #
             if constraint2:
@@ -3875,10 +3937,10 @@ class report_run:
                     #
                     constr = db.query(constq).list()
                     if constr[0]['c'] != 1:
-                        ecols.append(col)
+                        ecols.append(key)
                         errors.append(constm)
                 except:
-                    ecols.append(col)
+                    ecols.append(key)
                     errors.append( [ _['e_report_run_constraint'], label] )
             #
             if (cv) and (not hasws(cv)) and (type2 == 'integer'):
@@ -3891,9 +3953,12 @@ class report_run:
             #
             ocols[key] = cvv
             #
+            rsearch.append( [label, cvv] )
+            #
         #
         if errors:
             sess[SKR_RUN] = errors
+            raise web.seeother('/report/run/%s' %(report))
         else:
             try:
                 rreport = db.query(rquery, vars=ocols)
@@ -3902,13 +3967,16 @@ class report_run:
                 raise web.seeother('/report/run/%s' %(report))
         #
         data = {
-                'title': '%s - %s' %(_['tt_report_run'], freport), 
+                'title': '%s - %s' %(_['tt_report_run_result'], report), 
                 'command': 'report.run.result',
                 'report': report,
                 'header': rheader,
+                'search': rsearch,
+                'report2': freport,
                 }
         content = rreport
         stop()
+        #
         return T(data, content)
 
 
