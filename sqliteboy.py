@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.14'
+VERSION = '0.15'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -114,9 +114,29 @@ FORM_REQ_DATA = (FORM_KEY_DATA_TABLE,
 FORM_REFERENCE_SQL_0 = 'a'
 FORM_REFERENCE_SQL_1 = 'b'
 #
+REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
+REPORT_KEY_TITLE = FORM_KEY_TITLE
+REPORT_KEY_INFO = FORM_KEY_INFO
+REPORT_KEY_DATA = FORM_KEY_DATA
+REPORT_KEY_DATA_KEY = 'key'
+REPORT_KEY_DATA_LABEL = FORM_KEY_DATA_LABEL
+REPORT_KEY_DATA_REFERENCE = FORM_KEY_DATA_REFERENCE
+REPORT_KEY_DATA_DEFAULT = FORM_KEY_DATA_DEFAULT
+REPORT_KEY_DATA_REQUIRED = FORM_KEY_DATA_REQUIRED
+REPORT_KEY_DATA_READONLY = FORM_KEY_DATA_READONLY
+REPORT_KEY_DATA_CONSTRAINT = FORM_KEY_DATA_CONSTRAINT
+REPORT_KEY_DATA_TYPE = 'type'
 REPORT_KEY_SECURITY = FORM_KEY_SECURITY
 REPORT_KEY_SECURITY_RUN = FORM_KEY_SECURITY_RUN
+REPORT_KEY_SQL = 'sql'
+REPORT_KEY_HEADER = 'header'
+REPORT_REQ = (REPORT_KEY_DATA,
+                REPORT_KEY_SQL,
+            )
+REPORT_REQ_DATA = (REPORT_KEY_DATA_KEY,)
+REPORT_REFERENCE_SQL_0 = 'a'
+REPORT_REFERENCE_SQL_1 = 'b'
 
 
 #----------------------------------------------------------------------#
@@ -177,11 +197,9 @@ URLS = (
     '/form/action', 'form_action',
     '/form/run/(.*)', 'form_run',
     '/form/edit', 'form_edit',
-    '/form/insert', 'form_insert',
     '/report/action', 'report_action',
     '/report/run/(.*)', 'report_run',
     '/report/edit', 'report_edit',
-    '/report/insert', 'report_insert',
     )
 
 app = None
@@ -349,6 +367,7 @@ LANGS = {
             'cmd_run': 'run',
             'cmd_form_create': 'create',
             'cmd_report_create': 'create',
+            'cmd_report': 'report',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -378,7 +397,9 @@ LANGS = {
             'e_report_edit_syntax' : 'ERROR: report code error',
             'e_report_edit_name': 'ERROR: invalid report name',
             'e_report_run_syntax_or_required': 'ERROR: report code error or required keys are not set',
-            'e_report_run_general': 'ERROR: processing report',
+            'e_report_run_required': 'ERROR: required',
+            'e_report_run_constraint': 'ERROR: constraint',
+            'e_report_select_general': 'ERROR: processing report',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -1136,6 +1157,153 @@ def parseform(form):
                     )
     #
     return [ftitle, finfo, input]
+
+def reqreport(report):
+    try:
+        fo = s_select('report.code..%s' %(report))
+        fo = fo[0]
+        fe = json.loads(fo['e'])
+        for k in REPORT_REQ:
+            if not fe.has_key(k):
+                return False
+        fed = fe[REPORT_KEY_DATA]
+        for k in REPORT_REQ_DATA:
+            for d in fed:
+                if not d.has_key(k):
+                    return False
+    except:
+        return False
+    #
+    return True
+
+def parsereport(report):
+    fo = s_select('report.code..%s' %(report))
+    try:
+        fo = fo[0]['e']
+        fo = json.loads(fo)
+    except:
+        fo = {}
+    #
+    ftitle = fo.get(REPORT_KEY_TITLE, report)
+    finfo = fo.get(REPORT_KEY_INFO, '')
+    rquery = fo.get(REPORT_KEY_SQL, '').strip()
+    rheader = fo.get(REPORT_KEY_HEADER, [])
+    #
+    if not type(rheader) == type([]):
+        rheader = []
+    #
+    fdata = fo.get(REPORT_KEY_DATA)
+    input = []
+    #
+    keyadd = []
+    if fdata and rquery:
+        for fd in fdata:
+            if not type(fd) == type({}):
+                continue
+            #
+            key = fd.get(REPORT_KEY_DATA_KEY,'').strip()
+            if (not key) or (hasws(key)) or (not validfname(key)) or (key in keyadd):
+                continue
+            #
+            label = fd.get(REPORT_KEY_DATA_LABEL, key)
+            readonly = fd.get(REPORT_KEY_DATA_READONLY, 0)
+            required = fd.get(REPORT_KEY_DATA_REQUIRED, 0)
+            reference = fd.get(REPORT_KEY_DATA_REFERENCE, 0)
+            default = fd.get(REPORT_KEY_DATA_DEFAULT, '')
+            constraint = fd.get(REPORT_KEY_DATA_CONSTRAINT, [])
+            type1 = fd.get(REPORT_KEY_DATA_TYPE, '').lower().strip()
+            #
+            reference2 = 0
+            if (type(reference) in [type(''), type(u'')]) and reference:#query
+                reference2 = []
+                try:
+                    res = db.query(reference)
+                    for r in res:
+                        reference2.append(
+                            [
+                                r.get(REPORT_REFERENCE_SQL_0, ''), 
+                                r.get(REPORT_REFERENCE_SQL_1, '')
+                            ]
+                        )
+                except:
+                    pass
+            elif (type(reference) in [type([]), type(())]) and reference: #list
+                reference2 = []
+                try:
+                    for r in reference:
+                        reference2.append([r[0], r[1]])
+                except:
+                    pass
+            else:
+                reference2 = 0
+            #
+            reference3 = None
+            if type(reference2) == type([]):
+                reference3 = web.form.Dropdown(key, args=reference2)
+            #
+            default2 = default
+            if not default2:
+                default2 = ''
+            #
+            if (type(default) in [type([])]) and default:
+                default2 = ''
+                #
+                deff = default[0]
+                default.pop(0)
+                defs = []
+                try:
+                    for dd in default:
+                        dq = web.sqlquote(dd)
+                        defs.append(dq)
+                    #
+                    if defs:
+                        defsq = web.sqlquote('').join(defs, ',')
+                    else:
+                        defsq = ''
+                    #
+                    defq = 'select %s(%s) as f' %(deff, defsq)
+                    defr = db.query(defq).list()
+                    if defr:
+                        default2 = defr[0]['f']
+                except:
+                    pass
+            #
+            if reference3:
+                try:
+                    reference3.set_value(default2)
+                except:
+                    pass
+            #
+            constraint2 = []
+            try:
+                constf = constraint[0].strip()
+                consta = constraint[1]
+                constc = constraint[2]
+                conste = constraint[3]
+                constraint2 = constraint
+            except:
+                pass
+            #
+            type2 = ''
+            if type1 in REPORT_KEY_DATA_TYPES:
+                type2 = type1
+            #
+            keyadd.append(key)
+            #
+            input.append(
+                (
+                    label,
+                    key,  
+                    readonly, 
+                    required,  
+                    reference3, 
+                    default2,
+                    constraint2,
+                    type2,
+                )
+            )
+    #
+    return [ftitle, finfo, input, rquery, rheader]
 
 def nqtype(ftype):
     ret = False
@@ -1935,6 +2103,67 @@ $elif data['command'] == 'report.edit':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'report.run':
+    <p>
+    $ hint = data['hint']
+    <i>$hint</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)<br>
+        </div>
+    $if data['ftitle']:
+        <h3>
+            $data['ftitle']
+        </h3>
+    $if data['finfo']:
+        <div>
+            $data['finfo']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    $for i in data['input']:
+        <tr>
+        $ lbl = i[0]
+        $if i[4]:
+            $ lbl = '<b>' + i[0] + '</b>'
+        <td width='15%'>$lbl</td>
+        <td>
+        $ ro = ''
+        $if i[3]:
+            $ ro = ' readonly'
+        
+        $ defv = ''
+        $if i[5]:
+            $i[5].render()
+        $else:
+            $if i[6]:
+                $ defv = i[6]
+            $if i[2] in data['blob_type']:
+                <input type='file' name="$i[1]"$ro>
+            $elif i[2] in data['text_type']:
+                <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
+            $else:
+                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
+        </td>
+        </tr>
+    <tr>
+    <td colspan='2'>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
+$elif data['command'] == 'report.run.result':
+    $for c in content:
+        $c
 $else:
     $:content
 </body>
@@ -3053,8 +3282,8 @@ class form_run:
                 'form': form,
                 'message': message,
                 'input': input,
-                'hidden': (('form', form),),
-                'action_url': '/form/insert',
+                'hidden': (('hform', form),),
+                'action_url': '/form/run/%s' %(form),
                 'action_method': 'post',
                 'action_enctype': 'multipart/form-data',
                 'action_button': action_button,
@@ -3067,15 +3296,10 @@ class form_run:
         content = ''
         stop()
         return T(data, content)
-
-
-class form_insert:
-    def GET(self):
-        dflt()
         
-    def POST(self):
-        input = web.input(form='')
-        form = input.form.strip()
+    def POST(self, unused):
+        input = web.input(hform='')
+        form = input.hform.strip()
         #
         if not form:
             dflt()
@@ -3505,11 +3729,185 @@ class report_edit:
 class report_run:
     def GET(self, report):
         start()
+        #
+        if not report.strip() or not report.strip() in reports():
+            dflt()
+        #
+        if not canreport(REPORT_KEY_SECURITY_RUN, report):
+            dflt()
+        #
+        if not validfname(report):
+            dflt()
+        #
+        input = ()
+        action_button = (
+                            ('report', _['cmd_report'], False, '', 'submit'),
+                        )
+        ftitle = ''
+        finfo = ''
+        if not reqreport(report):
+            input = ()
+            action_button = ()
+            sess[SKR_RUN] = [
+                                [_['e_report_run_syntax_or_required']],
+                            ]
+        else:
+            try:
+                preport = parsereport(report)
+            except:
+                preport = [ftitle, finfo, input]
+            #
+            ftitle = preport[0]
+            finfo = preport[1]
+            input = preport[2]
+        #
+        message = smsgq(SKR_RUN, default=[])
+        #
         data = {
-                    'title' : _['tt_report_run'],
-                    'command': 'report.run',
+                'title': '%s - %s' %(_['tt_report_run'], report), 
+                'command': 'report.run',
+                'report': report,
+                'message': message,
+                'input': input,
+                'hidden': (('hreport', report),),
+                'action_url': '/report/run/%s' %(report),
+                'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
+                'action_button': action_button,
+                'hint': _['h_report_run'],
+                'ftitle': ftitle,
+                'finfo': finfo,
+                'blob_type': BLOB_TYPE,
+                'text_type': TEXT_TYPE,
                 }
-        content = 'not implemented yet'
+        content = ''
+        stop()
+        return T(data, content)
+        
+    def POST(self, unused):
+        input = web.input(hreport='')
+        report = input.hreport.strip()
+        #
+        if not report:
+            dflt()
+        #
+        if not canreport(REPORT_KEY_SECURITY_RUN, report):
+            dflt()
+        #
+        if not validfname(report):
+            dflt()
+        #
+        freport = report
+        finput = None
+        rquery = None
+        rheader = []
+        try:
+            preport = parsereport(report)
+            freport = preport[0]
+            finput = preport[2]
+            rquery = preport[3]
+            rheader = preport[4]
+        except:
+            preport = None
+        #
+        if not preport or not finput:
+            dflt()
+        #
+        start()
+        #
+        errors = []
+        ecols = []
+        ocols = {}
+        #
+        for f in finput:
+            try:
+                label = f[0] 
+                key = f[1]
+                readonly = f[2]
+                required = f[3]
+                reference3 = f[4]
+                default2 = f[5]
+                constraint2 = f[6]
+                type2 = f[7]
+                #
+                cv = input.get(key).strip()
+            except:
+                sess[SKR_RUN] = [ [_['e_report_select_general']] ]
+                raise web.seeother('/report/run/%s' %(report))
+            #
+            if required == 1 and not cv:
+                ecols.append(col)
+                errors.append( [ _['e_report_run_required'], label] )
+            #
+            if constraint2:
+                try:
+                    constf = constraint2[0].strip()
+                    consta = constraint2[1]
+                    constc = constraint2[2]
+                    conste = constraint2[3].strip()
+                    #
+                    if not conste:
+                        constm = [
+                                    _['e_report_run_constraint'], 
+                                    label, 
+                                    constf, 
+                                    constc
+                                ]
+                    else:
+                        constm = [
+                                    _['e_report_run_constraint'],
+                                    label,
+                                    conste,
+                                ]
+                    #
+                    if (consta == 1) or hasws(cv):
+                        cvq = web.sqlquote(cv)
+                    else:
+                        if cv:
+                            cvq = cv
+                        else:
+                            cvq = 0
+                    #
+                    if constf:
+                        constq = 'select %s(%s) %s as c' %(constf, cvq, constc)
+                    else:
+                        constq = 'select %s %s as c' %(cvq, constc)
+                    #
+                    constr = db.query(constq).list()
+                    if constr[0]['c'] != 1:
+                        ecols.append(col)
+                        errors.append(constm)
+                except:
+                    ecols.append(col)
+                    errors.append( [ _['e_report_run_constraint'], label] )
+            #
+            if (cv) and (not hasws(cv)) and (type2 == 'integer'):
+                try:
+                    cvv = int(cv)
+                except:
+                    cvv = 0
+            else:
+                cvv = cv
+            #
+            ocols[key] = cvv
+            #
+        #
+        if errors:
+            sess[SKR_RUN] = errors
+        else:
+            try:
+                rreport = db.query(rquery, vars=ocols)
+            except Exception, e:
+                sess[SKR_RUN] = [ [_['e_report_select_general'], str(e)] ]
+                raise web.seeother('/report/run/%s' %(report))
+        #
+        data = {
+                'title': '%s - %s' %(_['tt_report_run'], freport), 
+                'command': 'report.run.result',
+                'report': report,
+                'header': rheader,
+                }
+        content = rreport
         stop()
         return T(data, content)
 
