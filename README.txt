@@ -5,7 +5,7 @@ Simple Web SQLite Manager/Form/Report Application
 GPL
 
 
-Documentation for version 0.16
+Documentation for version 0.17
 
 
 CONTENTS
@@ -19,7 +19,7 @@ CONTENTS
 ( 8) USER-DEFINED FUNCTION
 ( 9) FORM CODE REFERENCE
 (10) REPORT CODE REFERENCE
-(11) DONATE
+(11) DONATE / COMMERCIAL SUPPORT
 (12) THANK YOU :)
 
 
@@ -30,6 +30,7 @@ https://github.com/nopri/sqliteboy/wiki
 
 ( 2) WHY
 - Easy to use, python and web.py based, Web SQLite Manager
+  with user-defined function and many extended features
   (Free/open source)
 - If Extended feature is enabled: 
   Multi user, simple (yet flexible) form (data entry) and 
@@ -48,9 +49,8 @@ https://github.com/nopri/sqliteboy/wiki
   reporting query is executed). Future version of reporting 
   will support custom output format (PDF, CSV, etc).
 
-  User-defined function, configurable hosts allowed,
-  and many more features are available as extended
-  features.
+  User accounts, configurable hosts allowed, and many others 
+  are available as extended features.
 - I need simple form (data entry) and reporting solution. 
   This application is under active development. I use it
   at work and home. 
@@ -62,7 +62,7 @@ https://github.com/nopri/sqliteboy/wiki
 - Configurable port 
   (default 11738 because it looks like sqliteboy)
 - Basic/Extended Feature
-  - Basic: Database management
+  - Basic: Database management + User-defined function
   - Extended: Form, Report, User/Login, etc
     - Completely optional
     - Can be enabled in menu
@@ -129,18 +129,19 @@ https://github.com/nopri/sqliteboy/wiki
 - Query
   - Free form SQL Query
   - Automatically view query output (as integer or table)
-- User account
+- User account (Extended feature)
   - Type: admin (full access), 
-    standard (limited or configurable form access)
+    standard (limited or configurable form/report access)
   - Change password
   - User management
 - User-defined function
   - Prefix: sqliteboy_
-  - Can be used in Query or Form
+  - Can be used in Query or Form or Report
   - Please read USER-DEFINED FUNCTION below
   - Will be added regularly (or by your request)
 - Easy to translate
 - Configurable hosts allowed (default: local)
+  (Extended feature)
 - Human readable database size (GB, MB, KB, B)
 - Load time
 - Custom Template
@@ -173,6 +174,7 @@ admin
 
 
 ( 8) USER-DEFINED FUNCTION
+- sqliteboy_strs(s)
 - sqliteboy_as_integer(s)
 - sqliteboy_as_float(s)
 - sqliteboy_len(s)
@@ -186,7 +188,23 @@ admin
 - sqliteboy_b64decode(s)
 - sqliteboy_randrange(a, b)
 - sqliteboy_time()
-
+- sqliteboy_lower(s)
+- sqliteboy_upper(s)
+- sqliteboy_is_valid_email(s)
+  return value: 1 (valid) or 0 (invalid)
+- sqliteboy_normalize_separator(
+    s, separator, remove_space, unique)
+  argument    : separator (separator string),
+    remove_space (remove space in s, 1 or 0),
+    unique (1 or 0).
+  example     : 
+    sqliteboy_normalize_separator
+      (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
+    -> '1,2,3,4' 
+- sqliteboy_x_user()
+  return value: user name (if extended feature
+    is enabled, or '')
+    
 
 ( 9) FORM CODE REFERENCE
 - Must be valid JSON syntax (json.org)
@@ -460,10 +478,12 @@ admin
 }
 
 
-(11) DONATE
+(11) DONATE / COMMERCIAL SUPPORT
 - If you use this application, or find it useful, or want to support 
   the development, please consider to donate :)
 - Any form of donation will be happily accepted
+- If you need commercial support (customization, integration, training),
+  please let me know :) Support is provided by tedut.com. 
 
 
 (12) THANK YOU :)

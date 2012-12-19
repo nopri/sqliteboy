@@ -14,7 +14,7 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.16'
+VERSION = '0.17'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -446,6 +446,14 @@ _ = res(LANGS, DEFAULT_LANG)
 #----------------------------------------------------------------------#
 SQLITE_UDF = []
 
+def sqliteboy_strs(s):
+    vt = [type(''), type(u'')]
+    if not type(s) in vt:
+        s = str(s)
+    #
+    return s
+SQLITE_UDF.append(('sqliteboy_strs', 1, sqliteboy_strs))
+
 def sqliteboy_as_integer(s):
     ret = 0
     #
@@ -515,6 +523,115 @@ SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
 def sqliteboy_time():
     return time.time()
 SQLITE_UDF.append(('sqliteboy_time', 0, sqliteboy_time))
+
+def sqliteboy_lower(s):
+    s = sqliteboy_strs(s)
+    return s.lower()
+SQLITE_UDF.append(('sqliteboy_lower', 1, sqliteboy_lower))
+
+def sqliteboy_upper(s):
+    s = sqliteboy_strs(s)
+    return s.upper()
+SQLITE_UDF.append(('sqliteboy_upper', 1, sqliteboy_upper))
+
+def sqliteboy_is_valid_email(s):
+    email = sqliteboy_strs(s)
+    #
+    tld = [
+    'biz', 
+    'com',
+    'info',
+    'name',
+    'net',
+    'org',
+    'pro',
+    'aero',
+    'asia',
+    'cat',
+    'coop',
+    'edu',
+    'gov',
+    'int',
+    'jobs',
+    'mil',
+    'mobi',
+    'museum',
+    'tel',
+    'travel',
+    'xxx',
+    ]
+
+    user_allowed = '-_.%+'
+    host_allowed = '-_.'
+
+    #too short
+    if len(email) < 6:
+        return int(False)
+    #
+    
+    #split by @
+    try:
+        user, domain = email.rsplit('@', 1)
+        host, tl = domain.rsplit('.', 1)
+    except:
+        return int(False)
+    #
+    
+    #check for country code and toplevel
+    if len(tl) != 2 and tl not in tld:
+        return int(False)
+    #
+
+    #remove char in user allowed
+    for i in user_allowed:
+        user = user.replace(i, '')
+    #
+    #remove char in host allowed
+    for i in host_allowed:
+        host = host.replace(i, '')
+    #
+
+    #should contain only alpha numeric
+    if user.isalnum() and host.isalnum():
+        return int(True)
+    else:
+        return int(False)
+    
+    #
+    return int(False)
+SQLITE_UDF.append(('sqliteboy_is_valid_email', 1, sqliteboy_is_valid_email))
+
+def sqliteboy_normalize_separator(s, separator, remove_space, unique):
+    field = sqliteboy_strs(s)
+    #
+    strs = field.strip()
+    splitted = strs.split(separator)
+    splitted2 = [x.strip() for x in splitted]
+    if remove_space:
+        splitted3 = [x.replace(' ', '') for x in splitted2]
+    else:
+        splitted3 = splitted2
+    
+    if unique:
+        splitted4 = []
+        for i in splitted3:
+            if i not in splitted4:
+                splitted4.append(i)
+    else:
+        splitte4 = splitted3
+
+    #
+    splitted5 = splitted4
+        
+    newlist = []
+    for part in splitted5:
+        if part:
+            newlist.append(part)
+    #
+    ret = separator.join(newlist)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_normalize_separator', 4, sqliteboy_normalize_separator))
 
 
 #----------------------------------------------------------------------#
@@ -1348,6 +1465,17 @@ def s_init():
     db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER, 
         e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), f='1')
     
+
+#----------------------------------------------------------------------#
+# SQLITE UDF (2)                                                       #
+#----------------------------------------------------------------------#
+def sqliteboy_x_user():
+    if isnosb(): 
+        return ''
+    else:
+        return user()
+SQLITE_UDF.append(('sqliteboy_x_user', 0, sqliteboy_x_user))
+
 
 #----------------------------------------------------------------------#
 # TEMPLATE                                                             #
@@ -2262,13 +2390,13 @@ class index:
         #
         form = input.form.lower().strip()
         xform = ''
-        if form in forms():
+        if not isnosb() and form in forms():
             if canform(FORM_KEY_SECURITY_RUN, form):
                 xform = form
         #
         report = input.report.lower().strip()
         xreport = ''
-        if report in reports():
+        if not isnosb() and report in reports():
             if canreport(REPORT_KEY_SECURITY_RUN, report):
                 xreport = report
         #
