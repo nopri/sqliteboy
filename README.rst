@@ -102,7 +102,7 @@ FEATURES
   
     - If enabled, one table::
       
-        _sqliteboy_, 
+        _sqliteboy_ 
         
       will be created. You can delete this table 
       and extended feature will be disabled
@@ -378,108 +378,149 @@ FORM CODE REFERENCE
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | security      | form security           | dict          | required    |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| onsave        | function call on save   |               |             |                          |
+|               | event [NOT IMPLEMENTED  |               |             |                          |
+|               | YET]                    |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | Key           | Description             | Type          | Status      | Example                  |
 +===============+=========================+===============+=============+==========================+
-| table         | table name,             | str           | required    | "table1"                 |
+| table         | table name;             | str           | required    | "table1"                 |
 |               | only single table is    |               |             |                          |
 |               | supported, and first    |               |             |                          |
 |               | table found will be     |               |             |                          |
 |               | used, other table(s)    |               |             |                          |
 |               | will be ignored         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| column        | column                  | str           | required    | "col1"                   |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| label         | label                   | str           | optional    | "column 1"               | 
++---------------+-------------------------+---------------+-------------+--------------------------+
+| required      | is required;            | int           | optional    | 1                        |
+|               | (0 = not required,      |               |             |                          |
+|               | 1 = required)           |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| readonly      | is readonly;            | int           | optional    | 0                        |
+|               | (0 = not readonly,      |               |             |                          |
+|               | 1 = readonly)           |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| reference     | predefined value(s)     | str, list or  | optional    |                          |
+|               |                         | int           |             |                          |
+|               | - str: SQL query;       |               |             | - "select col1 as a,     |
+|               |   returns 2 columns:    |               |             |   col2 as b from table1" |
+|               |   a and b; HTML select  |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list: static value(s);|               |             | - [ ["0", "NO"],         |
+|               |   contains list(s),     |               |             |   ["1", "YES"] ]         |
+|               |   which contains        |               |             |                          |
+|               |   two members;          |               |             |                          |
+|               |   HTML select           |               |             |                          |
+|               |                         |               |             |                          |
+|               | - int: ignored          |               |             |  - 0                     |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| default       | default value           | str, list or  | optional    |                          |
+|               |                         | int           |             |                          |
+|               | - str, int: use as is   |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list: SQL function    |               |             | - ["sqliteboy_md5",      |
+|               |   call; at least one    |               |             |   "hello"]               |
+|               |   member; first member  |               |             |                          |
+|               |   must be str (function |               |             | - ["sqlite_version"]     |
+|               |   name); return value   |               |             |                          |
+|               |   will be used as       |               |             |                          |
+|               |   default;              |               |             |                          |
+|               |                         |               |             |                          |
+|               |   format:               |               |             |                          |
+|               |   [function_name, arg1, |               |             |                          |
+|               |   ...]                  |               |             |                          |
+|               |                         |               |             |                          |
+|               |   do not put () in      |               |             |                          |
+|               |   function_name         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| constraint    | check before save       | list          | optional    |                          |
+|               |                         |               |             |                          |
+|               | - must be list of four  |               |             | - ["", 0, "> 10",        |
+|               |   members               |               |             |   "must be larger than   |
+|               |                         |               |             |   10"];                  |
+|               |   ["function_name",     |               |             |   check if column value  |
+|               |   as_str,               |               |             |   is > 10                |
+|               |   "condition",          |               |             |                          |
+|               |   "error_message"]      |               |             | - ["sqliteboy_len", 1,   |
+|               |                         |               |             |   "> 10", ""];           |
+|               |   function_name         |               |             |   check if sqliteboy_len |
+|               |   might be empty;       |               |             |   (column value) is > 10 |
+|               |   as_str must be 1      |               |             |                          |
+|               |   (treat function call  |               |             |                          |
+|               |   argument as string)   |               |             |                          |
+|               |   or 0;                 |               |             |                          |
+|               |   condition must not    |               |             |                          |
+|               |   empty;                |               |             |                          |
+|               |   condition must        |               |             |                          |
+|               |   contain boolean       |               |             |                          |
+|               |   comparison;           |               |             |                          |
+|               |   error_message might   |               |             |                          |
+|               |   be empty;             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if function_name is   |               |             |                          |
+|               |   not empty,            |               |             |                          |
+|               |   function_name will be |               |             |                          |
+|               |   called with column    |               |             |                          |
+|               |   value as an argument; |               |             |                          |
+|               |   function result will  |               |             |                          |
+|               |   be compared with      |               |             |                          |
+|               |   condition             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if function_name is   |               |             |                          |
+|               |   empty,                |               |             |                          |
+|               |   column value will     |               |             |                          |
+|               |   be compared with      |               |             |                          |
+|               |   condition             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if comparison result  |               |             |                          |
+|               |   is 0 (false),         |               |             |                          |
+|               |   form saving will be   |               |             |                          |
+|               |   cancelled;            |               |             |                          |
+|               |   if error_message is   |               |             |                          |
+|               |   specified,            |               |             |                          |
+|               |   error_message will be |               |             |                          |
+|               |   displayed;            |               |             |                          |
+|               |   else,                 |               |             |                          |
+|               |   generic error message |               |             |                          |
+|               |   with column name,     |               |             |                          |
+|               |   function_name (if any)|               |             |                          |
+|               |   and condition         |               |             |                          |
+|               |   will be displayed     |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
+- Keys (security):
 
-    - column   : column [str] <required>
-                 example: "col1"
-
-    - label    : label [str] [optional]
-                 example: "column 1"
-
-    - required : is required [int] [optional]
-                 (0 = not required, 1 = required)
-                 example: 1
-
-    - readonly : is readonly [int] [optional]
-                 (0 = not readonly, 1 = readonly)
-                 example: 0
-
-    - reference: predefined value(s) [optional]
-                 can be str, list or int
-
-                 - str: SQL query, 
-                        returns 2 columns: a and b
-                   rendered as HTML select
-                   example: "select col1 as a, col2 as b from table1"
-
-                 - list: static value(s),
-                         contains list(s), which
-                         contains two members
-                   rendered as HTML select
-                   example: [ ["0", "NO"], ["1", "YES"] ]
-
-                 - int: ignored
-                   example: 0
-
-    - default  : default value [optional]
-                 can be str, int, or list
-
-                 - str or int: use as is
-
-                 - list: SQL function call,
-                         at least one member
-                         first member must be str (function name)
-                         return value will be used as default
-                         format: [function_name, arg1, ...]
-                         do not put () in function_name
-                   example: ["sqliteboy_md5", "hello"]
-                   example: ["sqlite_version"]
-
-    - constraint: check before save [list] [optional]
-                  must be list of four members
-                  ["function_name", as_str, "condition", "error_message"]
-                  function_name might be empty
-                  as_str must be 1 (treat function call argument as string) 
-                    or 0
-                  condition must not empty
-                  condition must contain boolean comparison
-                  error_message might be empty
-                  if function_name is not empty, 
-                    function_name will be called
-                    with column value as an argument
-                    function result will be compared with condition
-                  if function_name is empty,
-                    column value will compared with condition
-                  example: ["", 0, "> 10", "must be larger than 10"]
-                    check if column value is > 10
-                  example: ["sqliteboy_len", 1, "> 10", ""]
-                    check if sqliteboy_len(column value) is > 10
-                  if comparison result is 0 (false),
-                    form saving will be cancelled
-                    if error_message is specified,
-                      error_message will be displayed
-                    else,
-                      generic error message with 
-                      column name, function_name (if any) and 
-                      condition will be displayed
-
-  - security: form security [dict] <required>
-
-    - run      : can run form <required>
-                 admin(s): always can run form
-                 can be "" or list
-
-                 - "": all users can run this form
-
-                 - list: only users in this list can run this form
-                   example: []
-                   example: ["user1", "user2"]
-
-  - onsave  : function call on save event [NOT IMPLEMENTED YET]
-
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| run           | can run form;           | "" or list    | required    |                          |
+|               | admin(s): always can run|               |             |                          |
+|               | form                    |               |             |                          |
+|               |                         |               |             |                          |
+|               | - "": all users can     |               |             |                          |
+|               |   run this form         |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list: only users in   |               |             | - []                     |
+|               |   this list can run     |               |             |                          |
+|               |   this form             |               |             | - ["user1", "user2"]     |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - note:
 
