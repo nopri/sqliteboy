@@ -1,10 +1,9 @@
 sqliteboy.py
 ========================================================================
-Simple Web SQLite Manager/Form/Report Application
-(c) Noprianto <nop@tedut.com>
-2012 
-GPL
-========================================================================
+    Simple Web SQLite Manager/Form/Report Application
+    (c) Noprianto <nop@tedut.com>
+    2012 
+    GPL
 
 
 Documentation for version 0.17
@@ -43,12 +42,11 @@ CONTENTS
 
 SCREENSHOTS / TUTORIAL
 ========================================================================
-https://github.com/nopri/sqliteboy/wiki
-(possibly not up-to-date)
 
+- https://github.com/nopri/sqliteboy/wiki (possibly not up-to-date)
 
 - `Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia) 
-<https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy>` 
+<https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy>`_ 
 
 
 WHY
@@ -58,6 +56,7 @@ WHY
   user-defined function and many extended features (Free/open source)
 
 - If Extended feature is enabled: 
+
   Multi user, simple (yet flexible) form (data entry) and reporting can 
   be created by admin (simple JSON syntax), and can be run by 
   admin/user (configurable).
@@ -270,8 +269,8 @@ admin
 
 HOW TO RUN
 ========================================================================
+Command::
 
-::
     python sqliteboy.py <database_file> [port]
 
 (then, using web browser, visit localhost:11738, or localhost:PORT, if 
@@ -322,19 +321,24 @@ USER-DEFINED FUNCTION
 - sqliteboy_upper(s)
 
 - sqliteboy_is_valid_email(s)
-  return value: 1 (valid) or 0 (invalid)
+  ::
+  
+    return value: 1 (valid) or 0 (invalid)
 
 - sqliteboy_normalize_separator(s, separator, remove_space, unique)
-::
-  argument    : separator (separator string), remove_space (remove 
-  space in s, 1 or 0), unique (1 or 0).
-  example     : 
-    sqliteboy_normalize_separator
-      (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
-    -> '1,2,3,4' 
+  ::
+  
+      argument    : separator (separator string), remove_space (remove 
+      space in s, 1 or 0), unique (1 or 0).
+      example     : 
+        sqliteboy_normalize_separator
+          (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
+        -> '1,2,3,4' 
 
 - sqliteboy_x_user()
-  return value: user name (if extended feature is enabled, or '')
+  ::
+  
+    return value: user name (if extended feature is enabled, or '')
     
 
 FORM CODE REFERENCE
@@ -351,18 +355,18 @@ FORM CODE REFERENCE
 
 - Keys:
 
-  - title   : form title [str] [optional]
-              example: "My Form"
+  - title   : form title [str] [optional]::
+                example: "My Form"
 
   - info    : form information [str] [optional]
               example: "Form Information"
 
   - data    : form data [list of dict] <required>
 
-    - table    : table name [str] <required>
-                 only single table is supported, and first table found
-                 will be used, other table(s) will be ignored
-                 example: "table1"
+    - table    : table name [str] <required>::
+                     only single table is supported, and first table found
+                     will be used, other table(s) will be ignored
+                     example: "table1"
 
     - column   : column [str] <required>
                  example: "col1"
