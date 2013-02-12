@@ -1,4 +1,4 @@
-sqliteboy.py
+sqliteboy
 ========================================================================
 ::
 
@@ -10,37 +10,11 @@ sqliteboy.py
 
 Documentation for version 0.17
 
+
 .. contents:: 
-========================================================================
-
-1. SCREENSHOTS / TUTORIAL
-
-2. WHY
-
-3. FEATURES
-
-4. REQUIREMENTS
-
-5. DEFAULT ADMIN USER/PASSWORD
-
-6. HOW TO RUN
-
-7. CUSTOM TEMPLATE
-
-8. USER-DEFINED FUNCTION
-
-9. FORM CODE REFERENCE
-
-10. REPORT CODE REFERENCE
-
-11. DONATE
-
-12. COMMERCIAL SUPPORT
-
-13. THANK YOU :)
 
 
-SCREENSHOTS / TUTORIAL
+Screenshots And Tutorial
 ========================================================================
 
 - screenshot, possibly not up-to-date:  
@@ -50,7 +24,7 @@ SCREENSHOTS / TUTORIAL
   https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
 
 
-WHY
+Why
 ========================================================================
 
 - Easy to use, python and web.py based, Web SQLite Manager with 
@@ -80,7 +54,7 @@ WHY
   application is under active development. I use it at work and home. 
   
 
-FEATURES
+Features
 ========================================================================
 
 - Work with single SQLite database file
@@ -256,7 +230,7 @@ FEATURES
   could not handle table with whitespace in name 
   
 
-REQUIREMENTS
+Requirements
 ========================================================================
 
 - python
@@ -268,12 +242,12 @@ REQUIREMENTS
 - JSON module (included as json, in python 2.6+)
 
 
-DEFAULT ADMIN USER/PASSWORD
+Default Admin User And Password
 ========================================================================
 admin
 
 
-HOW TO RUN
+How To Run
 ========================================================================
 Command::
 
@@ -283,7 +257,7 @@ then, using web browser, visit localhost:11738, or localhost:PORT, if
 PORT is specified
 
 
-CUSTOM TEMPLATE
+Custom Template
 ========================================================================
 
 - sqliteboy.html, if found in current directory
@@ -291,7 +265,7 @@ CUSTOM TEMPLATE
 - For template example: T_BASE variable
 
 
-USER-DEFINED FUNCTION
+User-defined Function
 ========================================================================
 
 - sqliteboy_strs(s)
@@ -352,7 +326,7 @@ USER-DEFINED FUNCTION
         user name (if extended feature is enabled, or '')
     
 
-FORM CODE REFERENCE
+Form Code Reference
 ========================================================================
 
 - Must be valid JSON syntax (json.org)
@@ -577,7 +551,7 @@ FORM CODE REFERENCE
     }
 
 
-REPORT CODE REFERENCE
+Report Code Reference
 ========================================================================
 
 - Must be valid JSON syntax (json.org)
@@ -813,7 +787,7 @@ REPORT CODE REFERENCE
     }
 
 
-DONATE
+Donate
 ========================================================================
 
 - If you use this application, or find it useful, or want to support 
@@ -822,13 +796,13 @@ DONATE
 - Any form of donation will be happily accepted
 
 
-COMMERCIAL SUPPORT
+Commercial Support
 ========================================================================
 If you need commercial support (customization, integration, training), 
 please let me know :) Support is provided by tedut.com. 
 
 
-THANK YOU :)
+Thank You
 ========================================================================
-
+Thank You very much :)
 
