@@ -1,13 +1,14 @@
 sqliteboy.py
 ========================================================================
+::
+
     Simple Web SQLite Manager/Form/Report Application
     (c) Noprianto <nop@tedut.com>
     2012 
     GPL
 
 
-Documentation for version 0.17
-========================================================================
+    Documentation for version 0.17
 
 
 CONTENTS
@@ -43,10 +44,11 @@ CONTENTS
 SCREENSHOTS / TUTORIAL
 ========================================================================
 
-- https://github.com/nopri/sqliteboy/wiki (possibly not up-to-date)
+- https://github.com/nopri/sqliteboy/wiki (screenshot, possibly not 
+  up-to-date)
 
-- `Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia) 
-<https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy>`_ 
+- https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy (Mengenal 
+  sqliteboy (intro to sqliteboy in Bahasa Indonesia)) 
 
 
 WHY
@@ -273,8 +275,8 @@ Command::
 
     python sqliteboy.py <database_file> [port]
 
-(then, using web browser, visit localhost:11738, or localhost:PORT, if 
-PORT is specified)
+then, using web browser, visit localhost:11738, or localhost:PORT, if 
+PORT is specified
 
 
 CUSTOM TEMPLATE
