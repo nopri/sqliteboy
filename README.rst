@@ -370,13 +370,13 @@ FORM CODE REFERENCE
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | Key           | Description             | Type          | Status      | Example                  |
 +===============+=========================+===============+=============+==========================+
+| data          | form data               | list of dict  | required    | see: Keys (data)         |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| security      | form security           | dict          | required    | see: Keys (security)     |
++---------------+-------------------------+---------------+-------------+--------------------------+
 | title         | form title              | str           | optional    | "My Form"                |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | form information        | str           | optional    | "Form Information"       |
-+---------------+-------------------------+---------------+-------------+--------------------------+
-| data          | form data               | list of dict  | required    |                          |
-+---------------+-------------------------+---------------+-------------+--------------------------+
-| security      | form security           | dict          | required    |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | onsave        | function call on save   |               |             |                          |
 |               | event [NOT IMPLEMENTED  |               |             |                          |
@@ -419,7 +419,7 @@ FORM CODE REFERENCE
 |               |   two members;          |               |             |                          |
 |               |   HTML select           |               |             |                          |
 |               |                         |               |             |                          |
-|               | - int: ignored          |               |             |  - 0                     |
+|               | - int: ignored          |               |             | - 0                      |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | default       | default value           | str, list or  | optional    |                          |
@@ -592,124 +592,196 @@ REPORT CODE REFERENCE
 
 - Keys:
 
-  - title   : report title [str] [optional]
-              example: "My Report"
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| data          | wizard/search data      | list of dict  | required    | see: Keys (data)         |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| security      | reporting security      | dict          | required    | see: Keys (security)     |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| sql           | free form sql query;    | str           | required    | "select a.a as           |
+|               | please note that any    |               |             | 'column a of table1',    |
+|               | placeholder must have   |               |             | a.e from table1          |
+|               | relation with key in    |               |             | a where a.a =            |
+|               | data (see Keys (data))  |               |             | $input_a_a and           |
+|               |                         |               |             | a.e > $a_e"              |
+|               |                         |               |             |                          |
+|               |                         |               |             | For that example,        |
+|               |                         |               |             | you must define          |
+|               |                         |               |             | "input_a_a"              |
+|               |                         |               |             | and "a_e"                |
+|               |                         |               |             | key in data              |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| title         | report title            | str           | optional    | "My Report"              |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| info          | report information      | str           | optional    | "Report Information"     |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| header        | header order;           | list          | optional    | ["column a of table1",   |
+|               | header order for query  |               |             |  "e"]                    |
+|               | result                  |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if not specified,     |               |             |                          |
+|               |   header order is       |               |             |                          |
+|               |   unpredictable,        |               |             |                          |
+|               |   because each row of   |               |             |                          |
+|               |   query result is       |               |             |                          |
+|               |   python dict and       |               |             |                          |
+|               |   default header order  |               |             |                          |
+|               |   will be read from     |               |             |                          |
+|               |   first row             |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
-  - info    : report information [str] [optional]
-              example: "Report Information"
+- Keys (data):
 
-  - header  : header order [list] [optional]
-              header order for query result
-              if not specified, header order is unpredictable
-                because each row of query result is python dict
-                and default header order will be read from 
-                first row
-              example: ["column a of table1", "e"]
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| key           | HTML input name;        | str           | required    | "input_a_a"              |
+|               | underscore and          |               |             |                          |
+|               | alphanumeric only       |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| label         | label                   | str           | optional    | "column a ="             | 
++---------------+-------------------------+---------------+-------------+--------------------------+
+| readonly      | is readonly;            | int           | optional    | 0                        |
+|               | (0 = not readonly,      |               |             |                          |
+|               | 1 = readonly)           |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| reference     | predefined value(s)     | str, list or  | optional    |                          |
+|               |                         | int           |             |                          |
+|               | - str: SQL query;       |               |             | - "select col1 as a,     |
+|               |   returns 2 columns:    |               |             |   col2 as b from table1" |
+|               |   a and b; HTML select  |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list: static value(s);|               |             | - [ ["0", "NO"],         |
+|               |   contains list(s),     |               |             |   ["1", "YES"] ]         |
+|               |   which contains        |               |             |                          |
+|               |   two members;          |               |             |                          |
+|               |   HTML select           |               |             |                          |
+|               |                         |               |             |                          |
+|               | - int: ignored          |               |             | - 0                      |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| default       | default value           | str, list or  | optional    |                          |
+|               |                         | int           |             |                          |
+|               | - str, int: use as is   |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list: SQL function    |               |             | - ["sqliteboy_md5",      |
+|               |   call; at least one    |               |             |   "hello"]               |
+|               |   member; first member  |               |             |                          |
+|               |   must be str (function |               |             | - ["sqlite_version"]     |
+|               |   name); return value   |               |             |                          |
+|               |   will be used as       |               |             |                          |
+|               |   default;              |               |             |                          |
+|               |                         |               |             |                          |
+|               |   format:               |               |             |                          |
+|               |   [function_name, arg1, |               |             |                          |
+|               |   ...]                  |               |             |                          |
+|               |                         |               |             |                          |
+|               |   do not put () in      |               |             |                          |
+|               |   function_name         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| type          | type;                   | str           | optional    |                          |
+|               | cast input type as      |               |             |                          |
+|               | given type;             |               |             |                          |
+|               | currently, only         |               |             |                          |
+|               | "integer" is supported  |               |             |                          |
+|               | (default: str)          |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if integer is         |               |             |                          |
+|               |   specified,            |               |             |                          |
+|               |   input will be         |               |             |                          |
+|               |   converted to          |               |             |                          |
+|               |   integer using         |               |             |                          |
+|               |   python's int()        |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| constraint    | check before reporting  | list          | optional    |                          |
+|               |                         |               |             |                          |
+|               | - must be list of four  |               |             | - ["", 0, "> 10",        |
+|               |   members               |               |             |   "must be larger than   |
+|               |                         |               |             |   10"];                  |
+|               |   ["function_name",     |               |             |   check if column value  |
+|               |   as_str,               |               |             |   is > 10                |
+|               |   "condition",          |               |             |                          |
+|               |   "error_message"]      |               |             | - ["sqliteboy_len", 1,   |
+|               |                         |               |             |   "> 10", ""];           |
+|               |   function_name         |               |             |   check if sqliteboy_len |
+|               |   might be empty;       |               |             |   (column value) is > 10 |
+|               |   as_str must be 1      |               |             |                          |
+|               |   (treat function call  |               |             |                          |
+|               |   argument as string)   |               |             |                          |
+|               |   or 0;                 |               |             |                          |
+|               |   condition must not    |               |             |                          |
+|               |   empty;                |               |             |                          |
+|               |   condition must        |               |             |                          |
+|               |   contain boolean       |               |             |                          |
+|               |   comparison;           |               |             |                          |
+|               |   error_message might   |               |             |                          |
+|               |   be empty;             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if function_name is   |               |             |                          |
+|               |   not empty,            |               |             |                          |
+|               |   function_name will be |               |             |                          |
+|               |   called with column    |               |             |                          |
+|               |   value as an argument; |               |             |                          |
+|               |   function result will  |               |             |                          |
+|               |   be compared with      |               |             |                          |
+|               |   condition             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if function_name is   |               |             |                          |
+|               |   empty,                |               |             |                          |
+|               |   column value will     |               |             |                          |
+|               |   be compared with      |               |             |                          |
+|               |   condition             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - if comparison result  |               |             |                          |
+|               |   is 0 (false),         |               |             |                          |
+|               |   reporting will be     |               |             |                          |
+|               |   cancelled;            |               |             |                          |
+|               |   if error_message is   |               |             |                          |
+|               |   specified,            |               |             |                          |
+|               |   error_message will be |               |             |                          |
+|               |   displayed;            |               |             |                          |
+|               |   else,                 |               |             |                          |
+|               |   generic error message |               |             |                          |
+|               |   with column name,     |               |             |                          |
+|               |   function_name (if any)|               |             |                          |
+|               |   and condition         |               |             |                          |
+|               |   will be displayed     |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
-  - sql     : free form sql query [str] <required>
-              please note that any placeholder must have 
-              relation with key in data (below)
-              example: 
-                "select a.a as 'column a of table1', 
-                  a.e from table1 a where a.a = $input_a_a and a.e > $a_e"
-              for example above, you must define "input_a_a" 
-                and "a_e" key in data (below)
+- Keys (security):
 
-  - data    : wizard/search data [list of dict] <required>
-
-    - key      : HTML input name [str] <required>
-                 underscore and alphanumeric only
-                 example: "input_a_a"
-
-    - label    : label [str] [optional]
-                 example: "column a ="
-
-    - readonly : is readonly [int] [optional]
-                 (0 = not readonly, 1 = readonly)
-                 example: 0
-
-    - reference: predefined value(s) [optional]
-                 can be str, list or int
-
-                 - str: SQL query, 
-                        returns 2 columns: a and b
-                   rendered as HTML select
-                   example: "select col1 as a, col2 as b from table1"
-
-                 - list: static value(s),
-                         contains list(s), which
-                         contains two members
-                   rendered as HTML select
-                   example: [ ["0", "NO"], ["1", "YES"] ]
-
-                 - int: ignored
-                   example: 0
-
-    - default  : default value [optional]
-                 can be str, int, or list
-
-                 - str or int: use as is
-
-                 - list: SQL function call,
-                         at least one member
-                         first member must be str (function name)
-                         return value will be used as default
-                         format: [function_name, arg1, ...]
-                         do not put () in function_name
-                   example: ["sqliteboy_md5", "hello"]
-                   example: ["sqlite_version"]
-
-    - type     : type [str] [optional]
-                 cast input type as given type
-                 currently, only "integer" is supported
-                 (default: str)
-                 if integer is specified, input will be converted
-                   to integer using python's int()
-
-    - constraint: check before reporting [list] [optional]
-                  must be list of four members
-                  ["function_name", as_str, "condition", "error_message"]
-                  function_name might be empty
-                  as_str must be 1 (treat function call argument as string) 
-                    or 0
-                  condition must not empty
-                  condition must contain boolean comparison
-                  error_message might be empty
-                  if function_name is not empty, 
-                    function_name will be called
-                    with column value as an argument
-                    function result will be compared with condition
-                  if function_name is empty,
-                    column value will compared with condition
-                  example: ["", 0, "> 10", "must be larger than 10"]
-                    check if column value is > 10
-                  example: ["sqliteboy_len", 1, "> 10", ""]
-                    check if sqliteboy_len(column value) is > 10
-                  if comparison result is 0 (false),
-                    reporting will be cancelled
-                    if error_message is specified,
-                      error_message will be displayed
-                    else,
-                      generic error message with 
-                      column name, function_name (if any) and 
-                      condition will be displayed
-
-  - security: reporting security [dict] <required>
-
-    - run      : can run report <required>
-                 admin(s): always can run report
-                 can be "" or list
-
-                 - "": all users can run this report
-
-                 - list: only users in this list can run this report
-                   example: []
-                   example: ["user1", "user2"]
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| run           | can run report;         | "" or list    | required    |                          |
+|               | admin(s): always can run|               |             |                          |
+|               | report                  |               |             |                          |
+|               |                         |               |             |                          |
+|               | - "": all users can     |               |             |                          |
+|               |   run this report       |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list: only users in   |               |             | - []                     |
+|               |   this list can run     |               |             |                          |
+|               |   this report           |               |             | - ["user1", "user2"]     |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - note:
-
-  - if you are using primary key column in form data, 
-    '*' character will be added to column label
 
   - tips: use sqliteboy_as_integer function in constraint
     to do integer conversion/comparison
