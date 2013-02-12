@@ -100,7 +100,10 @@ FEATURES
   
     - Can be enabled in menu
   
-    - If enabled, one table, _sqliteboy_, 
+    - If enabled, one table::
+      
+        _sqliteboy_, 
+        
       will be created. You can delete this table 
       and extended feature will be disabled
       
@@ -327,13 +330,17 @@ USER-DEFINED FUNCTION
 - sqliteboy_is_valid_email(s)
   ::
   
-    return value: 1 (valid) or 0 (invalid)
+    return value  : 
+        1 (valid) or 0 (invalid)
 
 - sqliteboy_normalize_separator(s, separator, remove_space, unique)
   ::
   
-      argument    : separator (separator string), remove_space (remove 
-      space in s, 1 or 0), unique (1 or 0).
+      argument    : 
+         separator (separator string)
+         remove_space (remove space in s, 1 or 0)
+         unique (1 or 0)
+         
       example     : 
         sqliteboy_normalize_separator
           (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
@@ -342,7 +349,8 @@ USER-DEFINED FUNCTION
 - sqliteboy_x_user()
   ::
   
-    return value: user name (if extended feature is enabled, or '')
+    return value  : 
+        user name (if extended feature is enabled, or '')
     
 
 FORM CODE REFERENCE
@@ -359,18 +367,31 @@ FORM CODE REFERENCE
 
 - Keys:
 
-  - title   : form title [str] [optional]::
-                example: "My Form"
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| title         | form title              | str           | optional    | "My Form"                |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| info          | form information        | str           | optional    | "Form Information"       |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| data          | form data               | list of dict  | required    |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| security      | form security           | dict          | required    |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
-  - info    : form information [str] [optional]
-              example: "Form Information"
+- Keys (data):
 
-  - data    : form data [list of dict] <required>
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| table         | table name,             | str           | required    | "table1"                 |
+|               | only single table is    |               |             |                          |
+|               | supported, and first    |               |             |                          |
+|               | table found will be     |               |             |                          |
+|               | used, other table(s)    |               |             |                          |
+|               | will be ignored         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
-    - table    : table name [str] <required>::
-                     only single table is supported, and first table found
-                     will be used, other table(s) will be ignored
-                     example: "table1"
 
     - column   : column [str] <required>
                  example: "col1"
