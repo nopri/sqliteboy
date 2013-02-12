@@ -8,10 +8,9 @@ sqliteboy.py
     GPL
 
 
-    Documentation for version 0.17
+Documentation for version 0.17
 
-
-CONTENTS
+.. contents:: 
 ========================================================================
 
 1. SCREENSHOTS / TUTORIAL
@@ -44,11 +43,11 @@ CONTENTS
 SCREENSHOTS / TUTORIAL
 ========================================================================
 
-- https://github.com/nopri/sqliteboy/wiki (screenshot, possibly not 
-  up-to-date)
+- screenshot, possibly not up-to-date:  
+  https://github.com/nopri/sqliteboy/wiki
 
-- https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy (Mengenal 
-  sqliteboy (intro to sqliteboy in Bahasa Indonesia)) 
+- Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  
+  https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
 
 
 WHY
@@ -616,10 +615,10 @@ REPORT CODE REFERENCE
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | report information      | str           | optional    | "Report Information"     |
 +---------------+-------------------------+---------------+-------------+--------------------------+
-| header        | header order;           | list          | optional    | ["column a of table1",   |
-|               | header order for query  |               |             |  "e"]                    |
-|               | result                  |               |             |                          |
-|               |                         |               |             |                          |
+| header        | header order;           | list          | optional    |                          |
+|               | header order for query  |               |             |                          |
+|               | result                  |               |             | - ["column a of table1", |
+|               |                         |               |             |    "e"]                  |
 |               | - if not specified,     |               |             |                          |
 |               |   header order is       |               |             |                          |
 |               |   unpredictable,        |               |             |                          |
