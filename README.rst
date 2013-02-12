@@ -227,7 +227,9 @@ FEATURES
 
 - User-defined function
 
-  - Prefix: sqliteboy_
+  - Prefix::
+  
+        sqliteboy_
 
   - Can be used in Query or Form or Report
 
@@ -468,6 +470,7 @@ FORM CODE REFERENCE
 
 - Example:
 ::
+
     {
       "title" : "My Form 1",
       "info"  : "Form Information", 
@@ -651,6 +654,7 @@ REPORT CODE REFERENCE
 
 - Example:
 ::
+
     {
       "title" : "My Report",
       "info"  : "Report Information", 
