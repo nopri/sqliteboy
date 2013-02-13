@@ -4,17 +4,17 @@
 # sqliteboy.py
 # Simple Web SQLite Manager/Form Application
 # (c) Noprianto <nop@tedut.com>
-# 2012
+# 2012-2013
 # GPL
 #
-# Please read README.txt
+# Please read README.rst
 #
 
 #----------------------------------------------------------------------#
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.17'
+VERSION = '0.18'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -89,7 +89,7 @@ CUSTOM_RT = {
                 'query': 4,
             } #command, rt 
 PK_SYM = '*'
-URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.txt')
+URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.rst')
 URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', __file__)
 PROTECTED_USERS = ['admin']
 FORM_ALL = ''
@@ -127,6 +127,7 @@ REPORT_KEY_DATA_REQUIRED = FORM_KEY_DATA_REQUIRED
 REPORT_KEY_DATA_READONLY = FORM_KEY_DATA_READONLY
 REPORT_KEY_DATA_CONSTRAINT = FORM_KEY_DATA_CONSTRAINT
 REPORT_KEY_DATA_TYPE = 'type'
+REPORT_KEY_MESSAGE = 'message'
 REPORT_KEY_SECURITY = FORM_KEY_SECURITY
 REPORT_KEY_SECURITY_RUN = FORM_KEY_SECURITY_RUN
 REPORT_KEY_SQL = 'sql'
@@ -137,6 +138,8 @@ REPORT_REQ = (REPORT_KEY_DATA,
 REPORT_REQ_DATA = (REPORT_KEY_DATA_KEY,)
 REPORT_REFERENCE_SQL_0 = 'a'
 REPORT_REFERENCE_SQL_1 = 'b'
+REPORT_MESSAGE_LEN = 3
+REPORT_MESSAGE_VAR_RESULT = '$result'
 
 
 #----------------------------------------------------------------------#
@@ -368,7 +371,7 @@ LANGS = {
             'cmd_run': 'run',
             'cmd_form_create': 'create',
             'cmd_report_create': 'create',
-            'cmd_report': 'report',
+            'cmd_report': 'go',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -1328,9 +1331,17 @@ def parsereport(report):
     finfo = fo.get(REPORT_KEY_INFO, '')
     rquery = fo.get(REPORT_KEY_SQL, '').strip()
     rheader = fo.get(REPORT_KEY_HEADER, [])
+    message1 = fo.get(REPORT_KEY_MESSAGE, [])    
     #
     if not type(rheader) == type([]):
         rheader = []
+    #
+    if not type(message1) == type([]):
+        message1 = []
+    message2 = []
+    if len(message1) == REPORT_MESSAGE_LEN:
+        message2 = message1
+    message2 = [str(x) for x in message2]    
     #
     fdata = fo.get(REPORT_KEY_DATA)
     input = []
@@ -1446,7 +1457,7 @@ def parsereport(report):
                 )
             )
     #
-    return [ftitle, finfo, input, rquery, rheader]
+    return [ftitle, finfo, input, rquery, rheader, message2]
 
 def nqtype(ftype):
     ret = False
@@ -2328,7 +2339,7 @@ $elif data['command'] == 'report.run.result':
         </table>
     <br>
     $ ctr = 0
-    $if content:
+    $if data['table']:
         $ keys = []
         <table>
         $for re in content:
@@ -2351,7 +2362,12 @@ $elif data['command'] == 'report.run.result':
             </tr>
             $ ctr = ctr + 1
         </table>    
-    $ctr $_['x_row']
+        $ctr $_['x_row']
+    $else:
+        $if data['result_message']:
+            $data['result_message']
+        $else:
+            $content
 $else:
     $:content
 </body>
@@ -3989,12 +4005,14 @@ class report_run:
         finput = None
         rquery = None
         rheader = []
+        message2 = []
         try:
             preport = parsereport(report)
             freport = preport[0]
             finput = preport[2]
             rquery = preport[3]
             rheader = preport[4]
+            message2 = preport[5]
         except:
             preport = None
         #
@@ -4103,6 +4121,27 @@ class report_run:
                 'report2': freport,
                 }
         content = rreport
+        #
+        xtable = hasattr(content, '__iter__')
+        data['table'] = xtable
+        #
+        message3 = ''
+        message2b = ''
+        if xtable == False:
+            try:
+                if content < 0:
+                    message2b = message2[0]
+                elif content == 0:
+                    message2b = message2[1]
+                elif content > 0:
+                    message2b = message2[2]
+                #
+                message3 = message2b.replace(REPORT_MESSAGE_VAR_RESULT, 
+                    str(content))
+            except:
+                pass
+        data['result_message'] = message3
+        #
         stop()
         #
         return T(data, content)

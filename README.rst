@@ -4,17 +4,17 @@ sqliteboy
 
     Simple Web SQLite Manager/Form/Report Application
     (c) Noprianto <nop@tedut.com>
-    2012 
+    2012-2013 
     GPL
 
 
-Documentation for version 0.17
+Documentation for version 0.18
 
 
 .. contents:: 
 
 
-Screenshots And Tutorial
+Screenshots And Wiki
 ========================================================================
 
 - screenshot, possibly not up-to-date:  
@@ -22,6 +22,8 @@ Screenshots And Tutorial
 
 - Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  
   https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
+  
+- More: https://github.com/nopri/sqliteboy/wiki/_pages
 
 
 Why
@@ -107,7 +109,7 @@ Features
   
 - Report Support (Extended feature, new in v0.16)
 
-  - Simple reporting
+  - Simple reporting (and data entry)
 
   - Simple syntax (JSON)
 
@@ -120,7 +122,7 @@ Features
 
   - Default value: function call or static value
 
-  - Constraint: check before reporting, 
+  - Constraint: check before query, 
     (possible to call function before comparison)
 
   - Flexible SQL query
@@ -130,6 +132,10 @@ Features
   - Custom header order
 
   - Simple security setting
+  
+  - As of v0.18, report also can be used as form/data entry, using 
+    insert SQL query. Custom result message (based on SQL query result), 
+    is also supported. 
 
 - Browse table
 
@@ -337,6 +343,10 @@ Form Code Reference
 - No trailling comma in dict or list
 
 - Python dict
+
+- Only single table is supported. For multiple table data entry
+  (or custom SQL query), please use Report feature. See Report Code Reference
+  below.
 
 - Keys:
 
@@ -563,6 +573,12 @@ Report Code Reference
 
 - Python dict
 
+- All key (HTML input) in data is required. See Keys (data) below.
+
+- Report also can be used as form/data entry, using insert SQL query. 
+  Custom result message (based on SQL query result), is also supported.
+  Using free form SQL query, data entry can work with multiple table.
+
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -591,10 +607,10 @@ Report Code Reference
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | header        | header order;           | list          | optional    |                          |
 |               | header order for query  |               |             |                          |
-|               | result                  |               |             | - ["column a of table1", |
-|               |                         |               |             |    "e"]                  |
-|               | - if not specified,     |               |             |                          |
-|               |   header order is       |               |             |                          |
+|               | result                  |               |             | - [                      |
+|               |                         |               |             |    "column a of table1", |
+|               | - if not specified,     |               |             |    "e"                   |
+|               |   header order is       |               |             |   ]                      |
 |               |   unpredictable,        |               |             |                          |
 |               |   because each row of   |               |             |                          |
 |               |   query result is       |               |             |                          |
@@ -604,6 +620,27 @@ Report Code Reference
 |               |   first row             |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| message       | custom result message;  | list          | optional    |                          |
+|               | only for SQL query that |               |             |                          |
+|               | returns integer (insert,|               |             | - [                      |
+|               | update, etc). Useful for|               |             |    "unknown result",     |
+|               | data entry function.    |               |             |    "zero result",        |
+|               |                         |               |             |    "success: $result"    |
+|               | - must be list of three |               |             |   ]                      |
+|               |   members (str)         |               |             |                          |
+|               |                         |               |             |                          |
+|               |   ["message res < 0",   |               |             |                          |
+|               |   "message res = 0",    |               |             |                          |
+|               |   "message res > 0"]    |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $result (in message)  |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   actual SQL Query      |               |             |                          |
+|               |   result                |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
