@@ -2,19 +2,43 @@
 #
 #
 # sqliteboy.py
-# Simple Web SQLite Manager/Form Application
+# Simple Web SQLite Manager/Form/Report Application
 # (c) Noprianto <nop@tedut.com>
 # 2012-2013
 # GPL
 #
 # Please read README.rst
 #
+#
+# # pyinstaller 2.0 spec #
+# # python <path/to/pyinstaller.py> <spec>
+#
+#    a = Analysis(['sqliteboy.py'])
+#
+#    a.datas += [
+#                ('sqliteboy.py', 'sqliteboy.py', 'DATA'),
+#                ('README.rst', 'README.rst', 'DATA'),
+#            ]
+#
+#    pyz = PYZ(a.pure)
+#
+#    exe = EXE(
+#                pyz, 
+#                a.scripts, 
+#                a.binaries, 
+#                a.datas, 
+#                name="sqliteboy.exe",
+#                console=True,
+#                debug=False
+#            )
+#
 
 #----------------------------------------------------------------------#
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-VERSION = '0.18'
+APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
+VERSION = '0.19'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -90,7 +114,7 @@ CUSTOM_RT = {
             } #command, rt 
 PK_SYM = '*'
 URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.rst')
-URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', __file__)
+URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', 'sqliteboy.py')
 PROTECTED_USERS = ['admin']
 FORM_ALL = ''
 FORM_KEY_TITLE = 'title'
@@ -147,7 +171,10 @@ REPORT_MESSAGE_VAR_RESULT = '$result'
 #----------------------------------------------------------------------#
 import sys
 import os
-CURDIR = os.path.dirname(__file__)
+if getattr(sys, 'frozen', None):
+    CURDIR = sys._MEIPASS
+else:
+    CURDIR = os.path.dirname(__file__)
 
 import time
 import decimal
@@ -168,6 +195,10 @@ import json
 import urllib
 import hashlib
 import base64
+
+import platform
+import struct
+import sqlite3
 
 import web
 web.config.debug = False
@@ -305,6 +336,7 @@ LANGS = {
             'x_version': 'version',
             'x_sqlite_version': 'SQLite version',
             'x_web_version': 'web.py version',
+            'x_python_version': 'Python version',
             'x_extended_features': 'extended features',
             'x_user': 'user',
             'x_delete': 'delete',
@@ -1141,6 +1173,7 @@ def sysinfo():
     ret = [
             (_['x_version'], s_a),
             (_['x_sqlite_version'], db.db_module.sqlite_version),
+            (_['x_python_version'], platform.python_version()),
             (_['x_web_version'], web.__version__),
             s_sb,
             (_['x_admin'], s_adm),
@@ -2427,7 +2460,27 @@ class index:
 
 class favicon_ico:
     def GET(self):
-        return ''
+        #ico file format on wikipedia
+        #header only, image size is set to 0, dummy icon
+        #little-endian
+        #
+        content = ''
+
+        #icondir
+        h1 = (0, 1, 1)
+        s1 = struct.Struct('< h h h')
+        p1 = s1.pack(*h1)
+        content += p1
+
+        #icondirentry 1
+        h2 = (16, 16, 2, 0, 1, 1, 0, 22)
+        s2 = struct.Struct('< b b b b h h i i')
+        p2 = s2.pack(*h2)
+        content += p2
+        
+        #
+        web.header('Content-Type', 'image/x-icon')
+        return content
         
 
 class table_action:
@@ -4152,6 +4205,8 @@ class report_run:
 #----------------------------------------------------------------------#
 if __name__ == '__main__':
     log(TITLE)
+    log(APP_DESC)
+    log('')
     if len(sys.argv) < 2:
         log('%s %s' %(sys.argv[0], _['usage']))
         sys.exit(1)

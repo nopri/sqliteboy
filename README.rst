@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.18
+Documentation for version 0.19
 
 
 .. contents:: 
@@ -241,11 +241,19 @@ Requirements
 
 - python
 
-- web.py
+- web.py (http://webpy.org)
 
 - SQLite module (included as sqlite3, in python 2.5+)
 
 - JSON module (included as json, in python 2.6+)
+
+(or see below if you prefer standalone application on Windows)
+
+
+Standalone Windows Application
+========================================================================
+- Standalone / portable / run from USB 
+- Download: http://tedut.com/sqliteboy.exe
 
 
 Default Admin User And Password
