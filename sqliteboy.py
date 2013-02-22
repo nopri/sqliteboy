@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.19'
+VERSION = '0.20'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -173,8 +173,10 @@ import sys
 import os
 if getattr(sys, 'frozen', None):
     CURDIR = sys._MEIPASS
+    CWDIR = os.getcwd()
 else:
     CURDIR = os.path.dirname(__file__)
+    CWDIR = CURDIR
 
 import time
 import decimal
@@ -2406,7 +2408,7 @@ $else:
 </body>
 </html>
 '''
-test_t_base = os.path.join(CURDIR, DEFAULT_T_BASE)
+test_t_base = os.path.join(CWDIR, DEFAULT_T_BASE)
 test_t_base = os.path.abspath(test_t_base)
 if os.access(test_t_base, os.R_OK):
     T_BASE = open(test_t_base).read()
@@ -2706,6 +2708,8 @@ class table_browse:
             dflt()
         #
         start()
+        #
+        prepsess()
         #
         input = web.input(limit=0, order='', sort='')
         #

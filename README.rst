@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.19
+Documentation for version 0.20
 
 
 .. contents:: 
@@ -252,7 +252,10 @@ Requirements
 
 Standalone Windows Application
 ========================================================================
-- Standalone / portable / run from USB 
+- Standalone / portable / run from USB Flash Disk 
+- Can be run by standard user
+- There is no need to install Python / requirements above
+- Single file executable (+/- 4 MB)
 - Download: http://tedut.com/sqliteboy.exe
 
 
@@ -265,7 +268,15 @@ How To Run
 ========================================================================
 Command::
 
+    sqliteboy.exe <database_file> [port]
+    
+    (if you are using Standalone Windows Application)
+    
+    or
+
     python sqliteboy.py <database_file> [port]
+    
+    (if you are using source code)
 
 then, using web browser, visit localhost:11738, or localhost:PORT, if 
 PORT is specified
