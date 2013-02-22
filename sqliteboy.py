@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.20'
+VERSION = '0.21'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -130,13 +130,15 @@ FORM_KEY_DATA_READONLY = 'readonly'
 FORM_KEY_DATA_CONSTRAINT = 'constraint'
 FORM_KEY_SECURITY = 'security'
 FORM_KEY_SECURITY_RUN = 'run'
-FORM_KEY_ONSAVE = 'onsave'
+FORM_KEY_DATA_ONSAVE = 'onsave'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
                     FORM_KEY_DATA_COLUMN,
                 )
 FORM_REFERENCE_SQL_0 = 'a'
 FORM_REFERENCE_SQL_1 = 'b'
+FORM_ONSAVE_SQL_VALUE = 'value'
+FORM_ONSAVE_SQL_RET = 'onsave'
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -356,7 +358,7 @@ LANGS = {
             'x_form': 'form',
             'x_code': 'code',
             'x_form_name': 'form name',
-            'x_report': 'report',
+            'x_report': 'report/form',
             'x_report_name': 'report name',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -429,6 +431,7 @@ LANGS = {
             'e_form_run_syntax_or_required': 'ERROR: form code error or required keys are not set',
             'e_form_run_required': 'ERROR: required',
             'e_form_run_constraint': 'ERROR: constraint',
+            'e_form_run_onsave': 'ERROR: onsave',
             'e_form_insert_general': 'ERROR: processing form',
             'e_report_edit_whitespace': 'ERROR: could not handle report with whitespace in name',
             'e_report_edit_exists': 'ERROR: report already exists',
@@ -455,9 +458,9 @@ LANGS = {
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key", use primary key column instead. For date/time type, please use integer. If date/time default is needed, please use current_time, current_date or current_timestamp. To use non-constant literally, please surround with quote(\'), for example \'current_time\'.',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
-            'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read README.txt for form code reference.',
+            'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read <a href="/sqliteboy/readme">README</a> for form code reference.',
             'h_form_run': '',
-            'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read README.txt for report code reference.',
+            'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read <a href="/sqliteboy/readme">README</a> for report code reference.',
             'h_report_run': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
@@ -1239,6 +1242,7 @@ def parseform(form):
                     reference = fd.get(FORM_KEY_DATA_REFERENCE, 0)
                     default = fd.get(FORM_KEY_DATA_DEFAULT, '')
                     constraint = fd.get(FORM_KEY_DATA_CONSTRAINT, [])
+                    onsave = fd.get(FORM_KEY_DATA_ONSAVE, '')
                     ftype = ''
                     for c in cols:
                         if c['name'] == col:
@@ -1318,6 +1322,11 @@ def parseform(form):
                     except:
                         pass
                     #
+                    try:
+                        onsave = onsave.strip()
+                    except:
+                        onsave = ''
+                    #
                     colstb.get(table, []).append(col)
                     #
                     input.append(
@@ -1331,6 +1340,7 @@ def parseform(form):
                             default2,
                             constraint2,
                             table,
+                            onsave,
                         )
                     )
     #
@@ -1613,7 +1623,7 @@ $for i in menugen():
     <form action='$i[0]' method='$i[1]'>
     <table>
     <tr>
-    <td width='10%'>
+    <td width='12%'>
     $i[2].capitalize()
     </td>
     <td width='25%'>
@@ -3598,6 +3608,7 @@ class form_run:
                 constraint2 = f[7]
                 table = f[8]
                 stable = table
+                onsave = f[9]
                 #
                 cv = input.get(col).strip()
             except:
@@ -3649,6 +3660,17 @@ class form_run:
                 except:
                     ecols.append(col)
                     errors.append( [ _['e_form_run_constraint'], label] )
+            #
+            if onsave:
+                try:
+                    onsaver = db.query(
+                                    onsave,
+                                    vars = {FORM_ONSAVE_SQL_VALUE: cv}
+                                ).list()
+                    cv = onsaver[0][FORM_ONSAVE_SQL_RET]
+                except Exception, e:
+                    ecols.append(col)
+                    errors.append( [ _['e_form_run_onsave'], label, str(e)] )                    
             #
             if ftype in BLOB_TYPE:
                 cvv = db.db_module.Binary(cv)

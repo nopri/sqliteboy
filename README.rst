@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.20
+Documentation for version 0.21
 
 
 .. contents:: 
@@ -42,7 +42,8 @@ Why
   Python list. Also, default value can be result of function call or 
   static value. Constraint is also supported, to do checking before 
   save, to prevent saving invalid value (and, it's possible to call 
-  function before comparison)
+  function before comparison). Onsave event is also supported, to 
+  execute SQL Query (and use the result) just before the data is saved.
   
   Reporting wizard also supports form field predefined values, default 
   value and constraint (checking before reporting query is executed). 
@@ -105,7 +106,9 @@ Features
 
   - Simple security setting
 
-  - onsave event (NOT IMPLEMENTED YET)
+  - As of v0.21, onsave event is also supported, to execute SQL Query 
+    (and use the result) just before the data is saved. The SQL Query 
+    can be very complex and involves nested function calls.
   
 - Report Support (Extended feature, new in v0.16)
 
@@ -367,6 +370,10 @@ Form Code Reference
   (or custom SQL query), please use Report feature. See Report Code Reference
   below.
 
+- Onsave event can be used to execute SQL Query (and use the result) 
+  just before the data is saved. The SQL Query can be very complex and 
+  involves nested function calls.
+
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -379,10 +386,6 @@ Form Code Reference
 | title         | form title              | str           | optional    | "My Form"                |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | form information        | str           | optional    | "Form Information"       |
-+---------------+-------------------------+---------------+-------------+--------------------------+
-| onsave        | function call on save   |               |             |                          |
-|               | event [NOT IMPLEMENTED  |               |             |                          |
-|               | YET]                    |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
@@ -500,7 +503,29 @@ Form Code Reference
 |               |   will be displayed     |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
-|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| onsave        | execute sql query just  | str           | optional    |                          |
+|               | before the data is saved|               |             |                          |
+|               |                         |               |             | - "select $value ||      |
+|               | - sql query can be very |               |             |   ' : ' ||               |
+|               |   complex and involves  |               |             |   sqliteboy_upper(       |
+|               |   nested function calls |               |             |   sqliteboy_md5($value)  |
+|               |                         |               |             |   ) as onsave"           |
+|               | - sql query must return |               |             |                          |
+|               |   one column: onsave    |               |             | - In example above, md5  |
+|               |                         |               |             |   hash of user input     |
+|               | - quoting is            |               |             |   will be calculated     |
+|               |   automatically done    |               |             |   using sqliteboy_md5.   |
+|               |                         |               |             |    Then the result will  |
+|               | - $value will replaced  |               |             |   be uppercased using    |
+|               |   with user input value |               |             |   sqliteboy_upper. Then  |
+|               |                         |               |             |   the result will be     |
+|               | - the returned value    |               |             |   concatenated with      |
+|               |   will be saved to      |               |             |   another string (final).|
+|               |   table (not the        |               |             |                          |
+|               |   user input value)     |               |             | - Example (input=hello): |
+|               |                         |               |             |   hello : 5D41402ABC4B2A7|
+|               |                         |               |             |   6B9719D911017C592      |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
@@ -556,7 +581,8 @@ Form Code Reference
                     "table"     : "table1",
                     "column"    : "c",
                     "default"   : ["sqliteboy_md5", "hello"],  
-                    "constraint": ["sqliteboy_len", 1, "= 32", ""]
+                    "constraint": ["sqliteboy_len", 1, "= 32", ""],
+                    "onsave"    : "select sqliteboy_upper($value) as onsave"
                   },
                   {
                     "table"     : "table1",
