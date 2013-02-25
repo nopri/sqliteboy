@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.21'
+VERSION = '0.22'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -358,7 +358,7 @@ LANGS = {
             'x_form': 'form',
             'x_code': 'code',
             'x_form_name': 'form name',
-            'x_report': 'report/form',
+            'x_report': 'report',
             'x_report_name': 'report name',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -458,9 +458,9 @@ LANGS = {
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key", use primary key column instead. For date/time type, please use integer. If date/time default is needed, please use current_time, current_date or current_timestamp. To use non-constant literally, please surround with quote(\'), for example \'current_time\'.',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
-            'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read <a href="/sqliteboy/readme">README</a> for form code reference.',
+            'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read <a href="%s">README</a> for form code reference.' %(URL_README[0]),
             'h_form_run': '',
-            'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read <a href="/sqliteboy/readme">README</a> for report code reference.',
+            'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read <a href="%s">README</a> for report code reference.' %(URL_README[0]),
             'h_report_run': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
@@ -3619,6 +3619,17 @@ class form_run:
                 ecols.append(col)
                 errors.append( [ _['e_form_run_required'], label] )
             #
+            if onsave:
+                try:
+                    onsaver = db.query(
+                                    onsave,
+                                    vars = {FORM_ONSAVE_SQL_VALUE: cv}
+                                ).list()
+                    cv = onsaver[0][FORM_ONSAVE_SQL_RET]
+                except Exception, e:
+                    ecols.append(col)
+                    errors.append( [ _['e_form_run_onsave'], label, str(e)] )                    
+            #            
             if constraint2:
                 try:
                     constf = constraint2[0].strip()
@@ -3660,17 +3671,6 @@ class form_run:
                 except:
                     ecols.append(col)
                     errors.append( [ _['e_form_run_constraint'], label] )
-            #
-            if onsave:
-                try:
-                    onsaver = db.query(
-                                    onsave,
-                                    vars = {FORM_ONSAVE_SQL_VALUE: cv}
-                                ).list()
-                    cv = onsaver[0][FORM_ONSAVE_SQL_RET]
-                except Exception, e:
-                    ecols.append(col)
-                    errors.append( [ _['e_form_run_onsave'], label, str(e)] )                    
             #
             if ftype in BLOB_TYPE:
                 cvv = db.db_module.Binary(cv)
