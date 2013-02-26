@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.22
+Documentation for version 0.23
 
 
 .. contents:: 
@@ -516,7 +516,7 @@ Form Code Reference
 |               |                         |               |             |   hash of user input     |
 |               | - quoting is            |               |             |   will be calculated     |
 |               |   automatically done    |               |             |   using sqliteboy_md5.   |
-|               |                         |               |             |    Then the result will  |
+|               |                         |               |             |   Then the result will   |
 |               | - $value will replaced  |               |             |   be uppercased using    |
 |               |   with user input value |               |             |   sqliteboy_upper. Then  |
 |               |                         |               |             |   the result will be     |

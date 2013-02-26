@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.22'
+VERSION = '0.23'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -131,6 +131,7 @@ FORM_KEY_DATA_CONSTRAINT = 'constraint'
 FORM_KEY_SECURITY = 'security'
 FORM_KEY_SECURITY_RUN = 'run'
 FORM_KEY_DATA_ONSAVE = 'onsave'
+FORM_KEY_SUB = 'sub'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
                     FORM_KEY_DATA_COLUMN,
@@ -139,6 +140,7 @@ FORM_REFERENCE_SQL_0 = 'a'
 FORM_REFERENCE_SQL_1 = 'b'
 FORM_ONSAVE_SQL_VALUE = 'value'
 FORM_ONSAVE_SQL_RET = 'onsave'
+FORM_SUB_ROWS_DEFAULT = 5
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -1344,7 +1346,104 @@ def parseform(form):
                         )
                     )
     #
-    return [ftitle, finfo, input]
+    fsub = fo.get(FORM_KEY_SUB, [])
+    if not type(fsub) == type([]):
+        fsub = []
+    #
+    try:
+        fsub_table = fsub[0]
+        fsub_key = fsub[1]
+        fsub_rows = fsub[2]
+        fsub_data = fsub[3]
+        #
+        if not fsub_table in tables() or fsub_table == table:
+            raise Exception
+        if not fsub_key in columns(fsub_table, True):
+            raise Exception
+        if not type(fsub_data) == type([]):
+            raise Exception
+        if not type(fsub_rows) == type(FORM_SUB_ROWS_DEFAULT):
+            raise Exception
+    except:
+        fsub_table = ''
+        fsub_key = ''
+        fsub_rows = FORM_SUB_ROWS_DEFAULT
+        fsub_data = []
+    #
+    fsub2 = []
+    fsub2_data = []
+    if fsub_table:
+        fsub2.append(fsub_table)
+        fsub2.append(fsub_key)
+        fsub2.append(fsub_rows)
+        fsub2_columns = columns(fsub_table, True)
+        #
+        for d in fsub_data:
+            try:
+                dc = d[0].strip()
+                dl = d[1].strip()
+                reference = d[2]
+                default = d[3]
+                if (not dc) or (not dc in fsub2_columns) or dc == fsub_key:
+                    raise Exception
+                if not dl: 
+                    dl = dc
+                #
+                reference2 = 0
+                if (type(reference) in [type(''), type(u'')]) and reference.strip():#query
+                    reference2 = []
+                    res = db.query(reference)
+                    for r in res:
+                        reference2.append(
+                            [
+                                r.get(FORM_REFERENCE_SQL_0, ''), 
+                                r.get(FORM_REFERENCE_SQL_1, '')
+                            ]
+                        )
+                elif (type(reference) == type([])) and reference: #list
+                    reference2 = []
+                    for r in reference:
+                        reference2.append([r[0], r[1]])
+                #
+                reference3 = None
+                if type(reference2) == type([]):
+                    reference3 = web.form.Dropdown(col, args=reference2)
+                #
+                default2 = default
+                if not default2:
+                    default2 = ''
+                #
+                if (type(default) in [type([])]) and default:
+                    default2 = ''
+                    #
+                    deff = default[0]
+                    default.pop(0)
+                    defs = []
+
+                    for dd in default:
+                        dq = web.sqlquote(dd)
+                        defs.append(dq)
+                    #
+                    if defs:
+                        defsq = web.sqlquote('').join(defs, ',')
+                    else:
+                        defsq = ''
+                    #
+                    defq = 'select %s(%s) as f' %(deff, defsq)
+                    defr = db.query(defq).list()
+                    if defr:
+                        default2 = defr[0]['f']
+                #
+                if reference3:
+                    reference3.set_value(default2)
+                #
+                fsub2_data.append([dl, dc, reference3, default2])
+            except:
+                continue
+        #
+        fsub2.append(fsub2_data)
+    #
+    return [ftitle, finfo, input, fsub2]
 
 def reqreport(report):
     try:
@@ -3524,6 +3623,7 @@ class form_run:
             dflt()
         #
         input = ()
+        sub = ()
         action_button = (
                             ('save', _['cmd_save'], False, '', 'submit'),
                         )
@@ -3531,6 +3631,7 @@ class form_run:
         finfo = ''
         if not reqform(form):
             input = ()
+            sub = ()
             action_button = ()
             sess[SKF_RUN] = [
                                 [_['e_form_run_syntax_or_required']],
@@ -3539,11 +3640,12 @@ class form_run:
             try:
                 pform = parseform(form)
             except:
-                pform = [ftitle, finfo, input]
+                pform = [ftitle, finfo, input, sub]
             #
             ftitle = pform[0]
             finfo = pform[1]
             input = pform[2]
+            sub = pform[3]
         #
         message = smsgq(SKF_RUN, default=[])
         #
@@ -3563,6 +3665,7 @@ class form_run:
                 'finfo': finfo,
                 'blob_type': BLOB_TYPE,
                 'text_type': TEXT_TYPE,
+                'sub': sub,
                 }
         content = ''
         stop()
