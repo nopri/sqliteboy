@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.23'
+VERSION = '0.24'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -140,7 +140,7 @@ FORM_REFERENCE_SQL_0 = 'a'
 FORM_REFERENCE_SQL_1 = 'b'
 FORM_ONSAVE_SQL_VALUE = 'value'
 FORM_ONSAVE_SQL_RET = 'onsave'
-FORM_SUB_ROWS_DEFAULT = 5
+FORM_SUB_ROWS_DEFAULT = [5, 1]#rows, required rows
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -1207,6 +1207,131 @@ def reqform(form):
     #
     return True
 
+def fref(reference):
+    reference2 = 0
+    if (type(reference) in [type(''), type(u'')]) and reference:#query
+        reference2 = []
+        try:
+            res = db.query(reference)
+            for r in res:
+                reference2.append(
+                    [
+                        r.get(FORM_REFERENCE_SQL_0, ''), 
+                        r.get(FORM_REFERENCE_SQL_1, '')
+                    ]
+                )
+        except:
+            pass
+    elif (type(reference) in [type([]), type(())]) and reference: #list
+        reference2 = []
+        try:
+            for r in reference:
+                reference2.append([r[0], r[1]])
+        except:
+            pass
+    else:
+        reference2 = 0
+    #
+    return reference2
+    
+def fdef(default):
+    default2 = default
+    if not default2:
+        default2 = ''
+    #
+    if (type(default) in [type([])]) and default:
+        default2 = ''
+        #
+        deff = default[0]
+        default.pop(0)
+        defs = []
+        try:
+            for dd in default:
+                dq = web.sqlquote(dd)
+                defs.append(dq)
+            #
+            if defs:
+                defsq = web.sqlquote('').join(defs, ',')
+            else:
+                defsq = ''
+            #
+            defq = 'select %s(%s) as f' %(deff, defsq)
+            defr = db.query(defq).list()
+            if defr:
+                default2 = defr[0]['f']
+        except:
+            pass
+    #
+    return default2
+    
+def parseform2(code, table):
+    fsub = code
+    if not type(fsub) == type([]):
+        fsub = []
+    #
+    try:
+        fsub_table = fsub[0]
+        fsub_key = fsub[1]
+        fsub_rows = fsub[2]
+        fsub_data = fsub[3]
+        #
+        if not fsub_table in tables() or fsub_table == table:
+            raise Exception
+        if not fsub_key in columns(fsub_table, True):
+            raise Exception
+        if not type(fsub_data) == type([]):
+            raise Exception
+        if not type(fsub_rows) == type(FORM_SUB_ROWS_DEFAULT):
+            raise Exception
+        fsub_rows = [int(x) for x in fsub_rows if int(x) > 0 or 0]
+        if fsub_rows[1] > fsub_rows[0]:
+            raise Exception
+        if len(fsub_rows) != len(FORM_SUB_ROWS_DEFAULT):
+            raise Exception
+    except:
+        fsub_table = ''
+        fsub_key = ''
+        fsub_rows = FORM_SUB_ROWS_DEFAULT
+        fsub_data = []
+    #
+    fsub2 = []
+    fsub2_data = []
+    if fsub_table:
+        fsub2.append(fsub_table)
+        fsub2.append(fsub_key)
+        fsub2.append(fsub_rows)
+        fsub2_columns = columns(fsub_table, True)
+        #
+        for d in fsub_data:
+            try:
+                dc = d[0].strip()
+                dl = d[1].strip()
+                reference = d[2]
+                default = d[3]
+                if (not dc) or (not dc in fsub2_columns) or dc == fsub_key:
+                    raise Exception
+                if not dl: 
+                    dl = dc
+                #
+                reference2 = fref(reference)
+                #
+                reference3 = None
+                if type(reference2) == type([]):
+                    reference3 = web.form.Dropdown(dc, args=reference2)
+                #
+                default2 = fdef(default)
+                #
+                if reference3:
+                    reference3.set_value(default2)
+                #
+                fsub2_data.append([dl, dc, reference3, default2])
+            except:
+                continue
+        #
+        fsub2.append(fsub2_data)
+    #
+    return fsub2
+
 def parseform(form):
     fo = s_select('form.code..%s' %(form))
     try:
@@ -1253,60 +1378,13 @@ def parseform(form):
                             if c.get('pk', 0) == 1:
                                 label = '%s%s' %(label, PK_SYM)
                     #
-                    reference2 = 0
-                    if (type(reference) in [type(''), type(u'')]) and reference:#query
-                        reference2 = []
-                        try:
-                            res = db.query(reference)
-                            for r in res:
-                                reference2.append(
-                                    [
-                                        r.get(FORM_REFERENCE_SQL_0, ''), 
-                                        r.get(FORM_REFERENCE_SQL_1, '')
-                                    ]
-                                )
-                        except:
-                            pass
-                    elif (type(reference) in [type([]), type(())]) and reference: #list
-                        reference2 = []
-                        try:
-                            for r in reference:
-                                reference2.append([r[0], r[1]])
-                        except:
-                            pass
-                    else:
-                        reference2 = 0
+                    reference2 = fref(reference)
                     #
                     reference3 = None
                     if type(reference2) == type([]):
                         reference3 = web.form.Dropdown(col, args=reference2)
                     #
-                    default2 = default
-                    if not default2:
-                        default2 = ''
-                    #
-                    if (type(default) in [type([])]) and default:
-                        default2 = ''
-                        #
-                        deff = default[0]
-                        default.pop(0)
-                        defs = []
-                        try:
-                            for dd in default:
-                                dq = web.sqlquote(dd)
-                                defs.append(dq)
-                            #
-                            if defs:
-                                defsq = web.sqlquote('').join(defs, ',')
-                            else:
-                                defsq = ''
-                            #
-                            defq = 'select %s(%s) as f' %(deff, defsq)
-                            defr = db.query(defq).list()
-                            if defr:
-                                default2 = defr[0]['f']
-                        except:
-                            pass
+                    default2 = fdef(default)
                     #
                     if reference3:
                         try:
@@ -1347,101 +1425,7 @@ def parseform(form):
                     )
     #
     fsub = fo.get(FORM_KEY_SUB, [])
-    if not type(fsub) == type([]):
-        fsub = []
-    #
-    try:
-        fsub_table = fsub[0]
-        fsub_key = fsub[1]
-        fsub_rows = fsub[2]
-        fsub_data = fsub[3]
-        #
-        if not fsub_table in tables() or fsub_table == table:
-            raise Exception
-        if not fsub_key in columns(fsub_table, True):
-            raise Exception
-        if not type(fsub_data) == type([]):
-            raise Exception
-        if not type(fsub_rows) == type(FORM_SUB_ROWS_DEFAULT):
-            raise Exception
-    except:
-        fsub_table = ''
-        fsub_key = ''
-        fsub_rows = FORM_SUB_ROWS_DEFAULT
-        fsub_data = []
-    #
-    fsub2 = []
-    fsub2_data = []
-    if fsub_table:
-        fsub2.append(fsub_table)
-        fsub2.append(fsub_key)
-        fsub2.append(fsub_rows)
-        fsub2_columns = columns(fsub_table, True)
-        #
-        for d in fsub_data:
-            try:
-                dc = d[0].strip()
-                dl = d[1].strip()
-                reference = d[2]
-                default = d[3]
-                if (not dc) or (not dc in fsub2_columns) or dc == fsub_key:
-                    raise Exception
-                if not dl: 
-                    dl = dc
-                #
-                reference2 = 0
-                if (type(reference) in [type(''), type(u'')]) and reference.strip():#query
-                    reference2 = []
-                    res = db.query(reference)
-                    for r in res:
-                        reference2.append(
-                            [
-                                r.get(FORM_REFERENCE_SQL_0, ''), 
-                                r.get(FORM_REFERENCE_SQL_1, '')
-                            ]
-                        )
-                elif (type(reference) == type([])) and reference: #list
-                    reference2 = []
-                    for r in reference:
-                        reference2.append([r[0], r[1]])
-                #
-                reference3 = None
-                if type(reference2) == type([]):
-                    reference3 = web.form.Dropdown(col, args=reference2)
-                #
-                default2 = default
-                if not default2:
-                    default2 = ''
-                #
-                if (type(default) in [type([])]) and default:
-                    default2 = ''
-                    #
-                    deff = default[0]
-                    default.pop(0)
-                    defs = []
-
-                    for dd in default:
-                        dq = web.sqlquote(dd)
-                        defs.append(dq)
-                    #
-                    if defs:
-                        defsq = web.sqlquote('').join(defs, ',')
-                    else:
-                        defsq = ''
-                    #
-                    defq = 'select %s(%s) as f' %(deff, defsq)
-                    defr = db.query(defq).list()
-                    if defr:
-                        default2 = defr[0]['f']
-                #
-                if reference3:
-                    reference3.set_value(default2)
-                #
-                fsub2_data.append([dl, dc, reference3, default2])
-            except:
-                continue
-        #
-        fsub2.append(fsub2_data)
+    fsub2 = parseform2(fsub, table)
     #
     return [ftitle, finfo, input, fsub2]
 
@@ -1508,60 +1492,13 @@ def parsereport(report):
             constraint = fd.get(REPORT_KEY_DATA_CONSTRAINT, [])
             type1 = fd.get(REPORT_KEY_DATA_TYPE, '').lower().strip()
             #
-            reference2 = 0
-            if (type(reference) in [type(''), type(u'')]) and reference:#query
-                reference2 = []
-                try:
-                    res = db.query(reference)
-                    for r in res:
-                        reference2.append(
-                            [
-                                r.get(REPORT_REFERENCE_SQL_0, ''), 
-                                r.get(REPORT_REFERENCE_SQL_1, '')
-                            ]
-                        )
-                except:
-                    pass
-            elif (type(reference) in [type([]), type(())]) and reference: #list
-                reference2 = []
-                try:
-                    for r in reference:
-                        reference2.append([r[0], r[1]])
-                except:
-                    pass
-            else:
-                reference2 = 0
+            reference2 = fref(reference)
             #
             reference3 = None
             if type(reference2) == type([]):
                 reference3 = web.form.Dropdown(key, args=reference2)
             #
-            default2 = default
-            if not default2:
-                default2 = ''
-            #
-            if (type(default) in [type([])]) and default:
-                default2 = ''
-                #
-                deff = default[0]
-                default.pop(0)
-                defs = []
-                try:
-                    for dd in default:
-                        dq = web.sqlquote(dd)
-                        defs.append(dq)
-                    #
-                    if defs:
-                        defsq = web.sqlquote('').join(defs, ',')
-                    else:
-                        defsq = ''
-                    #
-                    defq = 'select %s(%s) as f' %(deff, defsq)
-                    defr = db.query(defq).list()
-                    if defr:
-                        default2 = defr[0]['f']
-                except:
-                    pass
+            default2 = fdef(default)
             #
             if reference3:
                 try:
