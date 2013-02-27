@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.24'
+VERSION = '0.25'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1274,6 +1274,7 @@ def parseform2(code, table):
         fsub_key = fsub[1]
         fsub_rows = fsub[2]
         fsub_data = fsub[3]
+        fsub_info = fsub[4]
         #
         if not fsub_table in tables() or fsub_table == table:
             raise Exception
@@ -1293,6 +1294,7 @@ def parseform2(code, table):
         fsub_key = ''
         fsub_rows = FORM_SUB_ROWS_DEFAULT
         fsub_data = []
+        fsub_info = ''
     #
     fsub2 = []
     fsub2_data = []
@@ -1317,18 +1319,20 @@ def parseform2(code, table):
                 #
                 reference3 = None
                 if type(reference2) == type([]):
-                    reference3 = web.form.Dropdown(dc, args=reference2)
+                    dcname = '%s.%s' %(fsub_table, dc)
+                    reference3 = web.form.Dropdown(dcname, args=reference2)
                 #
                 default2 = fdef(default)
                 #
                 if reference3:
                     reference3.set_value(default2)
                 #
-                fsub2_data.append([dl, dc, reference3, default2])
+                fsub2_data.append([dc, dl, reference3, default2])
             except:
                 continue
         #
         fsub2.append(fsub2_data)
+        fsub2.append(fsub_info)
     #
     return fsub2
 
@@ -2307,6 +2311,41 @@ $elif data['command'] == 'form.run':
                 <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
             $else:
                 <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
+        </td>
+        </tr>
+    $if data['sub']:
+        $ subt = data['sub'][0]
+        $ subr = data['sub'][2]
+        $ subd = data['sub'][3]
+        $ subc = 1
+        <tr>
+        <td colspan='2'>
+        $data['sub'][4]
+        <table>
+        <th>&nbsp;</th>
+        $for sh in subd:
+            <th>$sh[1]</th>
+        $for sr in range(subr[0]):
+            <tr>
+            <td align='right'>
+            $if subc <= subr[1]:
+                <b>$subc</b>
+            $else:
+                $subc
+            </td>
+            $for sh in subd:
+                <td>
+                $if sh[2]:
+                    $sh[2].render()
+                $else:
+                    $ shv = ''
+                    $if sh[3]:
+                        $ shv = sh[3]
+                    <input type='text' name='$subt.$sh[0]' value='$shv'>
+                </td>
+            </tr>
+            $ subc = subc + 1
+        </table>
         </td>
         </tr>
     <tr>
