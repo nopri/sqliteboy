@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.25
+Documentation for version 0.26
 
 
 .. contents:: 
@@ -36,7 +36,7 @@ Why
 
   Multi user, simple (yet flexible) form (data entry) and reporting can 
   be created by admin (simple JSON syntax), and can be run by 
-  admin/user (configurable).
+  admin/user (configurable). Very simple subform is also supported.
   
   Form field supports predefined values (options) from SQL Query or 
   Python list. Also, default value can be result of function call or 
@@ -109,6 +109,10 @@ Features
   - As of v0.21, onsave event is also supported, to execute SQL Query 
     (and use the result) just before the data is saved. The SQL Query 
     can be very complex and involves nested function calls.
+
+  - As of v0.26, very simple subform is also supported. Subform can be 
+    used in one to many relationship. However, fields in subform is 
+    limited, compared to form. 
   
 - Report Support (Extended feature, new in v0.16)
 
@@ -373,6 +377,12 @@ Form Code Reference
 - Onsave event can be used to execute SQL Query (and use the result) 
   just before the data is saved. The SQL Query can be very complex and 
   involves nested function calls.
+  
+- Very simple subform is also supported. Subform can be used in one to 
+  many relationship. However, fields in subform is limited, compared to 
+  form (only reference and default are supported; all is required; 
+  none is readonly; column(s) can be selected). When saving data, 
+  transaction is used. 
 
 - Keys:
 
@@ -386,6 +396,32 @@ Form Code Reference
 | title         | form title              | str           | optional    | "My Form"                |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | form information        | str           | optional    | "Form Information"       |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| sub           | subform                 | list          | optional    |                          |              
+|               |                         |               |             |                          |
+|               | - must be list of five  |               |             | - ["table2", "a", [5,3], |
+|               |   members: related      |               |             |   [["b", "Column B",     |
+|               |   table (str); related  |               |             |   [ ["0", "NO"],         |
+|               |   column in that table  |               |             |   ["1", "YES"] ], "1"],  |
+|               |   (str); list of [rows  |               |             |   ["c", "Column C",      |
+|               |   (int), required rows  |               |             |   "select a, b from      |
+|               |   (int)]; list of       |               |             |   table1", ""]],         |
+|               |   list (column) [column |               |             |   "My Subform"]          |
+|               |   (str), label (str),   |               |             |                          |
+|               |   reference, default];  |               |             |                          |
+|               |   subform information   |               |             |                          |
+|               |   (str)                 |               |             |                          |
+|               |                         |               |             |                          |
+|               | - see Keys (data) below |               |             |                          |
+|               |   for reference/default |               |             |                          |
+|               |                         |               |             |                          |
+|               | - return value of       |               |             |                          |
+|               |   last_insert_rowid()   |               |             |                          |
+|               |   will be written to    |               |             |                          |
+|               |   related column (each  |               |             |                          |
+|               |   row). Use ROWID column|               |             |                          |
+|               |   in master table to get|               |             |                          |
+|               |   the relation)         |               |             |                          | 
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
@@ -563,6 +599,16 @@ Form Code Reference
     {
       "title" : "My Form 1",
       "info"  : "Form Information", 
+      "sub"   : [
+                  "table2", 
+                  "a", 
+                  [5,3], 
+                  [
+                    ["b", "Column B", [ ["0", "NO"], ["1", "YES"] ], "1"],
+                    ["c", "Column C", "select a, b from table1", ""]
+                  ],
+                  "My Subform" 
+                ],      
       "data"  : [
                   {
                     "table"     : "table1",

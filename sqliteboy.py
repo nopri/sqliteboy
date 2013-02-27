@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.25'
+VERSION = '0.26'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -338,6 +338,7 @@ LANGS = {
             'x_yes': 'yes',
             'x_no': 'no',
             'x_enabled': 'enabled',
+            'x_required': 'required',
             'x_not_enabled': 'not enabled',
             'x_version': 'version',
             'x_sqlite_version': 'SQLite version',
@@ -434,6 +435,7 @@ LANGS = {
             'e_form_run_required': 'ERROR: required',
             'e_form_run_constraint': 'ERROR: constraint',
             'e_form_run_onsave': 'ERROR: onsave',
+            'e_form_run_subform': 'ERROR: subform',
             'e_form_insert_general': 'ERROR: processing form',
             'e_report_edit_whitespace': 'ERROR: could not handle report with whitespace in name',
             'e_report_edit_exists': 'ERROR: report already exists',
@@ -3661,11 +3663,14 @@ class form_run:
             dflt()
         #
         finput = None
+        fsub = None
         try:
             pform = parseform(form)
             finput = pform[2]
+            fsub = pform[3]
         except:
             pform = None
+            fsub = None
         #
         if not pform or not finput:
             dflt()
@@ -3763,9 +3768,56 @@ class form_run:
         if not stable:
             dflt()
         #
+        #subform
+        fsub_table = ''
+        fsub_all2 = []
+        fsub_ref = ''
+        try:
+            fsub_all = {}
+            fsub_rows = 0
+            fsub_req = 0
+            fsub_info = ''
+            if fsub:
+                fsub_table = fsub[0]
+                fsub_ref = fsub[1]
+                fsub_rows = fsub[2][0]
+                fsub_req = fsub[2][1]
+                fsub_info = fsub[4]
+                for f in fsub[3]:
+                    fsub_col = f[0]
+                    fsub_k = '%s.%s' %(fsub_table, fsub_col)
+                    fsub_i = web.webapi.rawinput().get(fsub_k)
+                    if not isinstance(fsub_i, list): 
+                        fsub_i = [fsub_i]
+                    fsub_all[fsub_col] = fsub_i
+            #
+            fsub_keys = fsub_all.keys()
+            for i in range(fsub_rows):
+                fsub_t = {}
+                for k in fsub_keys:
+                    fsub_t[k] = fsub_all[k][i]
+                    if not fsub_t[k].strip(): 
+                        fsub_t = {}
+                        break
+                if fsub_t.keys():
+                    fsub_all2.append(fsub_t)
+            #
+            if len(fsub_all2) < fsub_req:
+                fsub_all2 = []
+                raise Exception, '%s %s %s %s' %(
+                        fsub_info,
+                        fsub_req,
+                        _['x_row'],
+                        _['x_required']
+                        )
+        except Exception, e:
+            errors.append( [ _['e_form_run_subform'], str(e)] )
+        #        
         if errors:
             sess[SKF_RUN] = errors
         else:
+            form_trans = db.transaction()
+            #
             try:
                 okeys = ocols.keys()
                 okeys2 = ['$'+x for x in okeys]
@@ -3775,10 +3827,29 @@ class form_run:
                         ','.join(okeys2),
                     )
                 db.query(q, vars=ocols)
+                #
+                form_last = db.query('select last_insert_rowid() as x')[0]['x']
+                #
+                #subform save
+                if (fsub_table in tables()) and (fsub_all2) and (fsub_ref in columns(fsub_table, True)):
+                    for f in fsub_all2:
+                        f[fsub_ref] = form_last
+                        fkeys = f.keys()
+                        fkeys2 = ['$'+x for x in fkeys]
+                        fq = 'insert into %s(%s) values(%s)' %(
+                                fsub_table,
+                                ','.join(fkeys),
+                                ','.join(fkeys2)
+                            )
+                        db.query(fq, f)
+                #
                 sess[SKF_RUN] = [ [_['o_form_run']] ]
             except Exception, e:
+                form_trans.rollback()
                 sess[SKF_RUN] = [ [_['e_form_insert_general'], str(e)] ]
                 raise web.seeother('/form/run/%s' %(form))
+            else:
+                form_trans.commit()
         #
         raise web.seeother('/form/run/%s' %(form))
         
