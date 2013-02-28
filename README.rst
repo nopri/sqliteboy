@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.26
+Documentation for version 0.27
 
 
 .. contents:: 
@@ -113,6 +113,16 @@ Features
   - As of v0.26, very simple subform is also supported. Subform can be 
     used in one to many relationship. However, fields in subform is 
     limited, compared to form. 
+    
+  - As of v0.27, custom result message (based on SQL query result), 
+    is also supported. 
+    
+  - As of v0.27, optional, additional SQL query statement(s) can be 
+    provided, and each of them will be executed in order, if you need 
+    to perform additional task(s), after the form data is saved (for 
+    example, write to another table). Previously, one might use report 
+    if need to write to several tables. Last insert rowid value is 
+    provided.
   
 - Report Support (Extended feature, new in v0.16)
 
@@ -370,9 +380,9 @@ Form Code Reference
 
 - Python dict
 
-- Only single table is supported. For multiple table data entry
-  (or custom SQL query), please use Report feature. See Report Code Reference
-  below.
+- Only single table is supported. If you need to write to another 
+  table after form data is saved, you can use additional SQL query 
+  statement(s) (see below). 
 
 - Onsave event can be used to execute SQL Query (and use the result) 
   just before the data is saved. The SQL Query can be very complex and 
@@ -383,6 +393,14 @@ Form Code Reference
   form (only reference and default are supported; all is required; 
   none is readonly; column(s) can be selected). When saving data, 
   transaction is used. 
+
+- Custom result message (based on SQL query result), is also supported.  
+  
+- Optional, additional SQL query statement(s) can be provided, and each 
+  of them will be executed in order, if you need to perform additional 
+  task(s), after the form data is saved (for example, write to another 
+  table). Previously, one might use report if need to write to several 
+  tables. Last insert rowid value is provided.
 
 - Keys:
 
@@ -422,6 +440,52 @@ Form Code Reference
 |               |   row). Use ROWID column|               |             |                          |
 |               |   in master table to get|               |             |                          |
 |               |   the relation)         |               |             |                          | 
++---------------+-------------------------+---------------+-------------+--------------------------+
+| message       | custom result message   | list          | optional    |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             | - [                      |
+|               | - not applicable to     |               |             |    "unknown result",     |
+|               |   subform               |               |             |    "zero result",        |
+|               |                         |               |             |    "success: $result"    |
+|               | - must be list of three |               |             |   ]                      |
+|               |   members (str)         |               |             |                          |
+|               |                         |               |             |                          |
+|               |   ["message res < 0",   |               |             |                          |
+|               |   "message res = 0",    |               |             |                          |
+|               |   "message res > 0"]    |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $result (in message)  |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   actual SQL Query      |               |             |                          |
+|               |   result                |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| sql2          | additional sql query    | list          | optional    |                          |
+|               | statement(s)            |               |             |                          |
+|               |                         |               |             | - ["insert into table3(  |
+|               | - must be list of str   |               |             |   a, b, c, d, e) values( |
+|               |                         |               |             |   $a, $b, $c, $d, $e)",  |
+|               | - $<column> will be     |               |             |   "insert into table4(x) |
+|               |   replaced by user input|               |             |   values(                |
+|               |   value for that column |               |             |   $last_insert_rowid)"]  |
+|               |                         |               |             |                          |
+|               | - $last_insert_rowid    |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   last_insert_rowid()   |               |             |                          |
+|               |   function call result  |               |             |                          |
+|               |   (after insert to main |               |             |                          |
+|               |   table)                |               |             |                          |
+|               |                         |               |             |                          |
+|               | - quoting is            |               |             |                          |
+|               |   automatically done    |               |             |                          |
+|               |                         |               |             |                          |
+|               | - each statement is     |               |             |                          |
+|               |   executed in           |               |             |                          |
+|               |   transaction (after    |               |             |                          |
+|               |   form data is saved)   |               |             |                          |
+|               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
@@ -608,7 +672,11 @@ Form Code Reference
                     ["c", "Column C", "select a, b from table1", ""]
                   ],
                   "My Subform" 
-                ],      
+                ],  
+      "sql2"  : [
+                  "insert into table3(a, b, c, d, e) values($a, $b, $c, $d, $e)",
+                  "insert into table4(x) values($last_insert_rowid)"
+                ],                    
       "data"  : [
                   {
                     "table"     : "table1",
@@ -645,7 +713,7 @@ Form Code Reference
                     "constraint": ["sqliteboy_as_integer", 1, "> 100", "must be larger than 100"]
                   }
                 ],
-
+      "message"  : ["unknown result", "zero result", "success: $result"],
       "security" : {
                      "run" : ""
                    }
@@ -908,7 +976,7 @@ Report Code Reference
                     "constraint": ["sqliteboy_as_integer", 1, "> 0", "e must be integer"]
                   }
                 ],
-
+      "message"  : ["unknown result", "zero result", "success: $result"],
       "security" : {
                      "run" : ""
                    }

@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.26'
+VERSION = '0.27'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -132,6 +132,8 @@ FORM_KEY_SECURITY = 'security'
 FORM_KEY_SECURITY_RUN = 'run'
 FORM_KEY_DATA_ONSAVE = 'onsave'
 FORM_KEY_SUB = 'sub'
+FORM_KEY_MESSAGE = 'message'
+FORM_KEY_SQL2 = 'sql2'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
                     FORM_KEY_DATA_COLUMN,
@@ -141,6 +143,8 @@ FORM_REFERENCE_SQL_1 = 'b'
 FORM_ONSAVE_SQL_VALUE = 'value'
 FORM_ONSAVE_SQL_RET = 'onsave'
 FORM_SUB_ROWS_DEFAULT = [5, 1]#rows, required rows
+FORM_MESSAGE_LEN = 3
+FORM_MESSAGE_VAR_RESULT = '$result'
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -1433,7 +1437,20 @@ def parseform(form):
     fsub = fo.get(FORM_KEY_SUB, [])
     fsub2 = parseform2(fsub, table)
     #
-    return [ftitle, finfo, input, fsub2]
+    message1 = fo.get(FORM_KEY_MESSAGE, [])  
+    if not type(message1) == type([]):
+        message1 = []
+    message2 = []
+    if len(message1) == FORM_MESSAGE_LEN:
+        message2 = message1
+    message2 = [str(x) for x in message2]        
+    #
+    sql2 = fo.get(FORM_KEY_SQL2, [])  
+    if not type(sql2) == type([]):
+        sql2 = []
+    sql2 = [str(x) for x in sql2]        
+    #
+    return [ftitle, finfo, input, fsub2, message2, sql2]
 
 def reqreport(report):
     try:
@@ -3664,13 +3681,18 @@ class form_run:
         #
         finput = None
         fsub = None
+        message2 = None
+        fsql2 = None
         try:
             pform = parseform(form)
             finput = pform[2]
             fsub = pform[3]
+            message2 = pform[4]
+            fsql2 = pform[5]
         except:
             pform = None
             fsub = None
+            message2 = None
         #
         if not pform or not finput:
             dflt()
@@ -3794,11 +3816,14 @@ class form_run:
             fsub_keys = fsub_all.keys()
             for i in range(fsub_rows):
                 fsub_t = {}
-                for k in fsub_keys:
-                    fsub_t[k] = fsub_all[k][i]
-                    if not fsub_t[k].strip(): 
-                        fsub_t = {}
-                        break
+                try:
+                    for k in fsub_keys:
+                        fsub_t[k] = fsub_all[k][i]
+                        if not fsub_t[k] or not fsub_t[k].strip(): 
+                            fsub_t = {}
+                            break
+                except:
+                    fsub_t = {}
                 if fsub_t.keys():
                     fsub_all2.append(fsub_t)
             #
@@ -3826,7 +3851,7 @@ class form_run:
                         ','.join(okeys),
                         ','.join(okeys2),
                     )
-                db.query(q, vars=ocols)
+                form_res = db.query(q, vars=ocols)
                 #
                 form_last = db.query('select last_insert_rowid() as x')[0]['x']
                 #
@@ -3843,7 +3868,27 @@ class form_run:
                             )
                         db.query(fq, f)
                 #
-                sess[SKF_RUN] = [ [_['o_form_run']] ]
+                #custom SQL (sql2)
+                ocols['last_insert_rowid'] = form_last
+                if fsql2:
+                    for fsql in fsql2:
+                        db.query(str(fsql), vars=ocols)
+                #
+                #custom message
+                message3 = _['o_form_run']
+                if message2 and len(message2) == FORM_MESSAGE_LEN:
+                    message2b = ''
+                    if form_res < 0:
+                        message2b = message2[0]
+                    elif form_res == 0:
+                        message2b = message2[1]
+                    elif form_res > 0:
+                        message2b = message2[2]
+                    message2b = str(message2b)
+                    message3 = message2b.replace(FORM_MESSAGE_VAR_RESULT, 
+                        str(form_res))
+                #
+                sess[SKF_RUN] = [ [message3] ]
             except Exception, e:
                 form_trans.rollback()
                 sess[SKF_RUN] = [ [_['e_form_insert_general'], str(e)] ]
