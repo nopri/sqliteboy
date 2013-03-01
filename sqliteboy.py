@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.27'
+VERSION = '0.28'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -3716,9 +3716,12 @@ class form_run:
                 stable = table
                 onsave = f[9]
                 #
-                cv = input.get(col).strip()
-            except:
-                sess[SKF_RUN] = [ [_['e_form_insert_general']] ]
+                cv_test = input.get(col)
+                cv = ''
+                if cv_test and hasattr(cv_test, 'strip'):
+                    cv = cv_test.strip()
+            except Exception, e:
+                sess[SKF_RUN] = [ [_['e_form_insert_general'], str(e)] ]
                 raise web.seeother('/form/run/%s' %(form))
             #
             if required == 1 and not cv:
@@ -4312,9 +4315,12 @@ class report_run:
                 constraint2 = f[6]
                 type2 = f[7]
                 #
-                cv = input.get(key).strip()
-            except:
-                sess[SKR_RUN] = [ [_['e_report_select_general']] ]
+                cv_test = input.get(key)
+                cv = ''
+                if cv_test and hasattr(cv_test, 'strip'):
+                    cv = cv_test.strip()
+            except Exception, e:
+                sess[SKR_RUN] = [ [_['e_report_select_general'], str(e)] ]
                 raise web.seeother('/report/run/%s' %(report))
             #
             if required == 1 and not cv:

@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.27
+Documentation for version 0.28
 
 
 .. contents:: 
@@ -439,7 +439,9 @@ Form Code Reference
 |               |   related column (each  |               |             |                          |
 |               |   row). Use ROWID column|               |             |                          |
 |               |   in master table to get|               |             |                          |
-|               |   the relation)         |               |             |                          | 
+|               |   the relation.         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | message       | custom result message   | list          | optional    |                          |
 |               |                         |               |             |                          |
