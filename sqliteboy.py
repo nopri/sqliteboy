@@ -38,7 +38,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.28'
+VERSION = '0.29'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -172,6 +172,8 @@ REPORT_REFERENCE_SQL_0 = 'a'
 REPORT_REFERENCE_SQL_1 = 'b'
 REPORT_MESSAGE_LEN = 3
 REPORT_MESSAGE_VAR_RESULT = '$result'
+FAVICON_WIDTH = 16
+FAVICON_HEIGHT = 16
 
 
 #----------------------------------------------------------------------#
@@ -788,6 +790,7 @@ def proc_login(handle):
     #
     if not isnosb():
         if not sess.user:
+            if path == '/favicon.ico': return handle()
             if not path == '/login':
                 raise web.seeother('/login')
         else:
@@ -1579,7 +1582,77 @@ def s_init():
     prepsess()
     db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER, 
         e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), f='1')
-    
+
+def favicon(width=FAVICON_WIDTH, height=FAVICON_HEIGHT, data=None):
+    #ref: ico and bmp file format on wikipedia
+    #little endian
+
+    #cool chessboard-like (color: from default/builtin theme)
+
+    w_i = width
+    h_i = height
+
+    w_b = w_i
+    h_b = h_i * 2
+    b_h = 40
+    bpp = 24
+    bxp = 3
+    c_p = 1
+    x_b = 1
+    s_d = 2
+    ppm = 2835
+    clx = (128, 96, 64)
+    clw = (255, 255, 255)
+    clk = (0, 0, 0)
+
+    c = ''
+
+    #icondir
+    h = (0, 1, x_b)
+    s = struct.Struct('< h h h')
+    p = s.pack(*h)
+    c += p
+
+    #icondirentry 1
+    h = (w_i, h_i, 0, 0, c_p, bpp, b_h + (w_b * h_b * bxp), 22)
+    s = struct.Struct('< b b b b h h i i')
+    p = s.pack(*h)
+    c += p
+
+    #bitmapinfoheader
+    h = (b_h, w_b, h_b, c_p, bpp, 0, w_b * h_b, ppm, ppm, 0, 0)
+    s = struct.Struct('< I i i H H I I i i I I')
+    p = s.pack(*h)
+    c += p
+
+    #pixel array
+    for b in range(h_i):
+        for k in range(w_b):
+            if k % s_d:
+                if b % s_d:
+                    h = clx
+                else:
+                    h = clw
+            else:
+                if b % s_d:
+                    h = clw
+                else:
+                    h = clx
+            s = struct.Struct('< B B B')
+            p = s.pack(*h)
+            c += p
+
+    #pixel array 2
+    for b in range(h_i):
+        for k in range(w_b):
+            h = clk
+            s = struct.Struct('< B B B')
+            p = s.pack(*h)
+            c += p
+
+    #
+    return c
+
 
 #----------------------------------------------------------------------#
 # SQLITE UDF (2)                                                       #
@@ -1599,6 +1672,7 @@ T_BASE = '''$def with (data, content)
 <!DOCTYPE html>
 <html>
 <head>
+<link rel='SHORTCUT ICON' href='/favicon.ico'>
 <title>$title(data['title'], '')</title>
 <meta charset='utf-8'>
 <style>
@@ -2566,24 +2640,12 @@ class index:
 
 class favicon_ico:
     def GET(self):
-        #ico file format on wikipedia
-        #header only, image size is set to 0, dummy icon
-        #little-endian
-        #
         content = ''
-
-        #icondir
-        h1 = (0, 1, 1)
-        s1 = struct.Struct('< h h h')
-        p1 = s1.pack(*h1)
-        content += p1
-
-        #icondirentry 1
-        h2 = (16, 16, 2, 0, 1, 1, 0, 22)
-        s2 = struct.Struct('< b b b b h h i i')
-        p2 = s2.pack(*h2)
-        content += p2
-        
+        #
+        try:
+            content = favicon()
+        except:
+            pass
         #
         web.header('Content-Type', 'image/x-icon')
         return content
