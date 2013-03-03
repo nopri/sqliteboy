@@ -28,6 +28,7 @@
 #                a.binaries, 
 #                a.datas, 
 #                name="sqliteboy.exe",
+#                icon="favicon.ico",
 #                console=True,
 #                debug=False
 #            )
@@ -38,7 +39,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.29'
+VERSION = '0.30'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2668,6 +2669,9 @@ class table_action:
             ('table_create', '/table/create'),
             ('query', '/query'),
         )
+        #
+        prepsess()
+        #
         for i in redir:
             if input.has_key(i[0]):
                 raise web.seeother(i[1])
@@ -3935,9 +3939,11 @@ class form_run:
                 #
                 #custom SQL (sql2)
                 ocols['last_insert_rowid'] = form_last
-                if fsql2:
+                if fsql2 and type(fsql2) == type([]):
                     for fsql in fsql2:
-                        db.query(str(fsql), vars=ocols)
+                        if fsql and hasattr(fsql, 'strip'):
+                            if fsql.strip():
+                                db.query(fsql, vars=ocols)
                 #
                 #custom message
                 message3 = _['o_form_run']
