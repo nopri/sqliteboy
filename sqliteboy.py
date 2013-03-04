@@ -39,7 +39,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.30'
+VERSION = '0.31'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -688,6 +688,19 @@ SQLITE_UDF.append(('sqliteboy_normalize_separator', 4, sqliteboy_normalize_separ
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
 #----------------------------------------------------------------------#
+def isstr(s, empty_ok=False):
+    ret = False
+    #
+    if hasattr(s, 'strip'):
+        ret = True
+        if empty_ok == False:
+            if s.strip():
+                ret = True
+            else:
+                ret = False
+    #
+    return ret
+
 def isadmin():
     try:
         return sess.admin == 1
@@ -1452,7 +1465,7 @@ def parseform(form):
     sql2 = fo.get(FORM_KEY_SQL2, [])  
     if not type(sql2) == type([]):
         sql2 = []
-    sql2 = [str(x) for x in sql2]        
+    sql2 = [str(x) for x in sql2 if isstr(x)]
     #
     return [ftitle, finfo, input, fsub2, message2, sql2]
 
@@ -1654,7 +1667,23 @@ def favicon(width=FAVICON_WIDTH, height=FAVICON_HEIGHT, data=None):
     #
     return c
 
-
+def fdialog_open():
+    ret = ()
+    #
+    try:
+        import win32gui
+        res = win32gui.GetOpenFileNameW(
+                InitialDir=CWDIR, 
+                Title=TITLE
+            )
+        resf = res[0]
+        ret = (os.path.basename(resf), resf)
+    except:
+        ret = ()
+    #
+    return ret
+    
+    
 #----------------------------------------------------------------------#
 # SQLITE UDF (2)                                                       #
 #----------------------------------------------------------------------#
@@ -4502,12 +4531,22 @@ if __name__ == '__main__':
     log(TITLE)
     log(APP_DESC)
     log('')
+    #
+    wtest = ()
+    #
     if len(sys.argv) < 2:
         log('%s %s' %(sys.argv[0], _['usage']))
-        sys.exit(1)
+        #
+        wtest = fdialog_open()
+        if not wtest:
+            sys.exit(1)
     #
-    dbfile0 = sys.argv[1]
-    dbfile = os.path.abspath(dbfile0)
+    if wtest:
+        dbfile0 = wtest[0]
+        dbfile = wtest[1]        
+    else:
+        dbfile0 = sys.argv[1]
+        dbfile = os.path.abspath(dbfile0)
     #
     try:
         port = int(sys.argv[2])

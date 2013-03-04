@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.30
+Documentation for version 0.31
 
 
 .. contents:: 
@@ -55,6 +55,10 @@ Why
   
 - I need simple form (data entry) and reporting solution. This 
   application is under active development. I use it at work and home. 
+
+- If you are using Windows, standalone / portable application is 
+  available. Run from Windows Explorer (double-click), no command line 
+  needed. 
   
 
 Features
@@ -273,6 +277,8 @@ Standalone Windows Application
 - Can be run by standard user
 - There is no need to install Python / requirements above
 - Single file executable (+/- 4 MB)
+- Run from Windows Explorer (double-click), no command line needed
+- To quit properly, press CTRL-C in terminal (cmd) window
 - Download: http://tedut.com/sqliteboy.exe
 
 
@@ -285,12 +291,21 @@ How To Run
 ========================================================================
 Command::
 
-    sqliteboy.exe <database_file> [port]
+    run sqliteboy.exe (double-click) from Windows Explorer, and select
+    database file (automatically create when opening a non-existent 
+    file). 
     
     (if you are using Standalone Windows Application)
     
     or
 
+    sqliteboy.exe <database_file> [port]
+    
+    (if you are using Standalone Windows Application and prefer command
+    line or need to set port)
+    
+    or
+    
     python sqliteboy.py <database_file> [port]
     
     (if you are using source code)
