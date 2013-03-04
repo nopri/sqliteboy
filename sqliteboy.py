@@ -39,7 +39,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.31'
+VERSION = '0.32'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1670,16 +1670,17 @@ def favicon(width=FAVICON_WIDTH, height=FAVICON_HEIGHT, data=None):
 def fdialog_open():
     ret = ()
     #
-    try:
-        import win32gui
-        res = win32gui.GetOpenFileNameW(
-                InitialDir=CWDIR, 
-                Title=TITLE
-            )
-        resf = res[0]
-        ret = (os.path.basename(resf), resf)
-    except:
-        ret = ()
+    if sys.platform.lower() == 'win32': 
+        try:
+            import win32gui
+            res = win32gui.GetOpenFileNameW(
+                    InitialDir=CWDIR, 
+                    Title=TITLE
+                )
+            resf = res[0]
+            ret = (os.path.basename(resf), resf)
+        except:
+            ret = ()
     #
     return ret
     
@@ -2367,7 +2368,8 @@ $elif data['command'] == 'form.edit':
     </p>    
     $if data['message']:
         <div>
-            $data['message']
+            $for m in data['message']:
+                $': '.join(m)<br>
         </div>
     <form action="$data['action_url']" method="$data['action_method']">
     $for h in data['hidden']:
@@ -2489,7 +2491,8 @@ $elif data['command'] == 'report.edit':
     </p>    
     $if data['message']:
         <div>
-            $data['message']
+            $for m in data['message']:
+                $': '.join(m)<br>
         </div>
     <form action="$data['action_url']" method="$data['action_method']">
     $for h in data['hidden']:
@@ -4070,12 +4073,12 @@ class form_edit:
         xform = ''
         if mode == MODE_INSERT:
             if not validfname(name):
-                sess[SKF_CREATE] = _['e_form_edit_name']
+                sess[SKF_CREATE] = [[_['e_form_edit_name']]]
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(code), MODE_INSERT))
             #
             if hasws(name):
-                sess[SKF_CREATE] = _['e_form_edit_whitespace']
+                sess[SKF_CREATE] = [[_['e_form_edit_whitespace']]]
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(code), MODE_INSERT))
             #
@@ -4086,7 +4089,7 @@ class form_edit:
             all = s_select('form.code')
             allf = [x['d'] for x in all]
             if name in allf:
-                sess[SKF_CREATE] = _['e_form_edit_exists']
+                sess[SKF_CREATE] = [[_['e_form_edit_exists']]]
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(code), MODE_INSERT))
             #
@@ -4096,18 +4099,18 @@ class form_edit:
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.insert(FORM_TBL, a='form', b='code', d=name, e=ocode)
-            except:
-                sess[SKF_CREATE] = _['e_form_edit_syntax']
+            except Exception, e:
+                sess[SKF_CREATE] = [[_['e_form_edit_syntax'], str(e)]]
                 raise web.seeother('/form/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(ocode), MODE_INSERT))
         else:
             if not validfname(name):
-                sess[SKF_CREATE] = _['e_form_edit_name']
+                sess[SKF_CREATE] = [[_['e_form_edit_name']]]
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
                         name, urllib.quote(code), form))
             #
             if hasws(name):
-                sess[SKF_CREATE] = _['e_form_edit_whitespace']
+                sess[SKF_CREATE] = [[_['e_form_edit_whitespace']]]
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
                         name, urllib.quote(code), form))
             #
@@ -4118,7 +4121,7 @@ class form_edit:
             all = s_select('form.code')
             allf = [x['d'] for x in all]
             if (name != form) and (name in allf):
-                sess[SKF_CREATE] = _['e_form_edit_exists']
+                sess[SKF_CREATE] = [[_['e_form_edit_exists']]]
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
                         name, urllib.quote(code), form))
             #
@@ -4131,8 +4134,8 @@ class form_edit:
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
                     vars={'a': 'form', 'b': 'code', 'd': form}, d=name, e=ocode)
-            except:
-                sess[SKF_CREATE] = _['e_form_edit_syntax']
+            except Exception, e:
+                sess[SKF_CREATE] = [[_['e_form_edit_syntax'], str(e)]]
                 raise web.seeother('/form/edit?name=%s&code=%s&form=%s' %(
                         name, urllib.quote(ocode), form))
         #
@@ -4232,12 +4235,12 @@ class report_edit:
         xreport = ''
         if mode == MODE_INSERT:
             if not validfname(name):
-                sess[SKR_CREATE] = _['e_report_edit_name']
+                sess[SKR_CREATE] = [[_['e_report_edit_name']]]
                 raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(code), MODE_INSERT))
             #
             if hasws(name):
-                sess[SKR_CREATE] = _['e_report_edit_whitespace']
+                sess[SKR_CREATE] = [[_['e_report_edit_whitespace']]]
                 raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(code), MODE_INSERT))
             #
@@ -4248,7 +4251,7 @@ class report_edit:
             all = s_select('report.code')
             allf = [x['d'] for x in all]
             if name in allf:
-                sess[SKR_CREATE] = _['e_report_edit_exists']
+                sess[SKR_CREATE] = [[_['e_report_edit_exists']]]
                 raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(code), MODE_INSERT))
             #
@@ -4258,18 +4261,18 @@ class report_edit:
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.insert(FORM_TBL, a='report', b='code', d=name, e=ocode)
-            except:
-                sess[SKR_CREATE] = _['e_report_edit_syntax']
+            except Exception, e:
+                sess[SKR_CREATE] = [[_['e_report_edit_syntax'], str(e)]]
                 raise web.seeother('/report/edit?name=%s&code=%s&mode=%s' %(
                         name, urllib.quote(ocode), MODE_INSERT))
         else:
             if not validfname(name):
-                sess[SKR_CREATE] = _['e_report_edit_name']
+                sess[SKR_CREATE] = [[_['e_report_edit_name']]]
                 raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
                         name, urllib.quote(code), report))
             #
             if hasws(name):
-                sess[SKR_CREATE] = _['e_report_edit_whitespace']
+                sess[SKR_CREATE] = [[_['e_report_edit_whitespace']]]
                 raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
                         name, urllib.quote(code), report))
             #
@@ -4280,7 +4283,7 @@ class report_edit:
             all = s_select('report.code')
             allf = [x['d'] for x in all]
             if (name != report) and (name in allf):
-                sess[SKR_CREATE] = _['e_report_edit_exists']
+                sess[SKR_CREATE] = [[_['e_report_edit_exists']]]
                 raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
                         name, urllib.quote(code), report))
             #
@@ -4293,8 +4296,8 @@ class report_edit:
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
                     vars={'a': 'report', 'b': 'code', 'd': report}, d=name, e=ocode)
-            except:
-                sess[SKR_CREATE] = _['e_report_edit_syntax']
+            except Exception, e:
+                sess[SKR_CREATE] = [[_['e_report_edit_syntax'], str(e)]]
                 raise web.seeother('/report/edit?name=%s&code=%s&report=%s' %(
                         name, urllib.quote(ocode), report))
         #

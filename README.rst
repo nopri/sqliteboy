@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.31
+Documentation for version 0.32
 
 
 .. contents:: 
@@ -57,8 +57,9 @@ Why
   application is under active development. I use it at work and home. 
 
 - If you are using Windows, standalone / portable application is 
-  available. Run from Windows Explorer (double-click), no command line 
-  needed. 
+  available (single file executable). Run from Windows Explorer 
+  (double-click), no command line needed. Can be run from USB Flash 
+  Disk. Can be run by standard user.
   
 
 Features
@@ -674,7 +675,32 @@ Form Code Reference
   - tips: use sqliteboy_as_integer function in constraint
     to do integer conversion/comparison
 
-- Example:
+- Example 1:
+::
+
+    {
+      "title" : "My Form (Simple)",
+      "info"  : "Form Information", 
+      "data"  : [
+                  {
+                    "table"     : "table1",
+                    "column"    : "a"
+                  },
+                  {
+                    "table"     : "table1",
+                    "column"    : "d"
+                  },
+                  {
+                    "table"     : "table1",
+                    "column"    : "f"
+                  }
+                ],
+      "security" : {
+                     "run" : ""
+                   }
+    }
+
+- Example 2:
 ::
 
     {
@@ -728,6 +754,10 @@ Form Code Reference
                     "label"     : "e (correct larger than 100)",
                     "required"  : 1,
                     "constraint": ["sqliteboy_as_integer", 1, "> 100", "must be larger than 100"]
+                  },
+                  {
+                    "table"     : "table1",
+                    "column"    : "f"
                   }
                 ],
       "message"  : ["unknown result", "zero result", "success: $result"],
@@ -993,7 +1023,6 @@ Report Code Reference
                     "constraint": ["sqliteboy_as_integer", 1, "> 0", "e must be integer"]
                   }
                 ],
-      "message"  : ["unknown result", "zero result", "success: $result"],
       "security" : {
                      "run" : ""
                    }
