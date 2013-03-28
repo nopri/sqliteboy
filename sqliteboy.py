@@ -39,10 +39,11 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.32'
+VERSION = '0.33'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
+CHECK_SAME_THREAD=False
 FORM_TBL = '_sqliteboy_'
 FORM_URL_INIT = '/sqliteboy/init'
 FORM_FIELDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
@@ -175,6 +176,7 @@ REPORT_MESSAGE_LEN = 3
 REPORT_MESSAGE_VAR_RESULT = '$result'
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
+PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
 #----------------------------------------------------------------------#
@@ -574,6 +576,27 @@ SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
 def sqliteboy_time():
     return time.time()
 SQLITE_UDF.append(('sqliteboy_time', 0, sqliteboy_time))
+
+def sqliteboy_time2(s):
+    try:
+        return time.mktime(time.strptime(s, PYTIME_FORMAT))
+    except:
+        return 0
+SQLITE_UDF.append(('sqliteboy_time2', 1, sqliteboy_time2))
+
+def sqliteboy_time3(f):
+    try:
+        return time.strftime(PYTIME_FORMAT, time.localtime(f))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_time3', 1, sqliteboy_time3))
+
+def sqliteboy_time4(f):
+    try:
+        return time.strftime(PYTIME_FORMAT, time.gmtime(f))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_time4', 1, sqliteboy_time4))
 
 def sqliteboy_lower(s):
     s = sqliteboy_strs(s)
@@ -4557,7 +4580,11 @@ if __name__ == '__main__':
         port = DEFAULT_PORT
     #
     try:
-        db = web.database(dbn=DBN, db=dbfile)
+        db = web.database(
+                dbn=DBN, 
+                db=dbfile, 
+                check_same_thread=CHECK_SAME_THREAD
+            )
         db.select(DEFAULT_TABLE)
     except:
         log('%s %s' %(_['e_connect'], dbfile), stream=sys.stderr)

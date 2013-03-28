@@ -8,13 +8,13 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.32
+Documentation for version 0.33
 
 
 .. contents:: 
 
 
-Screenshots And Wiki
+Screenshots And Wiki And Presentation
 ========================================================================
 
 - screenshot, possibly not up-to-date:  
@@ -22,6 +22,12 @@ Screenshots And Wiki
 
 - Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  
   https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
+  
+- Tutorial: simple medical record
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-simple-medical-record
+
+- SQLiteBoy Presentation (ppt format)
+  http://tedut.com/sqliteboy.ppt
   
 - More: https://github.com/nopri/sqliteboy/wiki/_pages
 
@@ -353,6 +359,40 @@ User-defined Function
 - sqliteboy_randrange(a, b)
 
 - sqliteboy_time()
+
+- sqliteboy_time2(s)
+  ::
+  
+      get time from string (YYYY-MM-DD HH:MM:SS)
+      argument    :
+         s (date/time string)
+         
+      example     :
+         sqliteboy_time2('2012-03-28 19:20:21')
+         -> 1332937221.0
+
+- sqliteboy_time3(f)
+  ::
+  
+      get string (YYYY-MM-DD HH:MM:SS) from time (local time) 
+      argument    :
+         f (time)
+         
+      example     :
+         sqliteboy_time3(1)
+         -> 1970-01-01 07:00:01
+         -> timezone is UTC+7 
+
+- sqliteboy_time4(f)
+  ::
+  
+      get string (YYYY-MM-DD HH:MM:SS) from time (UTC) 
+      argument    :
+         f (time)
+         
+      example     :
+         sqliteboy_time4(1)
+         -> 1970-01-01 00:00:01
 
 - sqliteboy_lower(s)
 
