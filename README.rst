@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.33
+Documentation for version 0.34
 
 
 .. contents:: 
@@ -25,6 +25,9 @@ Screenshots And Wiki And Presentation
   
 - Tutorial: simple medical record
   https://github.com/nopri/sqliteboy/wiki/Tutorial-simple-medical-record
+
+- Tutorial: install sqliteboy on ACRyan Playon!HD Mini2 ACRPV73800
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-install-sqliteboy-on-ACRyan-Playon!HD-Mini2-ACRPV73800
 
 - SQLiteBoy Presentation (ppt format)
   http://tedut.com/sqliteboy.ppt
@@ -403,6 +406,35 @@ User-defined Function
   
     return value  : 
         1 (valid) or 0 (invalid)
+
+- sqliteboy_match(s1, s2)
+  ::
+  
+      regular expression match  
+      argument    :
+         s1 (pattern string)
+         s2 (test string)
+         
+      return value: 
+        1 (match) or 0 (not match)
+
+- sqliteboy_is_number(n)
+  ::
+  
+      return value: 
+        1 (number) or 0 (not number)
+
+- sqliteboy_is_float(n)
+  ::
+  
+      return value: 
+        1 (float) or 0 (not float)
+
+- sqliteboy_is_integer(n)
+  ::
+  
+      return value: 
+        1 (integer) or 0 (not integer)
 
 - sqliteboy_normalize_separator(s, separator, remove_space, unique)
   ::

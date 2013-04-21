@@ -9,6 +9,11 @@
 #
 # Please read README.rst
 #
+# I apologize for:
+# - the lack of documentation in source code
+# - obsolete codes
+# - non-descriptive variable/function names
+# - PEP8 violations :)
 #
 # # pyinstaller 2.0 spec #
 # # python <path/to/pyinstaller.py> <spec>
@@ -39,7 +44,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.33'
+VERSION = '0.34'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -177,6 +182,7 @@ REPORT_MESSAGE_VAR_RESULT = '$result'
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+REGEX_EMAIL = r'^[\w\.\+-]+@[\w\.-]+\.[a-zA-Z]+$'
 
 
 #----------------------------------------------------------------------#
@@ -214,6 +220,8 @@ import base64
 import platform
 import struct
 import sqlite3
+
+import re
 
 import web
 web.config.debug = False
@@ -609,71 +617,44 @@ def sqliteboy_upper(s):
 SQLITE_UDF.append(('sqliteboy_upper', 1, sqliteboy_upper))
 
 def sqliteboy_is_valid_email(s):
-    email = sqliteboy_strs(s)
+    s = sqliteboy_strs(s)
     #
-    tld = [
-    'biz', 
-    'com',
-    'info',
-    'name',
-    'net',
-    'org',
-    'pro',
-    'aero',
-    'asia',
-    'cat',
-    'coop',
-    'edu',
-    'gov',
-    'int',
-    'jobs',
-    'mil',
-    'mobi',
-    'museum',
-    'tel',
-    'travel',
-    'xxx',
-    ]
-
-    user_allowed = '-_.%+'
-    host_allowed = '-_.'
-
-    #too short
-    if len(email) < 6:
-        return int(False)
-    #
-    
-    #split by @
-    try:
-        user, domain = email.rsplit('@', 1)
-        host, tl = domain.rsplit('.', 1)
-    except:
-        return int(False)
-    #
-    
-    #check for country code and toplevel
-    if len(tl) != 2 and tl not in tld:
-        return int(False)
-    #
-
-    #remove char in user allowed
-    for i in user_allowed:
-        user = user.replace(i, '')
-    #
-    #remove char in host allowed
-    for i in host_allowed:
-        host = host.replace(i, '')
-    #
-
-    #should contain only alpha numeric
-    if user.isalnum() and host.isalnum():
+    if re.match(REGEX_EMAIL, s):
         return int(True)
-    else:
-        return int(False)
-    
     #
     return int(False)
 SQLITE_UDF.append(('sqliteboy_is_valid_email', 1, sqliteboy_is_valid_email))
+
+def sqliteboy_match(s1, s2):
+    s1 = sqliteboy_strs(s1)
+    s2 = sqliteboy_strs(s2)
+    #
+    if re.match(s1, s2):
+        return int(True)
+    #
+    return int(False)
+SQLITE_UDF.append(('sqliteboy_match', 2, sqliteboy_match))
+
+def sqliteboy_is_number(n):
+    if isinstance(n, (float, int, long)):
+        return int(True)
+    #
+    return int(False)
+SQLITE_UDF.append(('sqliteboy_is_number', 1, sqliteboy_is_number))
+
+def sqliteboy_is_float(n):
+    if isinstance(n, float):
+        return int(True)
+    #
+    return int(False)
+SQLITE_UDF.append(('sqliteboy_is_float', 1, sqliteboy_is_float))
+
+def sqliteboy_is_integer(n):
+    if isinstance(n, int):
+        return int(True)
+    #
+    return int(False)
+SQLITE_UDF.append(('sqliteboy_is_integer', 1, sqliteboy_is_integer))
 
 def sqliteboy_normalize_separator(s, separator, remove_space, unique):
     field = sqliteboy_strs(s)
