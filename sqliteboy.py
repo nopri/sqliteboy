@@ -13,6 +13,7 @@
 # - the lack of documentation in source code
 # - obsolete codes
 # - non-descriptive variable/function names
+# - using python builtins as variable (input, type, ...) :(
 # - PEP8 violations :)
 #
 # # pyinstaller 2.0 spec #
@@ -44,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.34'
+VERSION = '0.35'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -688,6 +689,36 @@ def sqliteboy_normalize_separator(s, separator, remove_space, unique):
     return ret
 SQLITE_UDF.append(('sqliteboy_normalize_separator', 4, sqliteboy_normalize_separator))
 
+def sqliteboy_chunk(s, n, separator, justify, padding):
+    s = str(s)
+    separator = str(separator)
+    padding = str(padding)
+    #
+    if (not n) or (not s) or (n < 1):
+        return s
+    #
+    if padding: 
+        pad = padding[0]
+    else:
+        pad = ' '
+    #
+    if not justify:
+        justify = 0
+    #
+    mod = len(s) % n
+    if mod:
+        ln = len(s) + (n - mod)
+        if justify == 0: #left
+            s = s.ljust(ln, pad)
+        else: #right
+            s = s.rjust(ln, pad)
+    #
+    res = [s[i:i+n] for i in range(0, len(s), n)]
+    ret = separator.join(res)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_chunk', 5, sqliteboy_chunk))
+    
 
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #

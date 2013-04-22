@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.34
+Documentation for version 0.35
 
 
 .. contents:: 
@@ -448,6 +448,30 @@ User-defined Function
         sqliteboy_normalize_separator
           (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
         -> '1,2,3,4' 
+
+- sqliteboy_chunk(s, n, separator, justify, padding)
+  ::
+  
+      split string into evenly sized chunks
+      argument    : 
+         s (string)
+         n (length/size)
+         separator (separator string)
+         justify (0=left, 1=right)
+         padding (single padding character)
+         
+      example     : 
+        select sqliteboy_chunk('123456789', 3, '-', 1, 'x')
+        -> '123-456-789' 
+        
+        select sqliteboy_chunk('123456789', 2, '-', 0, 'x')
+        -> '12-34-56-78-9x'
+        
+        select sqliteboy_chunk('123456789', 2, '-', 1, 'x')
+        -> 'x1-23-45-67-89'
+        
+        select sqliteboy_chunk('123456789', 4, ',', 1, '*')
+        -> '***1,2345,6789'
 
 - sqliteboy_x_user()
   ::
