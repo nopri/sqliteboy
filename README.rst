@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.35
+Documentation for version 0.36
 
 
 .. contents:: 
@@ -472,6 +472,38 @@ User-defined Function
         
         select sqliteboy_chunk('123456789', 4, ',', 1, '*')
         -> '***1,2345,6789'
+
+- sqliteboy_number_format(n, decimals, decimal_point, thousands_separator)
+  ::
+  
+      format a number (or number as string) with grouped thousands and decimals
+      argument    : 
+         n (number or number as string), use string for very big number
+         decimals (number of decimal points)
+         decimal_point (separator for the decimal point)
+         thousands_separator (thousands separator)
+         
+      example     : 
+        sqliteboy_number_format(12345, 3, '.', ',')
+        -> '12,345'
+      
+        sqliteboy_number_format(12345, 3, ',', '.')
+        -> '12.345' 
+        
+        sqliteboy_number_format(12345.1234, 3, ',', '.')
+        -> '12.345,123'
+        
+        sqliteboy_number_format(12345.1234, 0, ',', '.')
+        -> '12.345'
+        
+        sqliteboy_number_format(12345.1234, 10, ',', '.')
+        -> '12.345,1234000000'
+        
+        sqliteboy_number_format(12345.1234, 2, ',', ' ')
+        -> '12 345,12'
+        
+        sqliteboy_number_format('-12345678912345678912345678912345678912.123', 10, ',', '.')
+        -> '-12.345.678.912.345.678.912.345.678.912.345.678.912,1230000000'
 
 - sqliteboy_x_user()
   ::

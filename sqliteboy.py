@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.35'
+VERSION = '0.36'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -718,6 +718,54 @@ def sqliteboy_chunk(s, n, separator, justify, padding):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_chunk', 5, sqliteboy_chunk))
+
+def sqliteboy_number_format(n, decimals, decimal_point, thousands_separator):
+    n = str(n)
+    decimal_point = str(decimal_point)
+    thousands_sep = str(thousands_separator)
+    #
+    neg = False
+    try:
+        f = float(n)
+        if f < 0:
+            neg = True
+    except:
+        return n
+    #
+    dec = decimals
+    if not sqliteboy_is_integer(dec) or dec < 0:
+        dec = 0
+    #
+    nn = ''
+    dd = ''
+    if '.' in n: #float
+        nn, dd = n.split('.')
+    else:
+        nn = n
+    nn = nn.replace('-', '')
+    nn = nn.replace('+', '')
+    nn = nn.strip()
+    dd = dd.strip()
+    #
+    if dd:
+        if dec <= len(dd):
+            dd = dd[:dec]
+        else:
+            dd = dd.ljust(dec, '0')
+    #
+    nn = sqliteboy_chunk(nn, 3, thousands_sep, 1, '').strip()
+    dd = dd.strip()
+    #
+    if neg:
+        nn = '-' + nn
+    #
+    if dd:
+        ret = nn + decimal_point + dd
+    else:
+        ret = nn
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_number_format', 4, sqliteboy_number_format))
     
 
 #----------------------------------------------------------------------#
