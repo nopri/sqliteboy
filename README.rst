@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.36
+Documentation for version 0.37
 
 
 .. contents:: 
@@ -397,6 +397,35 @@ User-defined Function
          sqliteboy_time4(1)
          -> 1970-01-01 00:00:01
 
+- sqliteboy_time5(s1, s2, mode)
+  ::
+  
+      calculate the difference between two dates in seconds, minutes, hours, days, or years
+      (1 year = 365.2425 days)
+      argument    :
+         s1 (YYYY-MM-DD HH:MM:SS)
+         s2 (YYYY-MM-DD HH:MM:SS)
+         mode (1=seconds, 2=minutes, 3=hours, 4=days, 5=years)
+         
+      example     :
+         sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 1)
+         -> 34218061.0 
+         
+         sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 2)
+         -> 570301.016667 
+         
+         sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 3)
+         -> 9505.01694444 
+         
+         sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 4)
+         -> 396.042372685 
+         
+         sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 5)
+         -> 1.08432718724 
+      
+      tips        :
+         use sqliteboy_number_format() to format the result
+
 - sqliteboy_lower(s)
 
 - sqliteboy_upper(s)
@@ -420,6 +449,9 @@ User-defined Function
 
 - sqliteboy_is_number(n)
   ::
+
+      argument    : 
+         n (number or string to test)
   
       return value: 
         1 (number) or 0 (not number)

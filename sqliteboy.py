@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.36'
+VERSION = '0.37'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -184,6 +184,7 @@ FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 REGEX_EMAIL = r'^[\w\.\+-]+@[\w\.-]+\.[a-zA-Z]+$'
+DAYS_IN_YEAR = 365.2425
 
 
 #----------------------------------------------------------------------#
@@ -588,6 +589,7 @@ SQLITE_UDF.append(('sqliteboy_time', 0, sqliteboy_time))
 
 def sqliteboy_time2(s):
     try:
+        s = s.strip()
         return time.mktime(time.strptime(s, PYTIME_FORMAT))
     except:
         return 0
@@ -606,6 +608,34 @@ def sqliteboy_time4(f):
     except:
         return ''
 SQLITE_UDF.append(('sqliteboy_time4', 1, sqliteboy_time4))
+
+def sqliteboy_time5(s1, s2, mode):
+    s1 = str(s1)
+    s2 = str(s2)
+    if not sqliteboy_is_integer(mode):
+        mode = 0
+    #
+    t1 = sqliteboy_time2(s1)
+    t2 = sqliteboy_time2(s2)
+    #
+    d = t2 - t1
+    d = float(d)
+    #
+    ret = 0
+    #
+    if mode == 1: #second
+        ret = d
+    elif mode == 2: #minute
+        ret = d / (60)
+    elif mode == 3: #hour
+        ret = d / (60 * 60)
+    elif mode == 4: #day
+        ret = d / (60 * 60 * 24)
+    elif mode == 5: #year
+        ret = d / (60 * 60 * 24 * DAYS_IN_YEAR)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_time5', 3, sqliteboy_time5)) 
 
 def sqliteboy_lower(s):
     s = sqliteboy_strs(s)
@@ -638,6 +668,27 @@ SQLITE_UDF.append(('sqliteboy_match', 2, sqliteboy_match))
 
 def sqliteboy_is_number(n):
     if isinstance(n, (float, int, long)):
+        return int(True)
+    #
+    try:
+        test = float(n)
+    except:
+        pass
+    else:
+        return int(True)
+    #
+    try:
+        test = long(n)
+    except:
+        pass
+    else:
+        return int(True)
+    #
+    try:
+        test = int(n)
+    except:
+        pass
+    else:
         return int(True)
     #
     return int(False)
