@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.37
+Documentation for version 0.38
 
 
 .. contents:: 
@@ -424,6 +424,7 @@ User-defined Function
          -> 1.08432718724 
       
       tips        :
+         empty s1 or s2: current date/time (localtime)
          use sqliteboy_number_format() to format the result
 
 - sqliteboy_lower(s)
@@ -509,6 +510,7 @@ User-defined Function
   ::
   
       format a number (or number as string) with grouped thousands and decimals
+      (works with number in scientific notation (e))
       argument    : 
          n (number or number as string), use string for very big number
          decimals (number of decimal points)
@@ -537,6 +539,77 @@ User-defined Function
         sqliteboy_number_format('-12345678912345678912345678912345678912.123', 10, ',', '.')
         -> '-12.345.678.912.345.678.912.345.678.912.345.678.912,1230000000'
 
+- sqliteboy_lookup2(table, field, field1, value1, order, default)
+  ::
+  
+      lookup into table
+      SELECT <field> FROM <table> WHERE <field1>=<value1> ORDER BY rowid asc
+      or
+      SELECT <field> FROM <table> WHERE <field1>=<value1> ORDER BY rowid desc
+      and
+      return first row
+      argument    : 
+         table (table name)
+         field (field name)
+         field1 (where field)
+         value1 (where field value)
+         order (0=asc, 1=desc)
+         default (default return value)
+         
+      example     : 
+        data in 'lookup' table:
+        | a | b | c |
+        -------------
+        |a1 |b1 |c1 |
+        |a2 |b2 |c2 |
+        
+        sqliteboy_lookup2('lookup', 'c', 'a', 'a1', 0, ':(')
+        -> 'c1' 
+        
+        sqliteboy_lookup2('lookup', 'c_notfound', 'a', 'a1', 0, ':(')
+        -> ':('
+        
+        sqliteboy_lookup2('lookup', 'b', 'a', 'a1', 0, ':(')
+        -> 'b1'
+        
+        sqliteboy_lookup2(12345, 'b', 'a', 'a1', 0, ':(')
+        -> ':('
+
+- sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default)
+  ::
+  
+      lookup into table
+      SELECT <field> FROM <table> WHERE <field1>=<value1> and <field2>=<value2> ORDER BY rowid asc
+      or
+      SELECT <field> FROM <table> WHERE <field1>=<value1> and <field2>=<value2> ORDER BY rowid desc
+      and
+      return first row
+      argument    : 
+         table (table name)
+         field (field name)
+         field1 (where field1)
+         value1 (where field1 value)
+         field2 (where field2)
+         value2 (where field2 value)
+         order (0=asc, 1=desc)
+         default (default return value)
+         
+      example     : 
+        data in 'lookup' table:
+        | a | b | c |
+        -------------
+        |a1 |b1 |c1 |
+        |a2 |b2 |c2 |
+        
+        sqliteboy_lookup3('lookup', 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
+        -> 'c1' 
+        
+        sqliteboy_lookup3('lookup', 'c', 'a', 'a1', 'b', 'b2', 0, ':(')
+        -> ':('
+                
+        sqliteboy_lookup3(12345, 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
+        -> ':('
+        
 - sqliteboy_x_user()
   ::
   

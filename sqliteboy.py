@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.37'
+VERSION = '0.38'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -615,6 +615,12 @@ def sqliteboy_time5(s1, s2, mode):
     if not sqliteboy_is_integer(mode):
         mode = 0
     #
+    tnow = sqliteboy_time()
+    if not s1.strip():
+        s1 = sqliteboy_time3(tnow)
+    if not s2.strip():
+        s2 = sqliteboy_time3(tnow)
+    #
     t1 = sqliteboy_time2(s1)
     t2 = sqliteboy_time2(s2)
     #
@@ -783,6 +789,10 @@ def sqliteboy_number_format(n, decimals, decimal_point, thousands_separator):
     except:
         return n
     #
+    if 'e' in n.lower():
+        efmt = '%%.%sf' %len(n)
+        n = efmt %float(n)
+    #
     dec = decimals
     if not sqliteboy_is_integer(dec) or dec < 0:
         dec = 0
@@ -817,7 +827,85 @@ def sqliteboy_number_format(n, decimals, decimal_point, thousands_separator):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_number_format', 4, sqliteboy_number_format))
+
+def sqliteboy_lookup2(table, field, field1, value1, order, default):
+    table = str(table)
+    field = str(field)
+    field1 = str(field1)
+    if not sqliteboy_is_number(order) or order < 0:
+        order = 0
+    #
+    if not table in tables():
+        return default
+    cols = columns(table, True)
+    if not field1 in cols or not field in cols:
+        return default
+    #
+    sorder = ' rowid asc'
+    if order > 0:
+        sorder = ' rowid desc'
+    #
+    ret = default
+    #
+    where = [
+            '%s=$%s' %(field1, field1), 
+            ]
+    var = {field1: value1}
+    #
+    try:
+        r = db.select(
+            table, 
+            where=' and '.join(where),
+            order=sorder, 
+            vars=var).list()
+        r = r[0]
+        ret = r[field]
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_lookup2', 6, sqliteboy_lookup2))
     
+def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default):
+    table = str(table)
+    field = str(field)
+    field1 = str(field1)
+    field2 = str(field2)
+    if not sqliteboy_is_number(order) or order < 0:
+        order = 0
+    #
+    if not table in tables():
+        return default
+    cols = columns(table, True)
+    if not field1 in cols or not field2 in cols or not field in cols:
+        return default
+    #
+    sorder = ' rowid asc'
+    if order > 0:
+        sorder = ' rowid desc'
+    #
+    ret = default
+    #
+    where = [
+            '%s=$%s' %(field1, field1), 
+            '%s=$%s' %(field2, field2),
+            ]
+    var = {field1: value1, field2: value2}
+    #
+    try:
+        r = db.select(
+            table, 
+            where=' and '.join(where),
+            order=sorder, 
+            vars=var).list()
+        r = r[0]
+        ret = r[field]
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3))
+
 
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
