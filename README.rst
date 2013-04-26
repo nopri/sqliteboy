@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.38
+Documentation for version 0.39
 
 
 .. contents:: 
@@ -211,6 +211,8 @@ Features
 - Rename table
 
 - Drop table 
+
+- CSV export 
 
 - Create table
 

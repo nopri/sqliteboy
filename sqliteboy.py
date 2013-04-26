@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.38'
+VERSION = '0.39'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -185,6 +185,8 @@ FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 REGEX_EMAIL = r'^[\w\.\+-]+@[\w\.-]+\.[a-zA-Z]+$'
 DAYS_IN_YEAR = 365.2425
+CSV_SUFFIX = '.csv'
+CSV_CTYPE = 'text/csv'
 
 
 #----------------------------------------------------------------------#
@@ -225,6 +227,9 @@ import sqlite3
 
 import re
 
+import csv
+import cStringIO
+
 import web
 web.config.debug = False
 
@@ -240,6 +245,7 @@ URLS = (
     '/table/column', 'table_column',
     '/table/rename', 'table_rename',
     '/table/drop', 'table_drop',
+    '/table/csv', 'table_csv',
     '/table/create', 'table_create',
     '/query', 'query',
     '/table/row/(.*)', 'table_row',
@@ -409,6 +415,7 @@ LANGS = {
             'cmd_column': 'column',
             'cmd_rename': 'rename',
             'cmd_table_drop': 'drop',
+            'cmd_export_csv': 'csv',
             'cmd_table_create': 'create',
             'cmd_query': 'query',
             'cmd_delete_selected': 'delete selected',
@@ -1293,6 +1300,7 @@ def menugen():
                     ['column', _['cmd_column']],
                     ['rename', _['cmd_rename']],
                     ['table_drop', _['cmd_table_drop']],
+                    ['export_csv', _['cmd_export_csv']],
                     ['table_create', _['cmd_table_create']],
                     ['query', _['cmd_query']],
                 )
@@ -2920,6 +2928,7 @@ class table_action:
             ('column', '/table/column?table=' + table),
             ('rename', '/table/rename?table=' + table),
             ('table_drop', '/table/drop?table=' + table),
+            ('export_csv', '/table/csv?table=' + table),
             ('table_create', '/table/create'),
             ('query', '/query'),
         )
@@ -3394,6 +3403,50 @@ class table_drop:
         #
         dflt()        
 
+
+class table_csv:
+    def GET(self):
+        table = web.input(table='').table
+        if not table in tables(): 
+            dflt()
+        #
+        cols = columns(table)
+        if not cols:
+            dflt()
+        #
+        try:
+            res = db.select(table, what='*', order='rowid asc')
+        except:
+            res = None
+        #
+        fout = cStringIO.StringIO()
+        writer = csv.writer(fout)
+        #
+        header = [c['name'] for c in cols]
+        writer.writerow(header)
+        #
+        types = {}
+        for c in cols:
+            types[c['name']] = c['type']
+        #
+        if res:
+            for r in res:
+                line = []
+                for h in header:
+                    data = r.get(h, '')
+                    if data and types.get(h, '') in BLOB_TYPE:
+                        data = base64.b64encode(data)
+                    line.append(data)
+                #
+                writer.writerow(line)
+        #
+        content = fout.getvalue()
+        #
+        disposition = 'attachment; filename=' + '%s%s' %(table, CSV_SUFFIX)
+        web.header('Content-Type', CSV_CTYPE)
+        web.header('Content-Disposition', disposition)
+        return content
+        
 
 class query:
     def GET(self):
