@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.39'
+VERSION = '0.40'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -183,10 +183,12 @@ REPORT_MESSAGE_VAR_RESULT = '$result'
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+PYTIME_FORMAT_BACKUP = '%Y-%m-%d_%H-%M-%S'
 REGEX_EMAIL = r'^[\w\.\+-]+@[\w\.-]+\.[a-zA-Z]+$'
 DAYS_IN_YEAR = 365.2425
 CSV_SUFFIX = '.csv'
 CSV_CTYPE = 'text/csv'
+BACKUP_BUFFER = 10 * SIZE_KB
 
 
 #----------------------------------------------------------------------#
@@ -259,6 +261,7 @@ URLS = (
     '/password', 'password',
     '/admin/users', 'admin_users',
     '/admin/hosts', 'admin_hosts',
+    '/admin/backup', 'admin_backup',
     '/form/action', 'form_action',
     '/form/run/(.*)', 'form_run',
     '/form/edit', 'form_edit',
@@ -432,6 +435,7 @@ LANGS = {
             'cmd_password': 'password',
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
+            'cmd_backup': 'backup',
             'cmd_save': 'save',
             'cmd_run': 'run',
             'cmd_form_create': 'create',
@@ -1423,10 +1427,11 @@ def sysinfo():
     #
     s_adm = _['x_no']
     if isadmin(): 
-        s_adm = '%s %s %s' %(
+        s_adm = '%s %s %s %s' %(
             _['x_yes'], 
             link('/admin/users', _['cmd_users']),
             link('/admin/hosts', _['cmd_hosts']),
+            link('/admin/backup', _['cmd_backup']),
             )
     if isnosb(): s_adm = _['x_not_applicable']
     #
@@ -3956,6 +3961,37 @@ class admin_hosts:
             sess[SK_HOSTS] = _['e_hosts']
         #
         raise web.seeother('/admin/hosts')
+
+
+class admin_backup:
+    def GET(self):
+        bf = '%s_%s' %(
+            time.strftime(PYTIME_FORMAT_BACKUP), 
+            os.path.basename(dbfile0),
+            )
+        #
+        disposition = 'attachment; filename=' + '%s' %(bf)
+        web.header('Content-Type', BLOB_CTYPE)
+        web.header('Content-Disposition', disposition)
+        web.header('Transfer-Encoding', 'chunked')
+        #
+        try:
+            f = open(dbfile0, 'rb')
+        except:
+            f = None
+        #
+        if f:
+            while True:
+                read = f.read(BACKUP_BUFFER)
+                #
+                if not read:
+                    break
+                #
+                yield read
+            #
+            f.close()
+        else:
+            yield ''
 
 
 class form_action:

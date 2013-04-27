@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.39
+Documentation for version 0.40
 
 
 .. contents:: 
@@ -255,6 +255,8 @@ Features
 - Easy to translate
 
 - Configurable hosts allowed (default: local) (Extended feature)
+
+- Database backup (admin) (Extended feature)
 
 - Human readable database size (GB, MB, KB, B)
 
