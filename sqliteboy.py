@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.40'
+VERSION = '0.41'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -99,6 +99,7 @@ SKQ = 'query'
 SK_CREATE = 'create'
 SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
+SK_NOTES = 'notes'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SKF_CREATE = 'form.create'
@@ -268,6 +269,7 @@ URLS = (
     '/report/action', 'report_action',
     '/report/run/(.*)', 'report_run',
     '/report/edit', 'report_edit',
+    '/notes', 'notes',
     )
 
 app = None
@@ -391,6 +393,9 @@ LANGS = {
             'x_form_name': 'form name',
             'x_report': 'report',
             'x_report_name': 'report name',
+            'x_title': 'title',
+            'x_content': 'content',
+            'x_action': 'action',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -411,6 +416,7 @@ LANGS = {
             'tt_report_edit': 'report edit',
             'tt_report_create': 'report create',
             'tt_report_run_result': 'report run (result)',
+            'tt_notes': 'notes',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -421,6 +427,7 @@ LANGS = {
             'cmd_export_csv': 'csv',
             'cmd_table_create': 'create',
             'cmd_query': 'query',
+            'cmd_query_src': 'query',
             'cmd_delete_selected': 'delete selected',
             'cmd_edit_selected': 'edit selected',
             'cmd_download': 'download',
@@ -433,6 +440,7 @@ LANGS = {
             'cmd_login': 'login',
             'cmd_logout': 'logout',
             'cmd_password': 'password',
+            'cmd_notes': 'notes',
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
             'cmd_backup': 'backup',
@@ -482,6 +490,7 @@ LANGS = {
             'o_password': 'OK: password changed',
             'o_hosts': 'OK: hosts updated',
             'o_form_run': 'OK: data saved',
+            'o_notes': 'OK: notes updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -496,6 +505,7 @@ LANGS = {
             'h_form_run': '',
             'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read <a href="%s">README</a> for report code reference.' %(URL_README[0]),
             'h_report_run': '',
+            'h_notes': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -921,6 +931,41 @@ SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3))
 #----------------------------------------------------------------------#
 # FUNCTION                                                             #
 #----------------------------------------------------------------------#
+def get_value1(values, default):
+    ret = default
+    #
+    if not values:
+        values = ()
+    #
+    for i in values:
+        if i:
+            ret = i
+            break
+    #
+    return ret
+
+def gen_d(exclude, a=0, b=999999, separator='-', retry=1000):
+    if not exclude:
+        exclude = ()
+    #
+    ret = None
+    #
+    i = 0
+    while True:
+        i = i+1
+        #
+        t = long(time.time())
+        r = random.randrange(a, b)
+        x = '%s%s%s' %(str(t), separator, str(r))
+        if not x in exclude:
+            ret = x
+            break
+        #
+        if i > retry:
+            break
+    #
+    return ret
+
 def isstr(s, empty_ok=False):
     ret = False
     #
@@ -1054,6 +1099,7 @@ def proc_nosb(handle):
             path.startswith('/password') or \
             path.startswith('/form') or \
             path.startswith('/report') or \
+            path.startswith('/notes') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -2001,6 +2047,7 @@ function toggle(src, dst)
 <td align='right' width='25%'>
 $if user():
     $user() <a href='/password'>$_['cmd_password']</a>
+    <a href='/notes'>$_['cmd_notes']</a> 
     <a href='/logout'>$_['cmd_logout']</a>
 </td>
 <td align='right' width='12%'>$size()</td>
@@ -2316,6 +2363,8 @@ $elif data['command'] == 'query':
     $ res = data['message']
     $if res:
         $ query = res[0]
+    $else:
+        $ query = data['query']
     <p>
     <i>$data['hint'].capitalize()</i>
     </p>
@@ -2849,6 +2898,71 @@ $elif data['command'] == 'report.run.result':
             $data['result_message']
         $else:
             $content
+$elif data['command'] == 'notes':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $if i == data['select_all']:
+                <input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'> $i
+            $else:
+                $i
+        </th>
+    $for u in content:
+        <tr>
+        <td width='12%' align='center'>
+            <input type='checkbox' name="$data['select']" value="$u['d']">
+        </td>
+        <td width='20%'>
+            <input type='hidden' name='d' value="$u['d']">
+            <input type='text' name='e' value="$u['e']">
+        </td>
+        <td>
+            <textarea name='f' rows='5' style='width: 90%'>$u['f']</textarea>
+        </td>
+        <td>
+            $if data['xaction']:
+                $for a in data['xaction']:
+                    <a href='$a[1]$u['d']'>$a[0]</a> 
+            $else:
+                &nbsp;
+        </td>
+        </tr>
+    $for u in range(data['max']):
+        <tr>
+        <td width='12%' align='center'>
+            &nbsp;
+        </td>
+        <td width='20%'>
+            <input type='hidden' name='d' value=''>
+            <input type='text' name='e'>
+        </td>
+        <td>
+            <textarea name='f' rows='5' style='width: 90%'></textarea>
+        </td>
+        <td>
+            &nbsp;
+        </td>
+        </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -3457,6 +3571,18 @@ class query:
     def GET(self):
         start()
         #
+        inp = web.input(src='', sid='')
+        q = ''
+        #
+        if not isnosb():
+            notes = s_select('my.notes.%s' %(user()))
+            alld = [x['d'] for x in notes]
+            if inp.src == 'notes' and inp.sid in alld:
+                for n in notes:
+                    if n['d'] == inp.sid:
+                        q = n['f']
+                        break
+        #
         data = {
             'title': '%s' %(_['tt_query']),
             'command': 'query',
@@ -3468,6 +3594,7 @@ class query:
             'hint': _['h_query'],
             'message': smsgq('query'),
             'blob_type': BLOB_TYPE,
+            'query': q,
         }
         content = ''
         stop()
@@ -4836,6 +4963,139 @@ class report_run:
         stop()
         #
         return T(data, content)
+
+
+class notes:
+    def GET(self):
+        start()
+        #
+        xaction = ()
+        if isadmin():
+            xaction = (
+                        (_['cmd_query_src'], '/query?src=notes&sid='),
+                    )
+        #
+        data = {
+                'title': _['tt_notes'],
+                'command': 'notes',
+                'action_url': '/notes',
+                'action_method': 'post',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns': (
+                            _['x_delete'], 
+                            _['x_title'], 
+                            _['x_content'], 
+                            _['x_action'],
+                        ),
+                'select': 'select',
+                'select_all': _['x_delete'],
+                'max': 3,
+                'xaction': xaction,
+                'message': smsgq(SK_NOTES),
+                'hint': _['h_notes'],
+            }
+        #
+        q = 'my.notes.%s' %(user())
+        content = s_select(q)
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        inp = web.input(select=[], d=[], e=[], f=[])
+        select = inp.select
+        d = inp.d
+        e = inp.e
+        f = inp.f
+        msg = []
+        #
+        updated = 0
+        #
+        #delete
+        allx = s_select('my.notes.%s' %(user()))
+        alld = [x['d'] for x in allx]
+        for i in range(len(d)):
+            di = d[i]
+            ei = e[i]
+            fi = f[i]
+            if (di in alld) and (not di in select):
+                if not ei.strip() and not fi.strip():
+                    select.append(di)       
+        for s in select:
+            if s in alld:
+                try:
+                    db.delete(FORM_TBL, 
+                        where='a=$a and b=$b and c=$c and d=$d', 
+                        vars={
+                            'a': 'my', 
+                            'b': 'notes', 
+                            'c': user(), 
+                            'd': s
+                        }
+                    )
+                    sev = ()
+                    for a in allx:
+                        if a['d'] == s:
+                            sev = [
+                                        a['e'].strip(),
+                                        a['f'].strip(),
+                                    ]
+                            break
+                    se = get_value1(sev, s)
+                    m = (_['x_deleted'], se)
+                    msg.append(m)
+                except:
+                    pass
+        #update
+        allx = s_select('my.notes.%s' %(user()))
+        alld = [x['d'] for x in allx]
+        for i in range(len(d)):
+            di = d[i]
+            ei = e[i]
+            fi = f[i]
+            if (di in alld) and (not di in select) and (ei.strip() or fi.strip()):
+                try:
+                    db.update(FORM_TBL, where='a=$a and b=$b and c=$c and d=$d',
+                        e=ei,
+                        f=fi,
+                        vars = {
+                            'a': 'my', 
+                            'b': 'notes', 
+                            'c': user(),
+                            'd': di
+                        }
+                    )
+                    updated += 1
+                except:
+                    pass
+        #new
+        allx = s_select('my.notes.%s' %(user()))
+        alld = [x['d'] for x in allx]
+        for i in range(len(e)):
+            dn = gen_d(alld)
+            di = d[i]
+            ei = e[i]
+            fi = f[i]
+            #
+            if (dn) and (not di) and (not dn in select) and (ei.strip() or fi.strip()):
+                try:
+                    db.insert(FORM_TBL, a='my', b='notes', c=user(),  
+                        d=dn, e=ei, f=fi
+                    )
+                    ex = get_value1([ei.strip(), fi.strip()], dn)
+                    m = (_['x_added'], ex)
+                    msg.append(m)
+                except:
+                    pass
+        #
+        if updated:
+            m = (_['o_notes'],)
+            msg.append(m)
+        #
+        sess[SK_NOTES] = msg
+        raise web.seeother('/notes')
 
 
 #----------------------------------------------------------------------#

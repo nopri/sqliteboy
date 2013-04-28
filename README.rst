@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.40
+Documentation for version 0.41
 
 
 .. contents:: 
@@ -239,6 +239,12 @@ Features
   - Change password
 
   - User management
+
+- Notes (Extended feature, new in v0.41)
+
+  - Simple notes 
+  
+  - Content as SQL Query (admin)
 
 - User-defined function
 
