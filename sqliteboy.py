@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.41'
+VERSION = '0.42'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -954,9 +954,10 @@ def gen_d(exclude, a=0, b=999999, separator='-', retry=1000):
     while True:
         i = i+1
         #
-        t = long(time.time())
+        t = float(time.time())
+        st = repr(t).replace('.', separator)
         r = random.randrange(a, b)
-        x = '%s%s%s' %(str(t), separator, str(r))
+        x = '%s%s%s' %(st, separator, str(r))
         if not x in exclude:
             ret = x
             break
@@ -5074,8 +5075,11 @@ class notes:
         allx = s_select('my.notes.%s' %(user()))
         alld = [x['d'] for x in allx]
         for i in range(len(e)):
-            dn = gen_d(alld)
             di = d[i]
+            if di:
+                continue
+            #
+            dn = gen_d(alld)
             ei = e[i]
             fi = f[i]
             #
