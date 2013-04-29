@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.42'
+VERSION = '0.43'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -102,6 +102,7 @@ SK_PASSWORD = 'password'
 SK_NOTES = 'notes'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
+SK_SYSTEM = 'system'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
 SKR_CREATE = 'report.create'
@@ -190,6 +191,8 @@ DAYS_IN_YEAR = 365.2425
 CSV_SUFFIX = '.csv'
 CSV_CTYPE = 'text/csv'
 BACKUP_BUFFER = 10 * SIZE_KB
+FILES_MAX_NUMBER = 10
+FILES_MAX_SIZE = 1 * SIZE_MB
 
 
 #----------------------------------------------------------------------#
@@ -262,6 +265,7 @@ URLS = (
     '/password', 'password',
     '/admin/users', 'admin_users',
     '/admin/hosts', 'admin_hosts',
+    '/admin/system', 'admin_system',
     '/admin/backup', 'admin_backup',
     '/form/action', 'form_action',
     '/form/run/(.*)', 'form_run',
@@ -396,6 +400,12 @@ LANGS = {
             'x_title': 'title',
             'x_content': 'content',
             'x_action': 'action',
+            'x_key': 'key',
+            'x_value': 'value',
+            'x_section': 'section',
+            'x_files': 'files',
+            'x_max_files_number': 'maximum number of files per user',
+            'x_max_file_size': 'maximum file size',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -409,6 +419,7 @@ LANGS = {
             'tt_password': 'password',
             'tt_users': 'users',
             'tt_hosts': 'hosts',
+            'tt_system': 'system',
             'tt_form_run': 'form run',
             'tt_form_edit': 'form edit',
             'tt_form_create': 'form create',
@@ -443,6 +454,7 @@ LANGS = {
             'cmd_notes': 'notes',
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
+            'cmd_system': 'system',
             'cmd_backup': 'backup',
             'cmd_save': 'save',
             'cmd_run': 'run',
@@ -465,6 +477,7 @@ LANGS = {
             'e_password_mismatch': 'ERROR: passwords mismatch',
             'e_password_blank': 'ERROR: please enter new password',
             'e_hosts': 'ERROR: could not update hosts',
+            'e_system': 'ERROR: could not update system configuration',
             'e_form_edit_whitespace': 'ERROR: could not handle form with whitespace in name',
             'e_form_edit_exists': 'ERROR: form already exists',
             'e_form_edit_syntax' : 'ERROR: form code error',
@@ -489,6 +502,7 @@ LANGS = {
             'o_rename': 'OK: alter table (rename)',
             'o_password': 'OK: password changed',
             'o_hosts': 'OK: hosts updated',
+            'o_system': 'OK: system configuration updated',
             'o_form_run': 'OK: data saved',
             'o_notes': 'OK: notes updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
@@ -501,6 +515,7 @@ LANGS = {
             'h_create2': 'hint: for multiple primary keys, do not select type contains "primary key", use primary key column instead. For date/time type, please use integer. If date/time default is needed, please use current_time, current_date or current_timestamp. To use non-constant literally, please surround with quote(\'), for example \'current_time\'.',
             'h_users': 'hint: only valid value(s) will be updated. You could not delete yourself or update your admin level. New username must be unique, must not contain whitespace and will be lowercased.',
             'h_hosts': 'hint: for custom hosts, please use whitespace separated format',
+            'h_system': '',
             'h_form_create': 'hint: please do not put whitespace in form name. Form name must be alphanumeric/underscore and will be converted to lowercase. Form code in JSON format. Please read <a href="%s">README</a> for form code reference.' %(URL_README[0]),
             'h_form_run': '',
             'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read <a href="%s">README</a> for report code reference.' %(URL_README[0]),
@@ -988,7 +1003,7 @@ def isadmin():
     return False
 
 def s_select(p):
-    pr = p.split(FORM_SPLIT)
+    pr = p.split(FORM_SPLIT)[:len(FORM_FIELDS)]
     st = []
     sd = {}
     for i in range(len(pr)):
@@ -1007,6 +1022,74 @@ def s_select(p):
         ret.append(d)
     #
     return ret
+
+def s_save(p, last=False):
+    pr = p.split(FORM_SPLIT)[:len(FORM_FIELDS)]
+    sf = []
+    sv = []
+    sd = {}
+    st = []
+    for i in range(len(pr)):
+        fi = FORM_FIELDS[i]
+        sf.append(fi)
+        #
+        pri = pr[i]
+        sv.append(pri)
+        #
+        s = '%s=$%s' %(fi, fi)
+        st.append(s)
+        sd[fi] = pri        
+    #
+    ret = False
+    #
+    if not last:
+        pr0 = pr[:-1]
+        saved = s_select(FORM_SPLIT.join(pr0))
+    else:
+        saved = s_select(p)
+    #
+    try:
+        if not saved:
+            sv = [str(web.sqlquote(x)) for x in sv]
+            q = '''
+                insert into %s (%s) values (%s)
+            ''' %(
+                    FORM_TBL,
+                    ','.join(sf),
+                    ','.join(sv),
+                )
+            db.query(q)
+        else:
+            if len(st) < 2:
+                raise Exception
+            #
+            q = '''
+                update %s set %s where %s
+            ''' %(
+                    FORM_TBL,
+                    st[-1],
+                    ' and '.join(st[:-1]),
+                )
+            db.query(q, vars=sd)
+        #
+        ret = True
+    except:
+        pass
+    #
+    return ret
+    
+def s_check(p, value):
+    if not s_select(p):
+        s_save(value)
+    #
+    ret = None
+    try:
+        ret = s_select(p)
+        ret = ret[0]
+    except:
+        pass
+    #
+    return ret 
 
 def canform(key, form, obj='form.code..'):
     ret = False
@@ -1474,10 +1557,11 @@ def sysinfo():
     #
     s_adm = _['x_no']
     if isadmin(): 
-        s_adm = '%s %s %s %s' %(
+        s_adm = '%s %s %s %s %s' %(
             _['x_yes'], 
             link('/admin/users', _['cmd_users']),
             link('/admin/hosts', _['cmd_hosts']),
+            link('/admin/system', _['cmd_system']),
             link('/admin/backup', _['cmd_backup']),
             )
     if isnosb(): s_adm = _['x_not_applicable']
@@ -2964,6 +3048,42 @@ $elif data['command'] == 'notes':
         </tr>
     </table>
     </form>
+$elif data['command'] == 'system':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $i
+        </th>
+    $for u in content:
+        <tr>
+        <td width='20%'>
+            $u[0]
+        </td>
+        <td>
+            $u[1]
+        </td>
+        <td>
+            <input type='text' name='$u[2]' value="$u[3]">
+        </td>
+        </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -4089,6 +4209,66 @@ class admin_hosts:
             sess[SK_HOSTS] = _['e_hosts']
         #
         raise web.seeother('/admin/hosts')
+
+
+class admin_system:
+    def GET(self):
+        start()
+        #
+        data = {
+                'title': _['tt_system'],
+                'command': 'system',
+                'action_url': '/admin/system',
+                'action_method': 'post',
+                'action_button': (
+                                    ('', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns' : (
+                                _['x_section'],
+                                _['x_key'],
+                                _['x_value'],
+                            ),
+                'message': smsgq(SK_SYSTEM, default=''),
+                'hint': _['h_system'],
+            }
+        #
+        content = [
+                    [
+                        _['x_files'], 
+                        _['x_max_files_number'], 
+                        'files.max_number.',
+                        s_check(
+                            'files.max_number.',
+                            'files.max_number..%s' %(FILES_MAX_NUMBER),
+                        ).get('d'),
+                    ],
+                    [
+                        _['x_files'], 
+                        _['x_max_file_size'], 
+                        'files.max_size.',
+                        s_check(
+                            'files.max_size.',
+                            'files.max_size..%s' %(FILES_MAX_SIZE),
+                        ).get('d'),
+                    ],
+                ]
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        inp = web.input()
+        #
+        try:
+            for k in inp.keys():
+                if k.strip() and s_select(k):
+                    p = '%s%s%s' %(k, FORM_SPLIT, inp.get(k, ''))
+                    s_save(p)
+            sess[SK_SYSTEM] = _['o_system']
+        except:
+            sess[SK_SYSTEM] = _['e_system']
+        #
+        raise web.seeother('/admin/system')
 
 
 class admin_backup:
