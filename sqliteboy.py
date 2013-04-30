@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.45'
+VERSION = '0.46'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -100,6 +100,7 @@ SK_CREATE = 'create'
 SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
 SK_NOTES = 'notes'
+SK_FILES = 'files'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SK_SYSTEM = 'system'
@@ -292,6 +293,8 @@ URLS = (
     '/report/run/(.*)', 'report_run',
     '/report/edit', 'report_edit',
     '/notes', 'notes',
+    '/files', 'files',
+    '/fs', 'fs',
     )
 
 app = None
@@ -423,7 +426,12 @@ LANGS = {
             'x_section': 'section',
             'x_files': 'files',
             'x_max_files_number': 'maximum number of files per user',
+            'x_max_files_number_error': 'maximum number of files per user exceeded',
             'x_max_file_size': 'maximum file size',
+            'x_max_file_size_error': 'maximum file size exceeded',
+            'x_file_name': 'file name',
+            'x_file_size': 'size',
+            'x_shared': 'shared',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -446,6 +454,7 @@ LANGS = {
             'tt_report_create': 'report create',
             'tt_report_run_result': 'report run (result)',
             'tt_notes': 'notes',
+            'tt_files': 'files',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -470,6 +479,7 @@ LANGS = {
             'cmd_logout': 'logout',
             'cmd_password': 'password',
             'cmd_notes': 'notes',
+            'cmd_files': 'files',
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
             'cmd_system': 'system',
@@ -479,6 +489,7 @@ LANGS = {
             'cmd_form_create': 'create',
             'cmd_report_create': 'create',
             'cmd_report': 'go',
+            'cmd_view': 'view',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_access_forbidden': 'access forbidden',
@@ -523,6 +534,7 @@ LANGS = {
             'o_system': 'OK: system configuration updated',
             'o_form_run': 'OK: data saved',
             'o_notes': 'OK: notes updated',
+            'o_files': 'OK: files updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -539,6 +551,7 @@ LANGS = {
             'h_report_create': 'hint: please do not put whitespace in report name. Report name must be alphanumeric/underscore and will be converted to lowercase. Report code in JSON format. Please read <a href="%s">README</a> for report code reference.' %(URL_README[0]),
             'h_report_run': '',
             'h_notes': '',
+            'h_files': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -997,7 +1010,7 @@ def isadmin():
         pass
     return False
 
-def s_select(p, string=True):
+def s_select(p, string=True, what='*, rowid', order='rowid asc'):
     pr = p.split(FORM_SPLIT)[:len(FORM_FIELDS)]
     st = []
     sd = {}
@@ -1009,14 +1022,21 @@ def s_select(p, string=True):
             sd[fi] = pri
             st.append(s)
     #
-    r = db.select(FORM_TBL, what='*, rowid', where = ' and '.join(st), vars=sd)
+    r = db.select(FORM_TBL, 
+                    what=what, 
+                    order=order,
+                    where = ' and '.join(st), 
+                    vars=sd)
     ret = []
     for i in r:
         d = {}
         for k in i.keys(): 
             ik = i[k]
             if string: 
-                ik = str(ik)
+                if ik:
+                    ik = str(ik)
+                else:
+                    ik = ''
             d[k] = ik
         ret.append(d)
     #
@@ -1089,6 +1109,10 @@ def s_check(p, value):
         pass
     #
     return ret 
+    
+def s_check2(p, default):
+    value = FORM_SPLIT.join([p, str(default)])
+    return s_check(p, value)
 
 def canform(key, form, obj='form.code..'):
     ret = False
@@ -1183,6 +1207,8 @@ def proc_nosb(handle):
             path.startswith('/form') or \
             path.startswith('/report') or \
             path.startswith('/notes') or \
+            path.startswith('/files') or \
+            path.startswith('/fs') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -1294,9 +1320,14 @@ def title(t, link='/'):
 def link(href, label):
     return '<a href="%s">%s</a>' %(href, label)
     
-def size():
-    s = os.path.getsize(dbfile)
-    s = float(s)
+def size(s=None):
+    if s is None:
+        s = os.path.getsize(dbfile)
+    #
+    try:
+        s = float(s)
+    except:
+        s = 0.0
     s2 = 0
     #
     if s >= SIZE_GB:
@@ -2048,6 +2079,43 @@ def fdialog_open():
             ret = ()
     #
     return ret
+
+def r_system(config, default=None):
+    ret = default
+    #
+    d = {}
+    for x in SYSTEM_CONFIG:
+        d[x[2]] = x[4]
+    df = {}
+    for x in SYSTEM_CONFIG:
+        df[x[2]] = x[5]
+    #
+    if not config in d.keys():
+        return ret
+    #
+    try:
+        ret = s_check2(config, d.get(config)).get('d', default)
+        ret = df.get(config)(ret)
+    except:
+        pass
+    #
+    return ret
+
+def r_files():
+    q = 'my.files.%s' %(user())
+    content = s_select(q, what='rowid, a, b, c, d, f, g', order='d asc')
+    for c in content:
+        g = {}
+        try:
+            g = json.loads(c.get('g'))
+        except:
+            pass
+        c['size'] = size(g.get('size'))
+        #
+        if not c.get('d', '').strip():
+            c['d'] = ''
+    #
+    return content
     
     
 #----------------------------------------------------------------------#
@@ -2131,6 +2199,7 @@ function toggle(src, dst)
 <td align='right' width='25%'>
 $if user():
     $user() <a href='/password'>$_['cmd_password']</a>
+    <a href='/files'>$_['cmd_files']</a> 
     <a href='/notes'>$_['cmd_notes']</a> 
     <a href='/logout'>$_['cmd_logout']</a>
 </td>
@@ -3079,6 +3148,77 @@ $elif data['command'] == 'system':
         </td>
         <td>
             <input type='text' name='$u[2]' value="$u[3]">
+        </td>
+        </tr>
+    </table>
+    </form>
+$elif data['command'] == 'files':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $if i == data['select_all']:
+                <input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'> $i
+            $else:
+                $i
+        </th>
+    $for u in content:
+        <tr>
+        <td width='12%' align='center'>
+            <input type='checkbox' name="$data['select']" value="$u['rowid']">
+        </td>
+        <td width='45%'>
+            <input type='hidden' name='rowid' value="$u['rowid']">
+            <input type='hidden' name='d' value="$u['d']">
+            $u['d']
+        </td>
+        <td width='15%' align='right'>
+            $u['size']
+        </td>
+        <td>
+            $ sel = ''
+            $if u['f'] == '1':
+                $ sel = ' selected'
+            <select name='f'>
+                <option value=''>$_['x_no']</option>
+                <option value='1'$sel>$_['x_yes']</option>
+            </select>        
+        </td>
+        <td>
+            $if data['xaction']:
+                $for a in data['xaction']:
+                    <a href='$a[1]$u['rowid']' target='$a[2]'>$a[0]</a> 
+            $else:
+                &nbsp;
+        </td>
+        </tr>
+    $for u in range(data['max']):
+        <tr>
+        <td width='12%' align='center'>
+            &nbsp;
+        </td>
+        <td colspan="$len(data['columns'][1:])">
+            <input type='hidden' name='rowid' value=''>
+            <input type='hidden' name='d' value=''>
+            <input type='hidden' name='f' value=''>
+            <input type='file' name='d_new'>
         </td>
         </tr>
     </table>
@@ -5281,6 +5421,182 @@ class notes:
         #
         sess[SK_NOTES] = msg
         raise web.seeother('/notes')
+
+
+class files:
+    def GET(self):
+        start()
+        #
+        xaction = (
+                    #(_['cmd_view'], '/fs?sid=', '_blank'),
+                    #(_['cmd_download'], '/fs?download=1&sid=', '_blank'),
+                )
+        #
+        data = {
+                'title': _['tt_files'],
+                'command': 'files',
+                'action_url': '/files',
+                'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns': (
+                            _['x_delete'], 
+                            _['x_file_name'], 
+                            _['x_file_size'], 
+                            _['x_shared'],
+                            _['x_action'],
+                        ),
+                'select': 'select',
+                'select_all': _['x_delete'],
+                'max': 3,
+                'xaction': xaction,
+                'message': smsgq(SK_FILES),
+                'hint': _['h_files'],
+            }
+        #
+        content = r_files()
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        inp = web.input(select=[], rowid=[], d=[], f=[])
+        select = inp.select
+        rowid = inp.rowid
+        d = inp.d
+        f = inp.f
+        msg = []
+        #
+        updated = 0
+        #
+        #delete
+        allx = r_files()
+        alld = [x['rowid'] for x in allx]
+        for s in select:
+            if s in alld:
+                try:
+                    db.delete(FORM_TBL, 
+                        where='a=$a and b=$b and c=$c and rowid=$ri', 
+                        vars={
+                            'a': 'my', 
+                            'b': 'files', 
+                            'c': user(), 
+                            'ri': s
+                        }
+                    )
+                    sev = ()
+                    for a in allx:
+                        if a['rowid'] == s:
+                            sev = [
+                                        a['d'].strip(),
+                                    ]
+                            break
+                    se = get_value1(sev, s)
+                    m = (_['x_deleted'], se)
+                    msg.append(m)
+                except:
+                    pass
+        #update
+        allx = r_files()
+        alld = [x['rowid'] for x in allx]
+        for i in range(len(rowid)):
+            ri = rowid[i]
+            di = d[i]
+            fi = f[i]
+            if (ri in alld) and (not ri in select):
+                try:
+                    db.update(FORM_TBL, where='a=$a and b=$b and c=$c and rowid=$ri',
+                        f=fi,
+                        vars = {
+                            'a': 'my', 
+                            'b': 'files', 
+                            'c': user(),
+                            'ri': ri
+                        }
+                    )
+                    #
+                    updated += 1
+                except:
+                    pass
+        #new
+        d_new = web.webapi.rawinput().get('d_new')
+        if not isinstance(d_new, list):
+            d_new = [d_new]
+        for n in d_new:
+            fname = ''
+            try:
+                fname = n.filename.strip()
+            except:
+                pass
+            #
+            if not fname:
+                continue
+            #
+            max_num = 0
+            max_size = 0
+            if not isadmin():
+                max_num = r_system('files.max_number.')
+                max_size = r_system('files.max_size.')
+            #
+            if max_num:
+                allx = r_files()
+                if len(allx) >= max_num:
+                    m = (_['x_max_files_number_error'], 
+                            n.filename, 
+                            str(max_num),
+                        )
+                    msg.append(m)                    
+                    continue
+            #
+            if max_size:
+                if len(n.value) >= max_size:
+                    m = (_['x_max_file_size_error'], 
+                            n.filename,
+                            size(len(n.value)),
+                            size(max_size),
+                        )
+                    msg.append(m)                    
+                    continue
+            #
+            #
+            g = {}
+            gj = ''
+            try:
+                g['size'] = len(n.value)
+                g['type'] = n.type
+                g['type_options'] = n.type_options
+                g['disposition'] = n.disposition
+                g['disposition_options'] = n.disposition_options
+                #
+                gj = json.dumps(g)
+            except:
+                pass
+            #
+            try:
+                db.insert(FORM_TBL, a='my', b='files', c=user(),  
+                    d=n.filename, 
+                    e=base64.b64encode(n.value), 
+                    f='0',
+                    g=gj,
+                )
+                m = (_['x_added'], n.filename)
+                msg.append(m)
+            except:
+                pass
+        #
+        if updated:
+            m = (_['o_files'],)
+            msg.append(m)
+        #        
+        sess[SK_FILES] = msg
+        raise web.seeother('/files')
+
+
+class fs:
+    def GET(self):
+        inp = web.input(sid='', download='')
 
 
 #----------------------------------------------------------------------#

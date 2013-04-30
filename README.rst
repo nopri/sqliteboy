@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.45
+Documentation for version 0.46
 
 
 .. contents:: 
