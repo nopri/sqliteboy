@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.44'
+VERSION = '0.45'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -977,29 +977,6 @@ def get_value1(values, default):
     #
     return ret
 
-def gen_d(exclude, a=0, b=999999, separator='-', retry=1000):
-    if not exclude:
-        exclude = ()
-    #
-    ret = None
-    #
-    i = 0
-    while True:
-        i = i+1
-        #
-        t = float(time.time())
-        st = repr(t).replace('.', separator)
-        r = random.randrange(a, b)
-        x = '%s%s%s' %(st, separator, str(r))
-        if not x in exclude:
-            ret = x
-            break
-        #
-        if i > retry:
-            break
-    #
-    return ret
-
 def isstr(s, empty_ok=False):
     ret = False
     #
@@ -1020,7 +997,7 @@ def isadmin():
         pass
     return False
 
-def s_select(p):
+def s_select(p, string=True):
     pr = p.split(FORM_SPLIT)[:len(FORM_FIELDS)]
     st = []
     sd = {}
@@ -1032,11 +1009,15 @@ def s_select(p):
             sd[fi] = pri
             st.append(s)
     #
-    r = db.select(FORM_TBL, where = ' and '.join(st), vars=sd)
+    r = db.select(FORM_TBL, what='*, rowid', where = ' and '.join(st), vars=sd)
     ret = []
     for i in r:
         d = {}
-        for k in i.keys(): d[k] = i[k]
+        for k in i.keys(): 
+            ik = i[k]
+            if string: 
+                ik = str(ik)
+            d[k] = ik
         ret.append(d)
     #
     return ret
@@ -3031,10 +3012,10 @@ $elif data['command'] == 'notes':
     $for u in content:
         <tr>
         <td width='12%' align='center'>
-            <input type='checkbox' name="$data['select']" value="$u['d']">
+            <input type='checkbox' name="$data['select']" value="$u['rowid']">
         </td>
         <td width='20%'>
-            <input type='hidden' name='d' value="$u['d']">
+            <input type='hidden' name='rowid' value="$u['rowid']">
             <input type='text' name='e' value="$u['e']">
         </td>
         <td>
@@ -3043,7 +3024,7 @@ $elif data['command'] == 'notes':
         <td>
             $if data['xaction']:
                 $for a in data['xaction']:
-                    <a href='$a[1]$u['d']'>$a[0]</a> 
+                    <a href='$a[1]$u['rowid']'>$a[0]</a> 
             $else:
                 &nbsp;
         </td>
@@ -3054,7 +3035,7 @@ $elif data['command'] == 'notes':
             &nbsp;
         </td>
         <td width='20%'>
-            <input type='hidden' name='d' value=''>
+            <input type='hidden' name='rowid' value=''>
             <input type='text' name='e'>
         </td>
         <td>
@@ -3715,10 +3696,10 @@ class query:
         #
         if not isnosb():
             notes = s_select('my.notes.%s' %(user()))
-            alld = [x['d'] for x in notes]
+            alld = [x['rowid'] for x in notes]
             if inp.src == 'notes' and inp.sid in alld:
                 for n in notes:
-                    if n['d'] == inp.sid:
+                    if n['rowid'] == inp.sid:
                         q = n['f']
                         break
         #
@@ -5206,9 +5187,9 @@ class notes:
         return T(data, content)
     
     def POST(self):
-        inp = web.input(select=[], d=[], e=[], f=[])
+        inp = web.input(select=[], rowid=[], e=[], f=[])
         select = inp.select
-        d = inp.d
+        rowid = inp.rowid
         e = inp.e
         f = inp.f
         msg = []
@@ -5217,29 +5198,29 @@ class notes:
         #
         #delete
         allx = s_select('my.notes.%s' %(user()))
-        alld = [x['d'] for x in allx]
-        for i in range(len(d)):
-            di = d[i]
+        alld = [x['rowid'] for x in allx]
+        for i in range(len(rowid)):
+            ri = rowid[i]
             ei = e[i]
             fi = f[i]
-            if (di in alld) and (not di in select):
+            if (ri in alld) and (not ri in select):
                 if not ei.strip() and not fi.strip():
-                    select.append(di)       
+                    select.append(ri)       
         for s in select:
             if s in alld:
                 try:
                     db.delete(FORM_TBL, 
-                        where='a=$a and b=$b and c=$c and d=$d', 
+                        where='a=$a and b=$b and c=$c and rowid=$ri', 
                         vars={
                             'a': 'my', 
                             'b': 'notes', 
                             'c': user(), 
-                            'd': s
+                            'ri': s
                         }
                     )
                     sev = ()
                     for a in allx:
-                        if a['d'] == s:
+                        if a['rowid'] == s:
                             sev = [
                                         a['e'].strip(),
                                         a['f'].strip(),
@@ -5252,21 +5233,21 @@ class notes:
                     pass
         #update
         allx = s_select('my.notes.%s' %(user()))
-        alld = [x['d'] for x in allx]
-        for i in range(len(d)):
-            di = d[i]
+        alld = [x['rowid'] for x in allx]
+        for i in range(len(rowid)):
+            ri = rowid[i]
             ei = e[i]
             fi = f[i]
-            if (di in alld) and (not di in select) and (ei.strip() or fi.strip()):
+            if (ri in alld) and (not ri in select) and (ei.strip() or fi.strip()):
                 try:
-                    db.update(FORM_TBL, where='a=$a and b=$b and c=$c and d=$d',
+                    db.update(FORM_TBL, where='a=$a and b=$b and c=$c and rowid=$ri',
                         e=ei,
                         f=fi,
                         vars = {
                             'a': 'my', 
                             'b': 'notes', 
                             'c': user(),
-                            'd': di
+                            'ri': ri
                         }
                     )
                     updated += 1
@@ -5274,22 +5255,21 @@ class notes:
                     pass
         #new
         allx = s_select('my.notes.%s' %(user()))
-        alld = [x['d'] for x in allx]
+        alld = [x['rowid'] for x in allx]
         for i in range(len(e)):
-            di = d[i]
-            if di:
+            ri = rowid[i]
+            if ri:
                 continue
             #
-            dn = gen_d(alld)
             ei = e[i]
             fi = f[i]
             #
-            if (dn) and (not di) and (not dn in select) and (ei.strip() or fi.strip()):
+            if ei.strip() or fi.strip():
                 try:
                     db.insert(FORM_TBL, a='my', b='notes', c=user(),  
-                        d=dn, e=ei, f=fi
+                        e=ei, f=fi
                     )
-                    ex = get_value1([ei.strip(), fi.strip()], dn)
+                    ex = get_value1([ei.strip(), fi.strip()], '')
                     m = (_['x_added'], ex)
                     msg.append(m)
                 except:
