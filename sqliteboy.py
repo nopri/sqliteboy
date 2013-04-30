@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.43'
+VERSION = '0.44'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -193,6 +193,24 @@ CSV_CTYPE = 'text/csv'
 BACKUP_BUFFER = 10 * SIZE_KB
 FILES_MAX_NUMBER = 10
 FILES_MAX_SIZE = 1 * SIZE_MB
+SYSTEM_CONFIG = (
+                    (
+                        'x_files',
+                        'x_max_files_number',
+                        'files.max_number.',
+                        'files.max_number..%s' %(FILES_MAX_NUMBER),
+                        FILES_MAX_NUMBER,
+                        int,
+                    ),
+                    (
+                        'x_files',
+                        'x_max_file_size',
+                        'files.max_size.',
+                        'files.max_size..%s' %(FILES_MAX_SIZE),
+                        FILES_MAX_SIZE,
+                        int,
+                    ),
+                )
 
 
 #----------------------------------------------------------------------#
@@ -4221,7 +4239,7 @@ class admin_system:
                 'action_url': '/admin/system',
                 'action_method': 'post',
                 'action_button': (
-                                    ('', _['cmd_save'], False, '', 'submit'),
+                                    ('save', _['cmd_save'], False, '', 'submit'),
                                 ),
                 'columns' : (
                                 _['x_section'],
@@ -4232,26 +4250,15 @@ class admin_system:
                 'hint': _['h_system'],
             }
         #
-        content = [
-                    [
-                        _['x_files'], 
-                        _['x_max_files_number'], 
-                        'files.max_number.',
-                        s_check(
-                            'files.max_number.',
-                            'files.max_number..%s' %(FILES_MAX_NUMBER),
-                        ).get('d'),
-                    ],
-                    [
-                        _['x_files'], 
-                        _['x_max_file_size'], 
-                        'files.max_size.',
-                        s_check(
-                            'files.max_size.',
-                            'files.max_size..%s' %(FILES_MAX_SIZE),
-                        ).get('d'),
-                    ],
+        content = []
+        for s in SYSTEM_CONFIG:
+            c = [
+                    _[s[0]],
+                    _[s[1]],
+                    s[2],
+                    s_check(s[2], s[3]).get('d'),
                 ]
+            content.append(c)
         #
         stop()
         return T(data, content)
@@ -4259,10 +4266,24 @@ class admin_system:
     def POST(self):
         inp = web.input()
         #
+        skeys = [x[2] for x in SYSTEM_CONFIG]
+        dkeys = {}
+        for s in SYSTEM_CONFIG:
+            dkeys[s[2]] = [s[4], s[5]]
+        #
         try:
             for k in inp.keys():
-                if k.strip() and s_select(k):
-                    p = '%s%s%s' %(k, FORM_SPLIT, inp.get(k, ''))
+                k = k.strip()
+                if (k) and (k in skeys) and (s_select(k)):
+                    kd = dkeys.get(k, [])
+                    kdv = kd[0]
+                    kdf = kd[1]
+                    ku = inp.get(k, kdv)
+                    try:
+                        test = kdf(ku)
+                    except:
+                        ku = kdv
+                    p = '%s%s%s' %(k, FORM_SPLIT, ku)
                     s_save(p)
             sess[SK_SYSTEM] = _['o_system']
         except:
