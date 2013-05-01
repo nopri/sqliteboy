@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.46
+Documentation for version 0.47
 
 
 .. contents:: 
@@ -59,8 +59,9 @@ Why
   Future version of reporting will support custom output format (PDF, 
   CSV, etc).
 
-  User accounts, configurable hosts allowed, and many others are 
-  available as extended features.
+  User accounts, Notes, Files (with file sharing support), 
+  configurable hosts allowed, database backup, system configuration 
+  and many others are available as extended features.
   
 - I need simple form (data entry) and reporting solution. This 
   application is under active development. I use it at work and home. 
@@ -167,6 +168,22 @@ Features
   - As of v0.18, report also can be used as form/data entry, using 
     insert SQL query. Custom result message (based on SQL query result), 
     is also supported. 
+
+- Files (Extended feature, new in v0.47)
+
+  - System configuration: maximum number of files per user (admin: unlimited)
+  
+  - System configuration: maximum file size (admin: unlimited)
+  
+  - Multiple file upload (content type, filename, etc are saved)
+  
+  - Action: view 
+  
+  - Action: download (disposition attachment)
+  
+  - Simple file sharing support 
+  
+  - Human readable file size
 
 - Browse table
 

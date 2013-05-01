@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.46'
+VERSION = '0.47'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -212,6 +212,9 @@ SYSTEM_CONFIG = (
                         int,
                     ),
                 )
+NOTFOUND_CHECK = [
+                    '/fs',
+                ]
 
 
 #----------------------------------------------------------------------#
@@ -492,6 +495,7 @@ LANGS = {
             'cmd_view': 'view',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
+            'e_notfound': 'ERROR 404: the page you are looking for is not found',
             'e_access_forbidden': 'access forbidden',
             'e_connect': 'ERROR: unable to connect to',
             'e_insert': 'ERROR: insert into table',
@@ -1252,10 +1256,23 @@ def stop():
     rendertime[1] = time.time()
 
 def notfound():
-    raise web.seeother('/')
+    url = web.url().lower()
+    #
+    if not url in NOTFOUND_CHECK:
+        dflt()
+    #
+    start()
+    data = {
+                'title': _['th_error'],
+                'command': 'error_404',
+                'message': _['e_notfound'],
+            }
+    content = ''
+    stop()
+    return web.notfound(T(data, content))
 
 def dflt():
-    notfound()
+    raise web.seeother('/')
 
 def nrfloat(snumber, precision=PRECISION, round=decimal.ROUND_UP):
     le = '0' * precision
@@ -2101,8 +2118,12 @@ def r_system(config, default=None):
     #
     return ret
 
-def r_files():
-    q = 'my.files.%s' %(user())
+def r_files(all_=False):
+    if not all_:
+        q = 'my.files.%s' %(user())
+    else:
+        q = 'my.files'
+    #
     content = s_select(q, what='rowid, a, b, c, d, f, g', order='d asc')
     for c in content:
         g = {}
@@ -2116,6 +2137,30 @@ def r_files():
             c['d'] = ''
     #
     return content
+
+def r_fs_ok(sid):
+    if not isstr(sid):
+        return False
+    #
+    if not sid.strip():
+        return False
+    #
+    allx = r_files()
+    alld = [x['rowid'] for x in allx]
+    if sid in alld:
+        return True
+    #
+    allf = r_files(True)
+    allfd = {}
+    for f in allf:
+        k = f.get('rowid')
+        s = f.get('f', '')
+        if k.strip():
+            allfd[k] = s
+    if sid in allfd.keys() and allfd.get(sid) == '1':
+        return True
+    #
+    return False
     
     
 #----------------------------------------------------------------------#
@@ -3223,6 +3268,11 @@ $elif data['command'] == 'files':
         </tr>
     </table>
     </form>
+$elif data['command'] == 'error_404':
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
 $else:
     $:content
 </body>
@@ -5428,8 +5478,8 @@ class files:
         start()
         #
         xaction = (
-                    #(_['cmd_view'], '/fs?sid=', '_blank'),
-                    #(_['cmd_download'], '/fs?download=1&sid=', '_blank'),
+                    (_['cmd_view'], '/fs?sid=', '_blank'),
+                    (_['cmd_download'], '/fs?download=1&sid=', '_blank'),
                 )
         #
         data = {
@@ -5597,7 +5647,40 @@ class files:
 class fs:
     def GET(self):
         inp = web.input(sid='', download='')
-
+        sid = inp.sid.strip()
+        download = inp.download.strip()
+        #
+        test = r_fs_ok(sid)
+        if not test:
+            raise web.notfound()
+        #
+        ft = ''
+        fn = ''
+        fc = ''
+        try:
+            r = db.select(FORM_TBL, 
+                            what='d, e, g', 
+                            where='rowid=$sid',
+                            vars={
+                                    'sid': long(sid),
+                                }
+                        )
+            r = r[0]
+            ft = json.loads(r.g).get('type')
+            fn = r.d
+            fc = base64.b64decode(r.e)
+        except:
+            dflt()
+        #
+        if download == '1':
+            disposition = 'attachment; filename=' + fn
+        else:
+            disposition = 'inline; filename=' + fn
+        #
+        web.header('Content-Type', ft)
+        web.header('Content-Disposition', disposition)
+        return fc
+        
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
