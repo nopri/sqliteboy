@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.47'
+VERSION = '0.48'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -101,6 +101,7 @@ SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
 SK_NOTES = 'notes'
 SK_FILES = 'files'
+SK_PAGES = 'pages'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SK_SYSTEM = 'system'
@@ -215,6 +216,33 @@ SYSTEM_CONFIG = (
 NOTFOUND_CHECK = [
                     '/fs',
                 ]
+REGEX_PAGE = (
+                (
+                    r'~([^~]+)~', 
+                    r'<em>\1</em>',
+                    True,
+                    '~text~ -> <em>text</em>',
+                ),
+                (
+                    r'\*([^\*]+)\*', 
+                    r'<strong>\1</strong>',
+                    True,
+                    '*text* -> <strong>text</strong>',
+                ),
+                (
+                    r'_([^_]+)_', 
+                    r'<u>\1</u>',
+                    True,
+                    '_text_ -> <u>text</u>',
+                ),
+                (
+                    r'\[([^\|]+)\|(\S+)\]', 
+                    r'<a href="\2">\1</a>',
+                    True,
+                    '[text|url] -> <a href="url">text</a>',
+                ),
+            )
+SAMPLE_PAGE = ', '.join([x[3] for x in REGEX_PAGE])
 
 
 #----------------------------------------------------------------------#
@@ -258,6 +286,8 @@ import re
 import csv
 import cStringIO
 
+from HTMLParser import HTMLParser
+
 import web
 web.config.debug = False
 
@@ -298,6 +328,8 @@ URLS = (
     '/notes', 'notes',
     '/files', 'files',
     '/fs', 'fs',
+    '/pages', 'pages',
+    '/page/(.*)', 'page',
     )
 
 app = None
@@ -319,6 +351,18 @@ sess_init = {
         'user': '',
         'admin': 0,
     }
+
+
+#----------------------------------------------------------------------#
+# STRIPHTMLPARSER                                                      #
+#----------------------------------------------------------------------#
+class StripHTMLParser(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.text = []
+    
+    def handle_data(self, data):
+        self.text.append(data)
 
 
 #----------------------------------------------------------------------#
@@ -435,6 +479,7 @@ LANGS = {
             'x_file_name': 'file name',
             'x_file_size': 'size',
             'x_shared': 'shared',
+            'x_preview': 'preview',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -458,6 +503,7 @@ LANGS = {
             'tt_report_run_result': 'report run (result)',
             'tt_notes': 'notes',
             'tt_files': 'files',
+            'tt_pages': 'page',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -483,6 +529,7 @@ LANGS = {
             'cmd_password': 'password',
             'cmd_notes': 'notes',
             'cmd_files': 'files',
+            'cmd_pages': 'page',
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
             'cmd_system': 'system',
@@ -539,6 +586,7 @@ LANGS = {
             'o_form_run': 'OK: data saved',
             'o_notes': 'OK: notes updated',
             'o_files': 'OK: files updated',
+            'o_pages': 'OK: page updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -556,6 +604,7 @@ LANGS = {
             'h_report_run': '',
             'h_notes': '',
             'h_files': '',
+            'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -1213,6 +1262,8 @@ def proc_nosb(handle):
             path.startswith('/notes') or \
             path.startswith('/files') or \
             path.startswith('/fs') or \
+            path.startswith('/pages') or \
+            path.startswith('/page') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -2161,7 +2212,27 @@ def r_fs_ok(sid):
         return True
     #
     return False
-    
+
+def striphtml(text):
+    data = StripHTMLParser()
+    data.feed(text)
+    ret = ''.join(data.text)
+    return ret
+
+def tr_page(code):
+    s = code
+    #
+    for r in REGEX_PAGE:
+        try:
+            if r[2]:
+                s = re.compile(r[0], re.M).sub(r[1], s)
+            else:
+                s = re.compile(r[0]).sub(r[1], s)
+        except:
+            pass
+    #
+    return s
+        
     
 #----------------------------------------------------------------------#
 # SQLITE UDF (2)                                                       #
@@ -2246,6 +2317,7 @@ $if user():
     $user() <a href='/password'>$_['cmd_password']</a>
     <a href='/files'>$_['cmd_files']</a> 
     <a href='/notes'>$_['cmd_notes']</a> 
+    <a href='/pages'>$_['cmd_pages']</a> 
     <a href='/logout'>$_['cmd_logout']</a>
 </td>
 <td align='right' width='12%'>$size()</td>
@@ -3268,11 +3340,51 @@ $elif data['command'] == 'files':
         </tr>
     </table>
     </form>
+$elif data['command'] == 'pages':
+    <p>
+    $ hint = data['hint'][0].upper() + data['hint'][1:]
+    <i>$hint</i>
+    </p>
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <a href="$data['url']" target='_blank'>$data['url']</a>
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $i
+        </th>
+    <tr>
+    <td width='50%' style='vertical-align: top'>
+        <textarea name='content' rows='40' cols='40'>$content[0]</textarea>
+    </td>
+    <td style='vertical-align: top'>
+        <div>
+        <pre>$:content[1]</pre>
+        </div>
+    </td>
+    </tr>
+    </table>
+    </form>
 $elif data['command'] == 'error_404':
     $if data['message']:
         <div>
             $data['message']
         </div>
+$elif data['command'] == 'page':
+    <pre>$:content</pre>
 $else:
     $:content
 </body>
@@ -5680,6 +5792,97 @@ class fs:
         web.header('Content-Type', ft)
         web.header('Content-Disposition', disposition)
         return fc
+
+
+class pages:
+    def GET(self):
+        start()
+        #
+        data = {
+                'title': _['tt_pages'],
+                'command': 'pages',
+                'action_url': '/pages',
+                'action_method': 'post',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns': (
+                            _['x_code'], 
+                            _['x_preview'], 
+                        ),                                
+                'message': smsgq(SK_PAGES),
+                'url': '/page/%s' %(user()),
+                'hint': _['h_pages'],
+            }
+        #
+        q = 'my.pages.%s.home' %(user())
+        page = s_check2(q, '')
+        #
+        content = ['', '']
+        if page:
+            content[0] = page.get('e', '')
+            content[1] = tr_page(content[0])
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        inp = web.input(content='')
+        content = inp.content
+        #
+        q = 'my.pages.%s.home' %(user())
+        #
+        try:
+            if s_select(q):
+                r = db.update(FORM_TBL, 
+                        e=striphtml(content), 
+                        where=' a=$a and b=$b and c=$c and d=$d ',
+                        vars = {
+                                    'a': 'my',
+                                    'b': 'pages',
+                                    'c': user(),
+                                    'd': 'home',
+                                }
+                    )
+            sess[SK_PAGES] = _['o_pages']
+        except:
+            sess[SK_PAGES] = _['e_pages']
+        #
+        raise web.seeother('/pages')
+
+
+class page:
+    def GET(self, u):
+        start()
+        #
+        allu = s_select('user.account')
+        users = [x['d'] for x in allu]
+        #
+        u = u.strip()
+        if not u or not u in users: 
+            dflt()
+        #
+        q = 'my.pages.%s.home' %(u)
+        p = s_select(q)
+        if not p:
+            dflt()
+        #
+        content = ''
+        if p:
+            p = p[0]
+            content = p.get('e', '')
+        #
+        if not content.strip():
+            dflt()
+        #
+        data = {
+                    'command': 'page',
+                    'title': u,
+                }
+        content = tr_page(content)
+        #
+        stop()
+        return T(data, content)
         
 
 #----------------------------------------------------------------------#

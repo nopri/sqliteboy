@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.47
+Documentation for version 0.48
 
 
 .. contents:: 
@@ -59,7 +59,7 @@ Why
   Future version of reporting will support custom output format (PDF, 
   CSV, etc).
 
-  User accounts, Notes, Files (with file sharing support), 
+  User accounts, Notes, Files (with file sharing support), Page (home page),
   configurable hosts allowed, database backup, system configuration 
   and many others are available as extended features.
   
@@ -184,6 +184,18 @@ Features
   - Simple file sharing support 
   
   - Human readable file size
+  
+  - URL: /fs
+  
+  - HTTP 404 Error: file not found or not shared
+  
+- Page (Extended feature, new in v0.48)
+
+  - Static page per user (home page)
+  
+  - URL: /page/<user>
+  
+  - Please read PAGE CODE REFERENCE section (below)
 
 - Browse table
 
@@ -318,6 +330,7 @@ Standalone Windows Application
 - Single file executable (+/- 4 MB)
 - Run from Windows Explorer (double-click), no command line needed
 - To quit properly, press CTRL-C in terminal (cmd) window
+- Documentation and source code are included
 - Download: http://tedut.com/sqliteboy.exe
 
 
@@ -1289,6 +1302,22 @@ Report Code Reference
                      "run" : ""
                    }
     }
+
+
+Page Code Reference
+========================================================================
+
+- ~text~ -> <em>text</em>
+
+- *text* -> <strong>text</strong>
+
+- _text_ -> <u>text</u>
+
+- [text|url] -> <a href="url">text</a>
+
+- Note: HTML tags will be stripped on page save
+
+- Note: rendered in <pre></pre> tag
 
 
 Donate
