@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.48
+Documentation for version 0.49
 
 
 .. contents:: 
@@ -469,9 +469,99 @@ User-defined Function
          empty s1 or s2: current date/time (localtime)
          use sqliteboy_number_format() to format the result
 
+- sqliteboy_is_leap(n)
+  ::
+  
+      is leap year  
+      argument    :
+         n (year)
+         
+      return value: 
+        1 (leap year) or 0 (not leap year)
+
 - sqliteboy_lower(s)
 
 - sqliteboy_upper(s)
+
+- sqliteboy_swapcase(s)
+
+- sqliteboy_capitalize(s, what)
+  ::
+  
+      capitalize string  
+      argument    :
+         s (input string)
+         what (0=first word, 1=all)
+         
+      example     : 
+        sqliteboy_capitalize('hello world', 0)
+        -> 'Hello world' 
+        
+        sqliteboy_capitalize('hello world', 1)
+        -> 'Hello World' 
+
+- sqliteboy_justify(s, justify, length, padding)
+  ::
+  
+      left, right, center justify string  
+      argument    :
+         s (input string)
+         justify (0=left, 1=right, 2=center)
+         length (length)
+         padding (single padding character)
+         
+      example     : 
+        sqliteboy_justify('hello', 0, 10, 'x')
+        -> 'helloxxxxx' 
+        
+        sqliteboy_justify('hello', 1, 10, 'x')
+        -> 'xxxxxhello'
+        
+        sqliteboy_justify('hello', 2, 10, 'x')
+        -> 'xxhelloxxx'
+        
+        sqliteboy_justify(12345, 1, 10, 0)
+        -> '0000012345'
+        
+- sqliteboy_find(s, sub, position, case)
+  ::
+  
+      find index in s where substring sub is found
+      argument    :
+         s (input string)
+         sub (substring)
+         position (0=lowest index, 1=highest index)
+         case (0=ignore case, 1=case sensitive)
+
+      return value: 
+        -1 (not found) or > -1 (found, starts from 0)
+
+      example     : 
+        sqliteboy_find('hello sqliteboy', 'e', 0, 0)
+        -> 1
+        
+        sqliteboy_find('hello sqliteboy', 'e', 1, 0)
+        -> 11
+        
+        sqliteboy_find('hello sqlitEboy', 'e', 1, 0)
+        -> 11
+        
+        sqliteboy_find('hello sqlitEboy', 'e', 1, 1)
+        -> 1
+
+- sqliteboy_reverse(s)
+  ::
+  
+      reverse string
+      argument    :
+         s (input string)
+         
+      example     : 
+        sqliteboy_reverse('hello world')
+        -> 'dlrow olleh'
+        
+        sqliteboy_reverse(12345)
+        -> '54321'
 
 - sqliteboy_is_valid_email(s)
   ::
@@ -652,6 +742,18 @@ User-defined Function
         sqliteboy_lookup3(12345, 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
         -> ':('
         
+- sqliteboy_http_remote_addr()
+  ::
+  
+    return value  : 
+        http remote address 
+
+- sqliteboy_http_user_agent()
+  ::
+  
+    return value  : 
+        http user agent (for example: web browser)
+
 - sqliteboy_x_user()
   ::
   
@@ -1307,13 +1409,25 @@ Report Code Reference
 Page Code Reference
 ========================================================================
 
-- ~text~ -> <em>text</em>
+- emphasis 
+  ::
 
-- *text* -> <strong>text</strong>
+      ~text~ -> <em>text</em>
 
-- _text_ -> <u>text</u>
+- strong
+  ::
 
-- [text|url] -> <a href="url">text</a>
+      *text* -> <strong>text</strong>
+
+- underline
+  ::
+
+      _text_ -> <u>text</u>
+
+- link
+  ::
+
+      [text|url] -> <a href="url">text</a>
 
 - Note: HTML tags will be stripped on page save
 

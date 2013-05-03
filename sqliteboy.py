@@ -14,6 +14,7 @@
 # - obsolete codes
 # - non-descriptive variable/function names
 # - using python builtins as variable (input, type, ...) :(
+# - bare except:
 # - PEP8 violations :)
 #
 # # pyinstaller 2.0 spec #
@@ -45,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.48'
+VERSION = '0.49'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -287,6 +288,8 @@ import csv
 import cStringIO
 
 from HTMLParser import HTMLParser
+
+import calendar
 
 import web
 web.config.debug = False
@@ -763,6 +766,15 @@ def sqliteboy_time5(s1, s2, mode):
     return ret
 SQLITE_UDF.append(('sqliteboy_time5', 3, sqliteboy_time5)) 
 
+def sqliteboy_is_leap(n):
+    ret = 0
+    #
+    if sqliteboy_is_integer(n):
+        ret = calendar.isleap(n)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_is_leap', 1, sqliteboy_is_leap))
+
 def sqliteboy_lower(s):
     s = sqliteboy_strs(s)
     return s.lower()
@@ -772,6 +784,77 @@ def sqliteboy_upper(s):
     s = sqliteboy_strs(s)
     return s.upper()
 SQLITE_UDF.append(('sqliteboy_upper', 1, sqliteboy_upper))
+
+def sqliteboy_swapcase(s):
+    s = str(s)
+    return s.swapcase()
+SQLITE_UDF.append(('sqliteboy_swapcase', 1, sqliteboy_swapcase))
+
+def sqliteboy_capitalize(s, what):
+    s = str(s)
+    if not sqliteboy_is_integer(what) or what < 0:
+        what = 0
+    #
+    if what == 0: #first 
+        return s.capitalize()
+    else:
+        return string.capwords(s)
+SQLITE_UDF.append(('sqliteboy_capitalize', 2, sqliteboy_capitalize))
+
+def sqliteboy_justify(s, justify, length, padding):
+    s = str(s)
+    if not sqliteboy_is_integer(justify) or justify < 0:
+        justify = 0
+    #
+    padding = str(padding)
+    if padding:
+        padding = padding[0]
+    else:
+        padding = ' '
+    #
+    ls = len(s)
+    if not sqliteboy_is_integer(length) or length < 0 or length < ls:
+        length = ls
+    #
+    ret = s
+    #
+    if justify == 0: #left
+        ret = s.ljust(length, padding)
+    elif justify == 1: #right
+        ret = s.rjust(length, padding)
+    elif justify == 2: #center
+        ret = s.center(length, padding)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_justify', 4, sqliteboy_justify))
+
+def sqliteboy_find(s, sub, position, case):
+    s = str(s)
+    sub = str(sub)
+    if not sqliteboy_is_integer(position) or position < 0:
+        position = 0
+    #
+    if not sqliteboy_is_integer(case) or case < 0:
+        case = 0
+    if not case: #ignore case
+        s = s.lower()
+        sub = sub.lower()
+    #
+    ret = -1
+    #
+    if position == 0: #left
+        ret = s.find(sub)
+    elif position == 1: #right
+        ret = s.rfind(sub)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_find', 4, sqliteboy_find))
+
+def sqliteboy_reverse(s):
+    s = str(s)
+    #
+    return s[::-1]
+SQLITE_UDF.append(('sqliteboy_reverse', 1, sqliteboy_reverse))
 
 def sqliteboy_is_valid_email(s):
     s = sqliteboy_strs(s)
@@ -1025,6 +1108,14 @@ def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, defau
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3))
+
+def sqliteboy_http_remote_addr():
+    return web.ctx.ip
+SQLITE_UDF.append(('sqliteboy_http_remote_addr', 0, sqliteboy_http_remote_addr))
+
+def sqliteboy_http_user_agent():
+    return web.ctx.env.get('HTTP_USER_AGENT', '')
+SQLITE_UDF.append(('sqliteboy_http_user_agent', 0, sqliteboy_http_user_agent))
 
 
 #----------------------------------------------------------------------#
