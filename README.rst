@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.49
+Documentation for version 0.50
 
 
 .. contents:: 
@@ -60,7 +60,7 @@ Why
   CSV, etc).
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
-  configurable hosts allowed, database backup, system configuration 
+  calculator, configurable hosts allowed, database backup, system configuration 
   and many others are available as extended features.
   
 - I need simple form (data entry) and reporting solution. This 
@@ -273,8 +273,16 @@ Features
 
   - Simple notes 
   
-  - Content as SQL Query (admin)
+  - Content as SQL Query (admin), calculator
 
+- Calculator (Extended feature, new in v0.50)
+
+  - Simple calculator 
+  
+  - Valid characters: 0123456789.-+*/()
+  
+  - Maximum length: 36
+  
 - User-defined function
 
   - Prefix::

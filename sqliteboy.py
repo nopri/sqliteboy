@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.49'
+VERSION = '0.50'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -103,6 +103,7 @@ SK_PASSWORD = 'password'
 SK_NOTES = 'notes'
 SK_FILES = 'files'
 SK_PAGES = 'pages'
+SK_CALCULATOR = 'calculator'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SK_SYSTEM = 'system'
@@ -124,6 +125,7 @@ COLUMN_TYPES = (
 MAX_COLUMN_ADD = 3
 CUSTOM_RT = {
                 'query': 4,
+                'calculator': 3,
             } #command, rt 
 PK_SYM = '*'
 URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.rst')
@@ -244,6 +246,8 @@ REGEX_PAGE = (
                 ),
             )
 SAMPLE_PAGE = ', '.join([x[3] for x in REGEX_PAGE])
+CALCULATOR_MAX_INPUT = 36
+CALCULATOR_ALLOWED = ''
 
 
 #----------------------------------------------------------------------#
@@ -264,6 +268,7 @@ import random
 import string
 FORM_VALID = [x for x in string.ascii_lowercase] + [x for x in string.digits]
 FORM_VALID.append('_')
+CALCULATOR_ALLOWED = string.digits + '.-+*/()'
 
 import socket
 DEFAULT_HOSTS_ALLOWED.append(socket.gethostbyname(socket.gethostname()))
@@ -333,6 +338,7 @@ URLS = (
     '/fs', 'fs',
     '/pages', 'pages',
     '/page/(.*)', 'page',
+    '/calculator', 'calculator',
     )
 
 app = None
@@ -483,6 +489,8 @@ LANGS = {
             'x_file_size': 'size',
             'x_shared': 'shared',
             'x_preview': 'preview',
+            'x_expression_too_long': 'expression too long',
+            'x_expression_invalid': 'invalid expression',            
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -507,6 +515,7 @@ LANGS = {
             'tt_notes': 'notes',
             'tt_files': 'files',
             'tt_pages': 'page',
+            'tt_calculator': 'calculator',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -533,6 +542,8 @@ LANGS = {
             'cmd_notes': 'notes',
             'cmd_files': 'files',
             'cmd_pages': 'page',
+            'cmd_calculator': 'calculator',
+            'cmd_calculate': 'calculate',
             'cmd_users': 'users',
             'cmd_hosts': 'hosts',
             'cmd_system': 'system',
@@ -608,6 +619,7 @@ LANGS = {
             'h_notes': '',
             'h_files': '',
             'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
+            'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -641,10 +653,16 @@ def sqliteboy_strs(s):
 SQLITE_UDF.append(('sqliteboy_strs', 1, sqliteboy_strs))
 
 def sqliteboy_as_integer(s):
+    s = str(s)
+    #
     ret = 0
     #
     try:
         ret = int(s)
+        if abs(ret) > sys.maxint:
+            ret = 0
+        else:
+            ret = int(ret)
     except:
         pass
     #
@@ -652,6 +670,8 @@ def sqliteboy_as_integer(s):
 SQLITE_UDF.append(('sqliteboy_as_integer', 1, sqliteboy_as_integer))
 
 def sqliteboy_as_float(s):
+    s = str(s)
+    #
     ret = 0
     #
     try:
@@ -1355,6 +1375,7 @@ def proc_nosb(handle):
             path.startswith('/fs') or \
             path.startswith('/pages') or \
             path.startswith('/page') or \
+            path.startswith('/calculator') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -2409,6 +2430,7 @@ $if user():
     <a href='/files'>$_['cmd_files']</a> 
     <a href='/notes'>$_['cmd_notes']</a> 
     <a href='/pages'>$_['cmd_pages']</a> 
+    <a href='/calculator'>$_['cmd_calculator']</a>
     <a href='/logout'>$_['cmd_logout']</a>
 </td>
 <td align='right' width='12%'>$size()</td>
@@ -2420,6 +2442,12 @@ $if data['command'] in crt.keys():
             $crtq[crt['query']]
         $else:
             $rt()
+    $elif data['command'] == 'calculator':
+        $ crtq = data['message']
+        $if crtq:
+            $crtq[crt['calculator']]
+        $else:
+            $rt()            
 $else:
     $rt()
 </td>
@@ -3476,6 +3504,38 @@ $elif data['command'] == 'error_404':
         </div>
 $elif data['command'] == 'page':
     <pre>$:content</pre>
+$elif data['command'] == 'calculator':
+    $ query = ''
+    $ res = data['message']
+    $if res:
+        $ query = res[0]
+    $else:
+        $ query = data['calculator']
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    <form action="$data['action_url']" method="$data['action_method']">
+    <table>
+    <tr>
+    <td>
+    <input type='text' name='q' value='$query' maxlength="$data['max_input']" size="$data['max_input']">
+    </td>
+    </tr>
+    <tr>
+    <td>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
+    <br>
+    $if res:
+        $res[1]<br>
+        $res[2]
 $else:
     $:content
 </body>
@@ -5545,9 +5605,11 @@ class notes:
     def GET(self):
         start()
         #
-        xaction = ()
+        xaction = [
+                    (_['cmd_calculator'], '/calculator?src=notes&sid='),
+                ]
         if isadmin():
-            xaction = (
+            xaction.append(
                         (_['cmd_query_src'], '/query?src=notes&sid='),
                     )
         #
@@ -5974,6 +6036,73 @@ class page:
         #
         stop()
         return T(data, content)
+
+class calculator:
+    def GET(self):
+        start()
+        #
+        inp = web.input(src='', sid='')
+        q = ''
+        #
+        if not isnosb():
+            notes = s_select('my.notes.%s' %(user()))
+            alld = [x['rowid'] for x in notes]
+            if inp.src == 'notes' and inp.sid in alld:
+                for n in notes:
+                    if n['rowid'] == inp.sid:
+                        q = n['f']
+                        break
+        #
+        data = {
+            'title': '%s' %(_['tt_calculator']),
+            'command': 'calculator',
+            'action_url': '/calculator',
+            'action_method': 'post',
+            'action_button': (
+                                ('calculate', _['cmd_calculate'], False, '', 'submit'),
+                            ),
+            'hint': _['h_calculator'],
+            'max_input': CALCULATOR_MAX_INPUT,
+            'message': smsgq(SK_CALCULATOR),
+            'calculator': q,
+        }
+        content = ''
+        stop()
+        return T(data, content)
+        
+    def POST(self):
+        q = web.input(q='').q.strip()
+        q0 = q
+        q = re.compile('\s+', re.M).sub('', q)
+        if not q:
+            raise web.seeother('/calculator')
+        #
+        start()
+        try:
+            if len(q) > CALCULATOR_MAX_INPUT:
+                raise Exception, _['x_expression_too_long']
+            #
+            for e in q:
+                if not e in CALCULATOR_ALLOWED:
+                    raise Exception, _['x_expression_invalid']
+            #
+            q2 = 'select $e'
+            msg = db.query(q2, 
+                        vars = {
+                                'e': web.sqlliteral(q),
+                            }
+                    )
+            msg = msg[0].get(q, '')
+            err = _['th_ok']
+        except Exception, e:
+            msg = e.message
+            err = _['th_error']
+        #
+        stop()
+        t = rt()
+        #
+        sess[SK_CALCULATOR] = [q0, err, msg, t]
+        raise web.seeother('/calculator')
         
 
 #----------------------------------------------------------------------#
