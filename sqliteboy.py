@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.50'
+VERSION = '0.51'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -248,6 +248,7 @@ REGEX_PAGE = (
 SAMPLE_PAGE = ', '.join([x[3] for x in REGEX_PAGE])
 CALCULATOR_MAX_INPUT = 36
 CALCULATOR_ALLOWED = ''
+PLAIN_CTYPE = 'text/plain'
 
 
 #----------------------------------------------------------------------#
@@ -2345,6 +2346,22 @@ def tr_page(code):
     #
     return s
         
+def fsize(f, working_dir=CURDIR, human_readable=True):
+    sz = 0
+    #
+    try:
+        f = os.path.abspath(os.path.join(working_dir, f))
+        #
+        sz = os.path.getsize(f)
+    except:
+        pass
+    #
+    ret = sz
+    if human_readable:
+        ret = size(sz)
+    #
+    return ret
+    
     
 #----------------------------------------------------------------------#
 # SQLITE UDF (2)                                                       #
@@ -2885,6 +2902,13 @@ $elif data['command'] == 'home':
         </tr>
     </table>
 $elif data['command'] in ['readme', 'source']:
+    <br>
+    <br>
+    <a href="$data['download']">$_['cmd_download']</a>
+    <br>
+    <br>
+    $data['size']
+    <br>
     <br>
     <textarea style="width: 100%;" rows=20 readonly>
     $:content
@@ -4347,34 +4371,66 @@ class sqliteboy_init:
 class sqliteboy_readme:
     def GET(self):
         start()
+        #
+        inp = web.input(download='')
+        download = inp.download.strip()
+        error = 0
+        #
         data = {
                 'title': _['tt_readme'],
                 'command': 'readme',
+                'download': '%s?download=1' %(URL_README[0]),
+                'size': fsize(URL_README[2]),
             }
         #
         try:
             content = open(os.path.join(CURDIR, URL_README[2])).read()
         except:
             content = _['e_open_file']
+            error = 1
         #
         stop()
+        #
+        if download == '1' and not error:
+            disposition = 'attachment; filename=%s' %(URL_README[2])
+            web.header('Content-Type', PLAIN_CTYPE)
+            web.header('Content-Disposition', disposition)
+            return content
+        #
         return T(data, content)
 
 
 class sqliteboy_source:
     def GET(self):
         start()
+        #
+        inp = web.input(download='')
+        download = inp.download.strip()
+        #        
         data = {
                 'title': _['tt_source'],
                 'command': 'source',
+                'download': '%s?download=1' %(URL_SOURCE[0]),
+                'size': fsize(URL_SOURCE[2]),
             }
         #
+        content2 = ''
         try:
             content = web.htmlquote(open(os.path.join(CURDIR, URL_SOURCE[2])).read())
+            #
+            if download == '1':
+                content2 = open(os.path.join(CURDIR, URL_SOURCE[2])).read()
         except:
             content = _['e_open_file'] 
         #
         stop()
+        #
+        if download == '1' and content2.strip():
+            disposition = 'attachment; filename=%s' %(URL_SOURCE[2])
+            web.header('Content-Type', PLAIN_CTYPE)
+            web.header('Content-Disposition', disposition)
+            return content2
+        #
         return T(data, content)
 
 
