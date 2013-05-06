@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.51'
+VERSION = '0.52'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -416,6 +416,306 @@ class MemSession(web.session.Store):
             if self.data.has_key(k):
                 del self.data[k]
         
+
+#----------------------------------------------------------------------#
+# NUMBER TO WORDS                                                      #
+#----------------------------------------------------------------------#
+def number_to_words_id(number, style=1):
+    #
+    WORDS = (
+                {
+                    '0': ('nol', ''),
+                    '1': 'satu',
+                    '2': 'dua',
+                    '3': 'tiga',
+                    '4': 'empat',
+                    '5': 'lima',
+                    '6': 'enam',
+                    '7': 'tujuh',
+                    '8': 'delapan',
+                    '9': 'sembilan',
+                    '10': 'sepuluh',
+                    '11': 'sebelas',
+                },
+                {
+                    1: '',
+                    2: ('belas', 'puluh'),
+                    3: ('ratus', 'seratus'),
+                },
+                {
+                    0: '',
+                    1: 'ribu',
+                    2: 'juta',
+                    3: 'milyar',
+                    4: 'triliun',
+                },
+                {
+                    True: 'min',
+                    False: '',
+                },
+                {
+                    1: ('satu', 'se'),
+                },
+                {
+                    1: [
+                        ' ', 
+                        ' koma '
+                        ],
+                }
+            )
+    #
+    
+    #
+    P = WORDS[0]
+    R = WORDS[1]
+    T = WORDS[2]
+    S = WORDS[3]
+    X = WORDS[4]
+    Y = WORDS[5]
+    if style in Y.keys():
+        stylex = style
+    else:
+        stylex = 1
+    Y1 = Y[stylex]
+    separator = Y1[0]
+    dseparator = Y1[1]
+    #
+        
+    #
+    #
+    
+    def is_number(s):
+        ret = False
+        #
+        try:
+            test = float(s)
+            ret = True
+        except:
+            pass
+        #
+        return ret
+        
+    def is_negative(s):
+        ret = False
+        #
+        try:
+            test = float(s)
+            if test < 0:
+                ret = True
+        except:
+            pass
+        #
+        return ret
+        
+    def get_thousands_chunk(s):
+        n = 3
+        #
+        mod = len(s) % n
+        if mod:
+            ln = len(s) + (n - mod)
+            s = s.rjust(ln, ' ')
+        #
+        ret = [s[i:i+n] for i in range(0, len(s), n)]
+        ret = [s.strip() for s in ret]
+        #
+        return ret
+    
+    def get_single(s):
+        res = []
+        #
+        for i in s:
+            x = P.get(i, '')
+            if x and i == '0':
+                x = x[0]
+            res.append(x)
+        #
+        ret = separator.join(res)
+        return ret
+    
+    def get_1d(s):
+        ret = ''
+        if not len(s) == 1: 
+            return ret
+        #
+        r = P.get(s, '')
+        if r and s == '0':
+            r = r[1]
+        #
+        ret = r
+        return ret
+        
+    def get_2d(s):
+        ret = ''
+        if not len(s) == 2: 
+            return ret
+        #
+        res = []
+        rn = ''
+        r = P.get(s, '')
+        #
+        if r:
+            res = [r]
+        else:
+            res2 = []
+            rx = R.get(2, ())
+            if s[0] == '1':
+                rn = rx[0]
+                r = get_1d(s[1])
+                res2 = [r, '']
+            elif s[0] == '0':
+                rn = ''
+                r = get_1d(s[1])
+                res2 = [r, '']
+            else:
+                rn = rx[1]
+                for i in s:
+                    r = get_1d(i)
+                    res2.append(r)
+            res = []
+            res.append(res2[0])
+            res.append(rn)
+            res.append(res2[1])
+        #
+        ret = separator.join(res)
+        return ret
+    
+    def get_3d(s):
+        ret = ''
+        if not len(s) == 3: 
+            return ret
+        #
+        res = []
+        rn = ''
+        r = P.get(s, '')
+        #
+        if r:
+            res = [r]
+        else:
+            res2 = []
+            rx = R.get(3, ())
+            if s[0] == '1':
+                rn = rx[1]
+                r = get_2d(s[1:])
+                res2 = [rn , r]
+            elif s[0] == '0':
+                rn = ''
+                rz = s.replace('0', '')
+                r = get_d(rz)
+                res2 = [r, '']
+            else:
+                rn = rx[0]
+                r1 = get_1d(s[0])
+                r2 = get_2d(s[1:])
+                res2 = [r1, rn, r2]
+            res = [separator.join(res2)]
+        #
+        ret = separator.join(res)
+        return ret
+            
+    def get_d(s):
+        ls = len(s)
+        ret = ''
+        #
+        if ls == 1:
+            ret = get_1d(s)
+        elif ls == 2:
+            ret = get_2d(s)
+        elif ls == 3:
+            ret = get_3d(s)
+        #
+        return ret
+    
+    #
+    #
+    
+    ret = ''
+    number = str(number).lower()
+    #
+    if not is_number(number):
+        return ret
+    #
+    if 'e' in number:
+        return ret
+    #    
+    P1 = ''
+    P2 = ''
+    if '.' in number:
+        P1, P2 = number.split('.')
+    else:
+        P1 = number
+    P1 = P1.strip()
+    P2 = P2.strip()
+    #
+    neg = is_negative(number)
+    #
+    P1 = P1.replace('+', '')
+    P1 = P1.replace('-', '')
+    #
+    lp1 = get_thousands_chunk(P1)
+    #
+    mx = max(T.keys())
+    mxt = ''
+    if long(P1) > 0:
+        mxt = T.get(mx, '')
+    #
+    if len(lp1) > mx:
+        rpa = [
+                    lp1[:-mx],
+                    mxt,
+                    lp1[-mx:],
+                ]
+    else:
+        rpa = [ 
+                    lp1, 
+                ]
+    #
+    rp1 = []
+    #
+    rpa = reversed(rpa)
+    for rp in rpa:
+        if isinstance(rp, str):
+            rp1.append(rp)
+            continue
+        #
+        rp = reversed(rp)
+        c = 0
+        for i in rp:
+            rsep = separator
+            #
+            r = get_d(i).strip()
+            for k in X.keys():
+                if c == k:
+                    xk = X.get(k)
+                    if r == xk[0]:
+                        r = xk[1]
+                        rsep = ''
+            #
+            x = T.get(c, '')
+            if not int(i) == 0:
+                if not r or not x:
+                    rsep = ''
+                z = rsep.join([r, x])
+                rp1.append(z)
+            c += 1
+    #
+    sp2 = get_single(P2)
+    #
+    rp1r = reversed(rp1)
+    sne = S.get(neg, '')
+    snr = separator.join(rp1r)
+    if not snr.strip():
+        snr = get_single('0')
+    #
+    zp1 = separator.join([sne, snr])
+    zp1 = zp1.strip()
+    #
+    if sp2:
+        ret = dseparator.join([zp1, sp2])
+    else:
+        ret = zp1
+    #
+    return ret
+    
 
 #----------------------------------------------------------------------#
 # LANG                                                                 #
