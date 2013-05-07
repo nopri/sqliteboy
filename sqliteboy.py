@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.52'
+VERSION = '0.53'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -420,6 +420,8 @@ class MemSession(web.session.Store):
 #----------------------------------------------------------------------#
 # NUMBER TO WORDS                                                      #
 #----------------------------------------------------------------------#
+NUMBER_TO_WORDS = {}
+
 def number_to_words_id(number, style=1):
     #
     WORDS = (
@@ -599,9 +601,8 @@ def number_to_words_id(number, style=1):
                 res2 = [rn , r]
             elif s[0] == '0':
                 rn = ''
-                rz = s.replace('0', '')
-                r = get_d(rz)
-                res2 = [r, '']
+                r = get_2d(s[1:])
+                res2 = [r, rn]
             else:
                 rn = rx[0]
                 r1 = get_1d(s[0])
@@ -630,6 +631,7 @@ def number_to_words_id(number, style=1):
     
     ret = ''
     number = str(number).lower()
+    maxlength = ( ( 2 * len(T.keys()) ) - 1) * 3
     #
     if not is_number(number):
         return ret
@@ -651,11 +653,14 @@ def number_to_words_id(number, style=1):
     P1 = P1.replace('+', '')
     P1 = P1.replace('-', '')
     #
+    if len(P1) > maxlength:
+        return ret
+    #
     lp1 = get_thousands_chunk(P1)
     #
     mx = max(T.keys())
     mxt = ''
-    if long(P1) > 0:
+    if is_number(P1) and long(P1) > 0:
         mxt = T.get(mx, '')
     #
     if len(lp1) > mx:
@@ -715,6 +720,7 @@ def number_to_words_id(number, style=1):
         ret = zp1
     #
     return ret
+NUMBER_TO_WORDS['id'] = number_to_words_id
     
 
 #----------------------------------------------------------------------#
@@ -1351,6 +1357,25 @@ def sqliteboy_number_format(n, decimals, decimal_point, thousands_separator):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_number_format', 4, sqliteboy_number_format))
+
+def sqliteboy_number_to_words(s, style, language):
+    ret = ''
+    #
+    s = str(s)
+    language = str(language).lower()
+    #
+    if not sqliteboy_is_integer(style) or style < 1:
+        style = 1
+    #
+    if not language in NUMBER_TO_WORDS.keys():
+        return ret
+    #
+    func = NUMBER_TO_WORDS.get(language)
+    if callable(func):
+        ret = func(s, style)
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_number_to_words', 3, sqliteboy_number_to_words))
 
 def sqliteboy_lookup2(table, field, field1, value1, order, default):
     table = str(table)

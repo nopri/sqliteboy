@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.52
+Documentation for version 0.53
 
 
 .. contents:: 
@@ -678,6 +678,38 @@ User-defined Function
         
         sqliteboy_number_format('-12345678912345678912345678912345678912.123', 10, ',', '.')
         -> '-12.345.678.912.345.678.912.345.678.912.345.678.912,1230000000'
+
+- sqliteboy_number_to_words(s, style, language)
+  ::
+  
+      number to words
+      Please read NUMBER TO WORDS REFERENCE section (below)
+      
+      argument    : 
+         s (number as string)
+         style (style, default 1, depends on language)
+         language (language code)
+         
+      return value: 
+        number to words or '' (error/unsupported)
+         
+      example     : 
+        language  : 'id'
+        
+        sqliteboy_number_to_words('-0', 1, 'id')
+        -> 'nol'
+        
+        sqliteboy_number_to_words('11', 1, 'id')
+        -> 'sebelas'
+        
+        sqliteboy_number_to_words('1000', 1, 'id')
+        -> 'seribu'
+        
+        sqliteboy_number_to_words('1000000', 1, 'id')
+        -> 'satu juta'
+        
+        sqliteboy_number_to_words('-123456789123456789123456789.123456789', 1, 'id')
+        -> 'min seratus dua puluh tiga triliun empat ratus lima puluh enam milyar tujuh ratus delapan puluh sembilan juta seratus dua puluh tiga ribu empat ratus lima puluh enam triliun tujuh ratus delapan puluh sembilan milyar seratus dua puluh tiga juta empat ratus lima puluh enam ribu tujuh ratus delapan puluh sembilan koma satu dua tiga empat lima enam tujuh delapan sembilan'
 
 - sqliteboy_lookup2(table, field, field1, value1, order, default)
   ::
@@ -1441,6 +1473,34 @@ Page Code Reference
 
 - Note: rendered in <pre></pre> tag
 
+
+Number To Words Reference
+========================================================================
+- Supported languages:
+  
+  - id            : Bahasa Indonesia
+  
+- More languages will be added 
+
+- Please let me know/correct me if there is something wrong in the 
+  implementation 
+
+- Currently, highest supported large number name is trillion (short scale) 
+  or 10**12 or 1,000,000,000,000. And, number supported is ranged
+  from: -999,999,999,999,999,999,999,999,999.99... 
+  (minus 999 trillion trillion plus digits after decimal point)
+  to:    999,999,999,999,999,999,999,999,999.99... 
+  (999 trillion trillion plus digits after decimal point)
+  
+  (This is, however, might be different for each language)
+    
+- Digits after the decimal point is virtually unlimited, so this is valid 
+  and supported number:
+  999999999999999999999999999.999999999999999999999999999999999999999999999999999999
+ 
+- What about style argument in sqliteboy_number_to_words function? 
+  It is reserved for different style, for each language supported. 
+  
 
 Donate
 ========================================================================
