@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.53'
+VERSION = '0.54'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -422,72 +422,42 @@ class MemSession(web.session.Store):
 #----------------------------------------------------------------------#
 NUMBER_TO_WORDS = {}
 
-def number_to_words_id(number, style=1):
-    #
-    WORDS = (
-                {
-                    '0': ('nol', ''),
-                    '1': 'satu',
-                    '2': 'dua',
-                    '3': 'tiga',
-                    '4': 'empat',
-                    '5': 'lima',
-                    '6': 'enam',
-                    '7': 'tujuh',
-                    '8': 'delapan',
-                    '9': 'sembilan',
-                    '10': 'sepuluh',
-                    '11': 'sebelas',
-                },
-                {
-                    1: '',
-                    2: ('belas', 'puluh'),
-                    3: ('ratus', 'seratus'),
-                },
-                {
-                    0: '',
-                    1: 'ribu',
-                    2: 'juta',
-                    3: 'milyar',
-                    4: 'triliun',
-                },
-                {
-                    True: 'min',
-                    False: '',
-                },
-                {
-                    1: ('satu', 'se'),
-                },
-                {
-                    1: [
-                        ' ', 
-                        ' koma '
-                        ],
-                }
-            )
-    #
-    
-    #
-    P = WORDS[0]
-    R = WORDS[1]
-    T = WORDS[2]
-    S = WORDS[3]
-    X = WORDS[4]
-    Y = WORDS[5]
-    if style in Y.keys():
-        stylex = style
-    else:
-        stylex = 1
-    Y1 = Y[stylex]
-    separator = Y1[0]
-    dseparator = Y1[1]
-    #
+class NumberToWords:
+    def __init__(self):
+        self.word = {}
+        self.name1 = {}
+        self.name2 = {}
+        self.sign = {}
+        self.replace = {}
+        self.style = {}
+        self.data = {}
+        #
+        self.chunk_size = 3
         
-    #
-    #
+    def maxlength(self):
+        ret = 0
+        #
+        ln1 = len(self.name1.keys())
+        #
+        if ln1:
+            ret = ( ( 2 * ln1 ) - 1) * self.chunk_size
+        #
+        return ret
+        
+    def separator(self):
+        return self.style.get('separator', ' ')
+        
+    def decimal_separator(self):
+        return self.style.get('decimal_separator', ' ')
     
-    def is_number(s):
+    def is_number(self, s, check_length=True):
+        s = str(s)
+        #
         ret = False
+        #
+        if check_length:
+            if len(s) > self.maxlength():
+                return False
         #
         try:
             test = float(s)
@@ -496,8 +466,8 @@ def number_to_words_id(number, style=1):
             pass
         #
         return ret
-        
-    def is_negative(s):
+    
+    def is_negative(self, s):
         ret = False
         #
         try:
@@ -509,8 +479,39 @@ def number_to_words_id(number, style=1):
         #
         return ret
         
-    def get_thousands_chunk(s):
-        n = 3
+    def split(self, s):
+        s = str(s).lower()
+        #
+        ret = ()
+        #
+        if not self.is_number(s, False):
+            return ret
+        #
+        if 'e' in s:
+            return ret
+        #    
+        P1 = ''
+        P2 = ''
+        if '.' in s:
+            P1, P2 = s.split('.')
+        else:
+            P1 = s
+        P1 = P1.strip()
+        P2 = P2.strip()
+        #
+        P1 = P1.replace('+', '')
+        P1 = P1.replace('-', '')
+        #
+        if not self.is_number(P1):
+            return ret
+        #
+        ret = (P1, P2)
+        return ret
+
+    def chunk(self, s):
+        s = str(s)
+        #
+        n = self.chunk_size
         #
         mod = len(s) % n
         if mod:
@@ -521,206 +522,438 @@ def number_to_words_id(number, style=1):
         ret = [s.strip() for s in ret]
         #
         return ret
-    
-    def get_single(s):
+
+    def get_single(self, s):
+        s = str(s)
+        #
         res = []
         #
         for i in s:
-            x = P.get(i, '')
+            x = self.word.get(i, '')
             if x and i == '0':
                 x = x[0]
             res.append(x)
         #
-        ret = separator.join(res)
+        ret = self.separator().join(res)
         return ret
     
-    def get_1d(s):
+    def get_1d(self, s):
+        s = str(s)
+        #
         ret = ''
+        #
         if not len(s) == 1: 
             return ret
         #
-        r = P.get(s, '')
+        r = self.word.get(s, '')
         if r and s == '0':
             r = r[1]
         #
         ret = r
+        return ret    
+
+    def get_2d(self, s):
+        '''
+        override this
+        '''
+        s = str(s)
+        #        
+        ret = ''
+        #
+        if not len(s) == 2: 
+            return ret
+        #
+        return ret    
+
+    def get_3d(self, s):
+        '''
+        override this
+        '''        
+        s = str(s)
+        #        
+        ret = ''
+        #
+        if not len(s) == 3: 
+            return ret
+        #
+        return ret    
+
+    def get_d(self, s):
+        s = str(s)
+        #        
+        ls = len(s)
+        #
+        ret = ''
+        #
+        if ls == 1:
+            ret = self.get_1d(s)
+        elif ls == 2:
+            ret = self.get_2d(s)
+        elif ls == 3:
+            ret = self.get_3d(s)
+        #
+        return ret        
+        
+    def get_x1(self, c, s, separator):
+        '''
+        override this if needed
+        '''        
+        s = str(s)
+        separator = str(separator)
+        #
+        ret = (s, separator)
         return ret
         
-    def get_2d(s):
+    def get_p1(self, p):
+        p = str(p)
+        #
+        nk = self.name1.keys()
+        mx = max(nk)
+        mxt = ''
+        if self.is_number(p) and long(p) > 0:
+            mxt = self.name1.get(mx, '')
+        #
+        lp1 = self.chunk(p)
+        if len(lp1) > mx:
+            ret = [
+                        lp1[:-mx],
+                        mxt,
+                        lp1[-mx:],
+                    ]
+        else:
+            ret = [ 
+                        lp1, 
+                    ]
+        #
+        return ret
+    
+    def words_p1(self, p):
+        ret = []
+        #
+        if not isinstance(p, list):
+            p = []
+        #
+        p = reversed(p)
+        for rp in p:
+            if isinstance(rp, str):
+                ret.append(rp)
+                continue
+            #
+            rp = reversed(rp)
+            c = 0
+            for i in rp:
+                rsep = self.separator()
+                #
+                r = self.get_d(i).strip()
+                r, rsep = self.get_x1(c, r, rsep)
+                #
+                x = self.name1.get(c, '')
+                if not int(i) == 0:
+                    if not r or not x:
+                        rsep = ''
+                    z = rsep.join([r, x])
+                    ret.append(z)
+                c += 1
+        #
+        return ret
+        
+    def words_p2(self, p):
+        p = str(p)
+        #
+        return self.get_single(p)
+        
+    def get_words(self, s):
+        ret = ''
+        #
+        neg = self.is_negative(s)
+        #
+        parts = self.split(s)
+        if not parts and len(parts) != 2:
+            return ret
+        #
+        p1 = parts[0]
+        p2 = parts[1]
+        #
+        c1 = self.get_p1(p1)
+        w1 = self.words_p1(c1)
+        w2 = self.words_p2(p2)
+        #
+        r1 = reversed(w1)
+        ss = self.sign.get(neg, '')
+        sr = self.separator().join(r1)
+        if not sr.strip():
+            sr = self.get_single('0')
+        #
+        z1 = self.separator().join([ss, sr])
+        z1 = z1.strip()
+        #
+        if w2:
+            ret = self.decimal_separator().join([z1, w2])
+        else:
+            ret = z1
+        #
+        return ret
+
+
+class NumberToWordsId(NumberToWords):
+    def __init__(self):
+        NumberToWords.__init__(self)
+        #
+        self.word = {
+                        '0': ('nol', ''),
+                        '1': 'satu',
+                        '2': 'dua',
+                        '3': 'tiga',
+                        '4': 'empat',
+                        '5': 'lima',
+                        '6': 'enam',
+                        '7': 'tujuh',
+                        '8': 'delapan',
+                        '9': 'sembilan',
+                        '10': 'sepuluh',
+                        '11': 'sebelas',
+                    }
+        #
+        self.name1 = {
+                        0: '',
+                        1: 'ribu',
+                        2: 'juta',
+                        3: 'milyar',
+                        4: 'triliun',        
+                    }
+        #
+        self.name2 = {
+                        1: '',
+                        2: ('belas', 'puluh'),
+                        3: ('ratus', 'seratus'),        
+                    }
+        #
+        self.sign = {
+                        True: 'min',
+                        False: '',        
+                    }
+        #
+        self.replace = {
+                        1: ('satu', 'se'),
+                    }
+        #
+        self.style = {
+                        'separator': ' ', 
+                        'decimal_separator': ' koma ',
+                    }
+        #
+
+    def get_2d(self, s):
+        s = str(s)
+        #
         ret = ''
         if not len(s) == 2: 
             return ret
         #
         res = []
         rn = ''
-        r = P.get(s, '')
+        r = self.word.get(s, '')
         #
         if r:
             res = [r]
         else:
             res2 = []
-            rx = R.get(2, ())
+            rx = self.name2.get(2, ())
             if s[0] == '1':
                 rn = rx[0]
-                r = get_1d(s[1])
+                r = self.get_1d(s[1])
                 res2 = [r, '']
             elif s[0] == '0':
                 rn = ''
-                r = get_1d(s[1])
+                r = self.get_1d(s[1])
                 res2 = [r, '']
             else:
                 rn = rx[1]
                 for i in s:
-                    r = get_1d(i)
+                    r = self.get_1d(i)
                     res2.append(r)
             res = []
             res.append(res2[0])
             res.append(rn)
             res.append(res2[1])
         #
-        ret = separator.join(res)
+        ret = self.separator().join(res)
         return ret
-    
-    def get_3d(s):
+
+    def get_3d(self, s):
+        s = str(s)
+        #
         ret = ''
         if not len(s) == 3: 
             return ret
         #
         res = []
         rn = ''
-        r = P.get(s, '')
+        r = self.word.get(s, '')
         #
         if r:
             res = [r]
         else:
             res2 = []
-            rx = R.get(3, ())
+            rx = self.name2.get(3, ())
             if s[0] == '1':
                 rn = rx[1]
-                r = get_2d(s[1:])
+                r = self.get_2d(s[1:])
                 res2 = [rn , r]
             elif s[0] == '0':
                 rn = ''
-                r = get_2d(s[1:])
+                r = self.get_2d(s[1:])
                 res2 = [r, rn]
             else:
                 rn = rx[0]
-                r1 = get_1d(s[0])
-                r2 = get_2d(s[1:])
+                r1 = self.get_1d(s[0])
+                r2 = self.get_2d(s[1:])
                 res2 = [r1, rn, r2]
-            res = [separator.join(res2)]
+            res = [self.separator().join(res2)]
         #
-        ret = separator.join(res)
+        ret = self.separator().join(res)
         return ret
-            
-    def get_d(s):
-        ls = len(s)
+        
+    def get_x1(self, c, s, separator):
+        for k in self.replace.keys():
+            if c == k:
+                xk = self.replace.get(k)
+                if s == xk[0]:
+                    s = xk[1]
+                    separator = ''
+                    break
+        #
+        return [s, separator]
+
+
+class NumberToWordsEn1(NumberToWords):
+    def __init__(self):
+        NumberToWords.__init__(self)
+        #
+        self.word = {
+                        '0': ('zero', ''),
+                        '1': 'one',
+                        '2': 'two',
+                        '3': 'three',
+                        '4': 'four',
+                        '5': 'five',
+                        '6': 'six',
+                        '7': 'seven',
+                        '8': 'eight',
+                        '9': 'nine',
+                        '10': 'ten',
+                        '11': 'eleven',
+                        '12': 'twelve',
+                        '13': 'thirteen',
+                        '15': 'fifteen',
+                        '18': 'eighteen',
+                        '20': 'twenty',
+                        '30': 'thirty',
+                        '40': 'forty',
+                        '50': 'fifty',
+                        '60': 'sixty',
+                        '70': 'seventy',
+                        '80': 'eighty',
+                        '90': 'ninety',
+                    }
+        #
+        self.name1 = {
+                        0: '',
+                        1: 'thousand',
+                        2: 'million',
+                        3: 'billion',
+                        4: 'trillion',        
+                    }
+        #
+        self.name2 = {
+                        1: '',
+                        2: ('teen', 'ty'),
+                        3: 'hundred',
+                    }
+        #
+        self.sign = {
+                        True: 'minus',
+                        False: '',        
+                    }
+        #
+        self.replace = {}
+        #
+        self.style = {
+                        'separator': ' ', 
+                        'decimal_separator': ' point ',
+                        'dash_separator': '-',
+                    }
+        #
+
+    def get_2d(self, s):
+        s = str(s)
+        #
         ret = ''
+        if not len(s) == 2: 
+            return ret
         #
-        if ls == 1:
-            ret = get_1d(s)
-        elif ls == 2:
-            ret = get_2d(s)
-        elif ls == 3:
-            ret = get_3d(s)
+        res = []
+        rn = ''
+        r = self.word.get(s, '')
         #
-        return ret
-    
-    #
-    #
-    
-    ret = ''
-    number = str(number).lower()
-    maxlength = ( ( 2 * len(T.keys()) ) - 1) * 3
-    #
-    if not is_number(number):
-        return ret
-    #
-    if 'e' in number:
-        return ret
-    #    
-    P1 = ''
-    P2 = ''
-    if '.' in number:
-        P1, P2 = number.split('.')
-    else:
-        P1 = number
-    P1 = P1.strip()
-    P2 = P2.strip()
-    #
-    neg = is_negative(number)
-    #
-    P1 = P1.replace('+', '')
-    P1 = P1.replace('-', '')
-    #
-    if len(P1) > maxlength:
-        return ret
-    #
-    lp1 = get_thousands_chunk(P1)
-    #
-    mx = max(T.keys())
-    mxt = ''
-    if is_number(P1) and long(P1) > 0:
-        mxt = T.get(mx, '')
-    #
-    if len(lp1) > mx:
-        rpa = [
-                    lp1[:-mx],
-                    mxt,
-                    lp1[-mx:],
-                ]
-    else:
-        rpa = [ 
-                    lp1, 
-                ]
-    #
-    rp1 = []
-    #
-    rpa = reversed(rpa)
-    for rp in rpa:
-        if isinstance(rp, str):
-            rp1.append(rp)
-            continue
+        if r:
+            res = [r]
+        else:
+            rx = self.name2.get(2, ())
+            if s[0] == '1':
+                rn = rx[0]
+                r = self.get_1d(s[1])
+                res = [r, rn]
+                ret = ''.join(res)
+            elif s[0] == '0':
+                rn = ''
+                r = self.get_1d(s[1])
+                res = [r, '']
+            else:
+                rn = self.word.get(s[0] + '0')
+                r = self.get_1d(s[1])
+                res = []
+                res.append(rn)
+                res.append(self.style.get('dash_separator', ''))
+                res.append(r)
+                ret = ''.join(res)
         #
-        rp = reversed(rp)
-        c = 0
-        for i in rp:
-            rsep = separator
-            #
-            r = get_d(i).strip()
-            for k in X.keys():
-                if c == k:
-                    xk = X.get(k)
-                    if r == xk[0]:
-                        r = xk[1]
-                        rsep = ''
-            #
-            x = T.get(c, '')
-            if not int(i) == 0:
-                if not r or not x:
-                    rsep = ''
-                z = rsep.join([r, x])
-                rp1.append(z)
-            c += 1
-    #
-    sp2 = get_single(P2)
-    #
-    rp1r = reversed(rp1)
-    sne = S.get(neg, '')
-    snr = separator.join(rp1r)
-    if not snr.strip():
-        snr = get_single('0')
-    #
-    zp1 = separator.join([sne, snr])
-    zp1 = zp1.strip()
-    #
-    if sp2:
-        ret = dseparator.join([zp1, sp2])
-    else:
-        ret = zp1
-    #
-    return ret
-NUMBER_TO_WORDS['id'] = number_to_words_id
+        if not ret:
+            ret = self.separator().join(res)
+        return ret
+
+    def get_3d(self, s):
+        s = str(s)
+        #
+        ret = ''
+        if not len(s) == 3: 
+            return ret
+        #
+        res = []
+        rn = ''
+        r = self.word.get(s, '')
+        #
+        if r:
+            res = [r]
+        else:
+            res2 = []
+            if s[0] == '0':
+                rn = ''
+                r = self.get_2d(s[1:])
+                res2 = [r, rn]
+            else:
+                rn = self.name2.get(3, '')
+                r1 = self.get_1d(s[0])
+                r2 = self.get_2d(s[1:])
+                res2 = [r1, rn, r2]
+            res = [self.separator().join(res2)]
+        #
+        ret = self.separator().join(res)
+        return ret
+
+
+NUMBER_TO_WORDS['id'] = NumberToWordsId
+NUMBER_TO_WORDS['en1'] = NumberToWordsEn1
     
 
 #----------------------------------------------------------------------#
@@ -1358,24 +1591,24 @@ def sqliteboy_number_format(n, decimals, decimal_point, thousands_separator):
     return ret
 SQLITE_UDF.append(('sqliteboy_number_format', 4, sqliteboy_number_format))
 
-def sqliteboy_number_to_words(s, style, language):
+def sqliteboy_number_to_words(s, language):
     ret = ''
     #
     s = str(s)
     language = str(language).lower()
     #
-    if not sqliteboy_is_integer(style) or style < 1:
-        style = 1
-    #
     if not language in NUMBER_TO_WORDS.keys():
         return ret
     #
-    func = NUMBER_TO_WORDS.get(language)
-    if callable(func):
-        ret = func(s, style)
+    oc = NUMBER_TO_WORDS.get(language)
+    try:
+        oo = oc()
+        ret = oo.get_words(s)
+    except:
+        pass
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_number_to_words', 3, sqliteboy_number_to_words))
+SQLITE_UDF.append(('sqliteboy_number_to_words', 2, sqliteboy_number_to_words))
 
 def sqliteboy_lookup2(table, field, field1, value1, order, default):
     table = str(table)

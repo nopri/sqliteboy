@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.53
+Documentation for version 0.54
 
 
 .. contents:: 
@@ -679,7 +679,7 @@ User-defined Function
         sqliteboy_number_format('-12345678912345678912345678912345678912.123', 10, ',', '.')
         -> '-12.345.678.912.345.678.912.345.678.912.345.678.912,1230000000'
 
-- sqliteboy_number_to_words(s, style, language)
+- sqliteboy_number_to_words(s, language)
   ::
   
       number to words
@@ -687,7 +687,6 @@ User-defined Function
       
       argument    : 
          s (number as string)
-         style (style, default 1, depends on language)
          language (language code)
          
       return value: 
@@ -696,20 +695,37 @@ User-defined Function
       example     : 
         language  : 'id'
         
-        sqliteboy_number_to_words('-0', 1, 'id')
+        sqliteboy_number_to_words('-0', 'id')
         -> 'nol'
         
-        sqliteboy_number_to_words('11', 1, 'id')
+        sqliteboy_number_to_words('11', 'id')
         -> 'sebelas'
         
-        sqliteboy_number_to_words('1000', 1, 'id')
+        sqliteboy_number_to_words('1000', 'id')
         -> 'seribu'
         
-        sqliteboy_number_to_words('1000000', 1, 'id')
+        sqliteboy_number_to_words('1000000', 'id')
         -> 'satu juta'
         
-        sqliteboy_number_to_words('-123456789123456789123456789.123456789', 1, 'id')
+        sqliteboy_number_to_words('-123456789123456789123456789.123456789', 'id')
         -> 'min seratus dua puluh tiga triliun empat ratus lima puluh enam milyar tujuh ratus delapan puluh sembilan juta seratus dua puluh tiga ribu empat ratus lima puluh enam triliun tujuh ratus delapan puluh sembilan milyar seratus dua puluh tiga juta empat ratus lima puluh enam ribu tujuh ratus delapan puluh sembilan koma satu dua tiga empat lima enam tujuh delapan sembilan'
+
+        language  : 'en1'
+        
+        sqliteboy_number_to_words('-0', 'en1')
+        -> 'zero'
+        
+        sqliteboy_number_to_words('11', 'en1')
+        -> 'eleven'
+        
+        sqliteboy_number_to_words('1000', 'en1')
+        -> 'one thousand'
+        
+        sqliteboy_number_to_words('1000000', 'en1')
+        -> 'one million'
+        
+        sqliteboy_number_to_words('-123456789123456789123456789.123456789', 'en1')
+        -> 'minus one hundred twenty-three trillion four hundred fifty-six billion seven hundred eighty-nine million one hundred twenty-three thousand four hundred fifty-six trillion seven hundred eighty-nine billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine point one two three four five six seven eight nine'        
 
 - sqliteboy_lookup2(table, field, field1, value1, order, default)
   ::
@@ -1479,6 +1495,7 @@ Number To Words Reference
 - Supported languages:
   
   - id            : Bahasa Indonesia
+  - en1           : English (trillion billion million thousand scheme)
   
 - More languages will be added 
 
@@ -1488,19 +1505,16 @@ Number To Words Reference
 - Currently, highest supported large number name is trillion (short scale) 
   or 10**12 or 1,000,000,000,000. And, number supported is ranged
   from: -999,999,999,999,999,999,999,999,999.99... 
-  (minus 999 trillion trillion plus digits after decimal point)
+  (minus 999.999 999 999 999 999 999 999 999 trillion trillion plus digits after decimal point)
   to:    999,999,999,999,999,999,999,999,999.99... 
-  (999 trillion trillion plus digits after decimal point)
+  (      999.999 999 999 999 999 999 999 999 trillion trillion plus digits after decimal point)
   
   (This is, however, might be different for each language)
     
-- Digits after the decimal point is virtually unlimited, so this is valid 
-  and supported number:
+- Digits after the decimal point is limited only by python float 
+  (that is, very very long long number), so this is valid and supported number:
   999999999999999999999999999.999999999999999999999999999999999999999999999999999999
- 
-- What about style argument in sqliteboy_number_to_words function? 
-  It is reserved for different style, for each language supported. 
-  
+   
 
 Donate
 ========================================================================
