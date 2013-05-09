@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.54'
+VERSION = '0.55'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1094,6 +1094,7 @@ LANGS = {
             'cmd_report_create': 'create',
             'cmd_report': 'go',
             'cmd_view': 'view',
+            'cmd_use_result': 'use the result',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
@@ -1415,6 +1416,31 @@ def sqliteboy_reverse(s):
     #
     return s[::-1]
 SQLITE_UDF.append(('sqliteboy_reverse', 1, sqliteboy_reverse))
+
+def sqliteboy_repeat(s, n):
+    s = str(s)
+    #
+    if not sqliteboy_is_integer(n) or n < 1:
+        n = 1
+    #
+    n = abs(n)
+    ret = s * n
+    return ret
+SQLITE_UDF.append(('sqliteboy_repeat', 2, sqliteboy_repeat))
+
+def sqliteboy_count(s, sub, case):
+    s = str(s)
+    sub = str(sub)
+    #
+    if not sqliteboy_is_integer(case) or case < 0:
+        case = 0
+    if not case: #ignore case
+        s = s.lower()
+        sub = sub.lower()
+    #    
+    ret = s.count(sub)
+    return ret
+SQLITE_UDF.append(('sqliteboy_count', 3, sqliteboy_count))
 
 def sqliteboy_is_valid_email(s):
     s = sqliteboy_strs(s)
@@ -4100,7 +4126,7 @@ $elif data['command'] == 'calculator':
     <table>
     <tr>
     <td>
-    <input type='text' name='q' value='$query' maxlength="$data['max_input']" size="$data['max_input']">
+    <input id='qcalculator' type='text' name='q' value='$query' maxlength="$data['max_input']" size="$data['max_input']">
     </td>
     </tr>
     <tr>
@@ -4117,7 +4143,13 @@ $elif data['command'] == 'calculator':
     <br>
     $if res:
         $res[1]<br>
+        <br>
+        $res[0]<br>
+        <br>
         $res[2]
+        <br>
+        $if not res[4]:
+            <a href='#' onclick='javascript:document.getElementById("qcalculator").value="$res[2]"'>$_['cmd_use_result']</a>
 $else:
     $:content
 </body>
@@ -6691,6 +6723,8 @@ class calculator:
         if not q:
             raise web.seeother('/calculator')
         #
+        error = 1
+        #
         start()
         try:
             if len(q) > CALCULATOR_MAX_INPUT:
@@ -6708,14 +6742,16 @@ class calculator:
                     )
             msg = msg[0].get(q, '')
             err = _['th_ok']
+            error = 0
         except Exception, e:
             msg = e.message
             err = _['th_error']
+            error = 1
         #
         stop()
         t = rt()
         #
-        sess[SK_CALCULATOR] = [q0, err, msg, t]
+        sess[SK_CALCULATOR] = [q0, err, msg, t, error]
         raise web.seeother('/calculator')
         
 

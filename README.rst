@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.54
+Documentation for version 0.55
 
 
 .. contents:: 
@@ -570,6 +570,46 @@ User-defined Function
         
         sqliteboy_reverse(12345)
         -> '54321'
+
+- sqliteboy_repeat(s, n)
+  ::
+  
+      repeat s (n times)
+      argument    :
+         s (input string)
+         n (n times)
+
+      example     : 
+        sqliteboy_repeat('sqliteboy ', 5)
+        -> 'sqliteboy sqliteboy sqliteboy sqliteboy sqliteboy'
+        
+        sqliteboy_repeat(1, 20)
+        -> '11111111111111111111'
+        
+        sqliteboy_repeat('=', 10)
+        -> '=========='
+
+- sqliteboy_count(s, sub, case)
+  ::
+  
+      count substring sub in s
+      argument    :
+         s (input string)
+         sub (substring)
+         case (0=ignore case, 1=case sensitive)
+
+      return value: 
+        0 (not found) or > 0 (found)
+
+      example     : 
+        sqliteboy_count('hello sqliteboy', 'e', 0)
+        -> 2 
+        
+        sqliteboy_count('hello hello hello', 'Hello', 0)
+        -> 3 
+        
+        sqliteboy_count('hello hello hello', 'Hello', 1)
+        -> 0
 
 - sqliteboy_is_valid_email(s)
   ::
