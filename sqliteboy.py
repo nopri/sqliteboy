@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.55'
+VERSION = '0.56'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -179,6 +179,8 @@ REPORT_KEY_SECURITY = FORM_KEY_SECURITY
 REPORT_KEY_SECURITY_RUN = FORM_KEY_SECURITY_RUN
 REPORT_KEY_SQL = 'sql'
 REPORT_KEY_HEADER = 'header'
+REPORT_KEY_HEADERS = 'headers'
+REPORT_KEY_FOOTERS = 'footers'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
@@ -187,6 +189,14 @@ REPORT_REFERENCE_SQL_0 = 'a'
 REPORT_REFERENCE_SQL_1 = 'b'
 REPORT_MESSAGE_LEN = 3
 REPORT_MESSAGE_VAR_RESULT = '$result'
+REPORT_HEADERS_CELL_LEN = 3
+REPORT_FOOTERS_CELL_LEN = 3
+REPORT_HEADERS_CELL_TYPES = [
+                                (str, unicode, ), 
+                                (str, unicode, int, ),
+                                (dict, ),
+                            ]
+REPORT_FOOTERS_CELL_TYPES = REPORT_HEADERS_CELL_TYPES
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -2648,6 +2658,64 @@ def reqreport(report):
     #
     return True
 
+def rheaders(data, cell_len, cell_types):
+    r0 = []
+    r1 = 0
+    ret = [r0, r1]
+    #
+    if not isinstance(data, list):
+        return ret
+    #
+    if not data:
+        return ret
+    #
+    for i in data:
+        #
+        if not isinstance(i, list):    
+            continue
+        #
+        if not i:
+            continue
+        #
+        temp = []
+        for j in i:
+            #
+            if not isinstance(j, list):
+                continue
+            #
+            lj = len(j)
+            #
+            if not lj == cell_len:
+                continue
+            #
+            error = 1
+            try:
+                for k in range(lj):
+                    if not isinstance(j[k], cell_types[k]):
+                        raise Exception
+                error = 0
+            except:
+                error = 1
+            #
+            if error:
+                continue
+            #
+            temp.append(j)
+            #
+            lt = len(temp)
+            if lt > r1:
+                r1 = lt
+            #
+        #
+        if temp:
+            r0.append(temp)
+    #
+    ret = [r0, r1]
+    return ret    
+    
+def rfooters(data, cell_len, cell_types):
+    return rheaders(data, cell_len, cell_types)
+
 def parsereport(report):
     fo = s_select('report.code..%s' %(report))
     try:
@@ -2739,7 +2807,21 @@ def parsereport(report):
                 )
             )
     #
-    return [ftitle, finfo, input, rquery, rheader, message2]
+    xheaders = fo.get(REPORT_KEY_HEADERS, [])
+    oheaders = rheaders(
+                        xheaders, 
+                        REPORT_HEADERS_CELL_LEN, 
+                        REPORT_HEADERS_CELL_TYPES,
+                    )
+    #
+    xfooters = fo.get(REPORT_KEY_FOOTERS, [])
+    ofooters = rfooters(
+                        xfooters, 
+                        REPORT_FOOTERS_CELL_LEN, 
+                        REPORT_FOOTERS_CELL_TYPES,
+                    )
+    #
+    return [ftitle, finfo, input, rquery, rheader, message2, oheaders, ofooters]
 
 def nqtype(ftype):
     ret = False

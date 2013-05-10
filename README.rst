@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.55
+Documentation for version 0.56
 
 
 .. contents:: 
@@ -369,6 +369,14 @@ Command::
     python sqliteboy.py <database_file> [port]
     
     (if you are using source code)
+    
+    or 
+    
+    python sqliteboy.py <database_file> [port] > LOGFILE 2>&1 &
+    
+    (if you are using source code, under Linux/Bash shell, and want to run
+    in the background. You could use /dev/null as LOGFILE if you don't care
+    about the logs.)
 
 then, using web browser, visit localhost:11738, or localhost:PORT, if 
 PORT is specified
