@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.56'
+VERSION = '0.57'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -197,6 +197,10 @@ REPORT_HEADERS_CELL_TYPES = [
                                 (dict, ),
                             ]
 REPORT_FOOTERS_CELL_TYPES = REPORT_HEADERS_CELL_TYPES
+REPORT_CELL_TYPE_TEXT = ''
+REPORT_CELL_TYPE_FILES_IMAGE = 'files.image'
+REPORT_CELL_TYPE_SQL = 'sql'
+REPORT_CELL_TYPE_SQL_RESULT = REPORT_REFERENCE_SQL_0
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -3000,6 +3004,8 @@ def striphtml(text):
 
 def tr_page(code):
     s = code
+    #
+    s = striphtml(s)
     #
     for r in REGEX_PAGE:
         try:
@@ -6185,6 +6191,8 @@ class report_run:
         rquery = None
         rheader = []
         message2 = []
+        pheaders = []
+        pfooters = []
         try:
             preport = parsereport(report)
             freport = preport[0]
@@ -6192,6 +6200,8 @@ class report_run:
             rquery = preport[3]
             rheader = preport[4]
             message2 = preport[5]
+            pheaders = preport[6]
+            pfooters = preport[7]
         except:
             preport = None
         #
@@ -6283,6 +6293,82 @@ class report_run:
             #
             rsearch.append( [label, cvv] )
             #
+        #
+        rformat = ''
+        #
+        pheaders2 = []
+        pfooters2 = []
+        pboth = [
+                    [
+                        pheaders, 
+                        pheaders2,
+                        REPORT_HEADERS_CELL_LEN,
+                        REPORT_HEADERS_CELL_TYPES,
+                    ],
+                    [
+                        pfooters, 
+                        pfooters2,
+                        REPORT_FOOTERS_CELL_LEN,
+                        REPORT_FOOTERS_CELL_TYPES,
+                    ],
+                ]
+        #
+        for phf in pboth:
+            phfx = phf[0]
+            phfy = phf[1]
+            phfz = phf[2]
+            phft = phf[3]
+            #
+            if not phfx or not len(phfx) == 2:
+                continue
+            #
+            phfx0 = phfx[0]
+            phfx1 = phfx[1]
+            #
+            if (not phfx0) \
+                or (not phfx1) \
+                or (not isinstance(phfx0, list)) \
+                or (not isinstance(phfx1, int)):
+                    phfx0 = []
+                    phfx1 = 0
+            #
+            for p in phfx0:
+                phfl = []
+                #
+                for pc in p:
+                    if not len(pc) == phfz:
+                        continue 
+                    #
+                    if not isinstance(pc[0], phft[0]) \
+                        or not isinstance(pc[1], phft[1]):
+                            continue
+                    #
+                    if hasattr(pc[0], 'lower'):
+                        pc[0] = pc[0].lower()
+                    #
+                    if rformat == '': #default
+                        phfc = ''
+                        #
+                        if pc[0] == REPORT_CELL_TYPE_TEXT:
+                            phfc = str(pc[1])
+                        #
+                        phfl.append(phfc)
+                #
+                phfl2 = [x for x in phfc if x]
+                #
+                if not phfl2:
+                    continue
+                #
+                #fit to length
+                if len(phfl) < phfx1:
+                    phfx1d = phfx1 - len(phfl)
+                    for d in range(phfx1d):
+                        phfl.append('')
+                #
+                if phfl:
+                    phfy.append(phfl)
+        #
+        ###X
         #
         if errors:
             sess[SKR_RUN] = errors
