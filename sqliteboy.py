@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.57'
+VERSION = '0.58'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -201,6 +201,14 @@ REPORT_CELL_TYPE_TEXT = ''
 REPORT_CELL_TYPE_FILES_IMAGE = 'files.image'
 REPORT_CELL_TYPE_SQL = 'sql'
 REPORT_CELL_TYPE_SQL_RESULT = REPORT_REFERENCE_SQL_0
+REPORT_FORMAT_DEFAULT = ''
+REPORT_FORMAT_CSV = 'csv'
+REPORT_FORMAT_PDF = 'pdf'
+REPORT_FORMAT_ALL = [
+                        REPORT_FORMAT_DEFAULT,
+                        REPORT_FORMAT_CSV,
+                        REPORT_FORMAT_PDF,
+                    ]
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -3031,6 +3039,11 @@ def fsize(f, working_dir=CURDIR, human_readable=True):
     ret = sz
     if human_readable:
         ret = size(sz)
+    #
+    return ret
+
+def tr_report_text(s, data):
+    ret = s
     #
     return ret
     
@@ -6174,8 +6187,9 @@ class report_run:
         return T(data, content)
         
     def POST(self, unused):
-        input = web.input(hreport='')
+        input = web.input(hreport='', format='')
         report = input.hreport.strip()
+        rformat = input.format
         #
         if not report:
             dflt()
@@ -6193,6 +6207,8 @@ class report_run:
         message2 = []
         pheaders = []
         pfooters = []
+        pheaders2 = []
+        pfooters2 = []        
         try:
             preport = parsereport(report)
             freport = preport[0]
@@ -6294,10 +6310,16 @@ class report_run:
             rsearch.append( [label, cvv] )
             #
         #
-        rformat = ''
+        if errors:
+            sess[SKR_RUN] = errors
+            raise web.seeother('/report/run/%s' %(report))
+        else:
+            try:
+                rreport = db.query(rquery, vars=ocols)
+            except Exception, e:
+                sess[SKR_RUN] = [ [_['e_report_select_general'], str(e)] ]
+                raise web.seeother('/report/run/%s' %(report))
         #
-        pheaders2 = []
-        pfooters2 = []
         pboth = [
                     [
                         pheaders, 
@@ -6346,15 +6368,54 @@ class report_run:
                     if hasattr(pc[0], 'lower'):
                         pc[0] = pc[0].lower()
                     #
-                    if rformat == '': #default
-                        phfc = ''
-                        #
-                        if pc[0] == REPORT_CELL_TYPE_TEXT:
-                            phfc = str(pc[1])
-                        #
-                        phfl.append(phfc)
+                    phfc = {}
+                    #
+                    if pc[0] == REPORT_CELL_TYPE_TEXT:
+                        if rformat in REPORT_FORMAT_ALL:
+                            phfc = {
+                                        'content': tr_report_text(
+                                                        pc[1],
+                                                        pc[2]
+                                                    ),
+                                        'data': {
+                                                    'type': pc[0],
+                                                },
+                                    }
+                    elif pc[0] == REPORT_CELL_TYPE_SQL:
+                        if rformat in REPORT_FORMAT_ALL:
+                            phfq = pc[1]
+                            phfqr = ''
+                            #                            
+                            try:
+                                phfqr0 = db.query(phfq, vars=ocols).list()
+                                phfqr1 = phfqr0[0]
+                                phfqr = phfqr1.get(
+                                    REPORT_CELL_TYPE_SQL_RESULT,
+                                    ''
+                                    )
+                                if isblob(phfqr):
+                                    phfqr = ''
+                            except:
+                                pass
+                            #
+                            phfc = {
+                                        'content': phfqr,
+                                        'data': {
+                                                    'type': pc[0],
+                                                },
+                                    }
+                    elif pc[0] == REPORT_CELL_TYPE_FILES_IMAGE:
+                        if rformat == REPORT_FORMAT_DEFAULT:
+                            phfc = {
+                                        'content': str(pc[1]),
+                                        'data': {
+                                                    'type': pc[0],
+                                                },
+                                    }                            
+                    #
+                    phfl.append(phfc)                        
                 #
-                phfl2 = [x for x in phfc if x]
+                phfl2 = [x for x in phfl if x]
                 #
                 if not phfl2:
                     continue
@@ -6363,22 +6424,11 @@ class report_run:
                 if len(phfl) < phfx1:
                     phfx1d = phfx1 - len(phfl)
                     for d in range(phfx1d):
-                        phfl.append('')
+                        phfl.append({})
                 #
                 if phfl:
                     phfy.append(phfl)
         #
-        ###X
-        #
-        if errors:
-            sess[SKR_RUN] = errors
-            raise web.seeother('/report/run/%s' %(report))
-        else:
-            try:
-                rreport = db.query(rquery, vars=ocols)
-            except Exception, e:
-                sess[SKR_RUN] = [ [_['e_report_select_general'], str(e)] ]
-                raise web.seeother('/report/run/%s' %(report))
         #
         data = {
                 'title': '%s - %s' %(_['tt_report_run_result'], report), 
@@ -6387,6 +6437,8 @@ class report_run:
                 'header': rheader,
                 'search': rsearch,
                 'report2': freport,
+                'headers': pheaders2,
+                'footers': pfooters2,
                 }
         content = rreport
         #
