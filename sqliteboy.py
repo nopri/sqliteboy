@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.58'
+VERSION = '0.59'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -201,6 +201,8 @@ REPORT_CELL_TYPE_TEXT = ''
 REPORT_CELL_TYPE_FILES_IMAGE = 'files.image'
 REPORT_CELL_TYPE_SQL = 'sql'
 REPORT_CELL_TYPE_SQL_RESULT = REPORT_REFERENCE_SQL_0
+REPORT_RESULT_ROW_COUNT = 'result_row_count'
+REPORT_RESULT_MESSAGE = 'result_message'
 REPORT_FORMAT_DEFAULT = ''
 REPORT_FORMAT_CSV = 'csv'
 REPORT_FORMAT_PDF = 'pdf'
@@ -6201,6 +6203,7 @@ class report_run:
             dflt()
         #
         freport = report
+        reportinfo = ''
         finput = None
         rquery = None
         rheader = []
@@ -6212,6 +6215,7 @@ class report_run:
         try:
             preport = parsereport(report)
             freport = preport[0]
+            reportinfo = preport[1]
             finput = preport[2]
             rquery = preport[3]
             rheader = preport[4]
@@ -6320,6 +6324,45 @@ class report_run:
                 sess[SKR_RUN] = [ [_['e_report_select_general'], str(e)] ]
                 raise web.seeother('/report/run/%s' %(report))
         #
+        r_row_count = -1
+        #
+        data = {
+                'title': '%s - %s' %(_['tt_report_run_result'], report), 
+                'command': 'report.run.result',
+                'report': report,
+                'header': rheader,
+                'search': rsearch,
+                'report2': freport,
+                'headers': pheaders2,
+                }
+        content = rreport
+        #
+        xtable = hasattr(content, '__iter__')
+        data['table'] = xtable
+        #
+        message3 = ''
+        message2b = ''
+        if xtable == False:
+            try:
+                if content < 0:
+                    message2b = message2[0]
+                elif content == 0:
+                    message2b = message2[1]
+                elif content > 0:
+                    message2b = message2[2]
+                #
+                message3 = message2b.replace(REPORT_MESSAGE_VAR_RESULT, 
+                    str(content))
+            except:
+                pass
+        else:
+            content = content.list()
+            r_row_count = len(content)
+        data['result_message'] = message3
+        #
+        ocols[REPORT_RESULT_ROW_COUNT] = r_row_count
+        ocols[REPORT_RESULT_MESSAGE] = message3
+        #
         pboth = [
                     [
                         pheaders, 
@@ -6362,6 +6405,7 @@ class report_run:
                         continue 
                     #
                     if not isinstance(pc[0], phft[0]) \
+                        or not isinstance(pc[2], phft[2]) \
                         or not isinstance(pc[1], phft[1]):
                             continue
                     #
@@ -6370,6 +6414,9 @@ class report_run:
                     #
                     phfc = {}
                     #
+                    pc2 = pc[2]
+                    pc2['type'] = pc[0]
+                    #
                     if pc[0] == REPORT_CELL_TYPE_TEXT:
                         if rformat in REPORT_FORMAT_ALL:
                             phfc = {
@@ -6377,9 +6424,7 @@ class report_run:
                                                         pc[1],
                                                         pc[2]
                                                     ),
-                                        'data': {
-                                                    'type': pc[0],
-                                                },
+                                        'data': pc2,
                                     }
                     elif pc[0] == REPORT_CELL_TYPE_SQL:
                         if rformat in REPORT_FORMAT_ALL:
@@ -6400,17 +6445,13 @@ class report_run:
                             #
                             phfc = {
                                         'content': phfqr,
-                                        'data': {
-                                                    'type': pc[0],
-                                                },
+                                        'data': pc2,
                                     }
                     elif pc[0] == REPORT_CELL_TYPE_FILES_IMAGE:
                         if rformat == REPORT_FORMAT_DEFAULT:
                             phfc = {
                                         'content': str(pc[1]),
-                                        'data': {
-                                                    'type': pc[0],
-                                                },
+                                        'data': pc2,
                                     }                            
                     #
                     phfl.append(phfc)                        
@@ -6429,38 +6470,65 @@ class report_run:
                 if phfl:
                     phfy.append(phfl)
         #
-        #
-        data = {
-                'title': '%s - %s' %(_['tt_report_run_result'], report), 
-                'command': 'report.run.result',
-                'report': report,
-                'header': rheader,
-                'search': rsearch,
-                'report2': freport,
-                'headers': pheaders2,
-                'footers': pfooters2,
+        phtempd = {
+                        'type': REPORT_CELL_TYPE_TEXT,
                 }
-        content = rreport
         #
-        xtable = hasattr(content, '__iter__')
-        data['table'] = xtable
+        if not pheaders2:
+            pheaders2.append(
+                [
+                    {
+                        'content': freport,
+                        'data': phtempd,
+                    },
+                    {
+                        'content': reportinfo,
+                        'data': phtempd,
+                    },
+                ]
+            )
+            #
+            for x in rsearch:
+                phtemp = []
+                for y in x:
+                    phtemp.append(
+                        {
+                            'content': y,
+                            'data': phtempd,
+                        }
+                    )
+                pheaders2.append(phtemp)
         #
-        message3 = ''
-        message2b = ''
-        if xtable == False:
-            try:
-                if content < 0:
-                    message2b = message2[0]
-                elif content == 0:
-                    message2b = message2[1]
-                elif content > 0:
-                    message2b = message2[2]
-                #
-                message3 = message2b.replace(REPORT_MESSAGE_VAR_RESULT, 
-                    str(content))
-            except:
-                pass
-        data['result_message'] = message3
+        if not pfooters2:
+            if r_row_count > -1:
+                pfooters2.append(
+                    [
+                        {
+                            'content': r_row_count,
+                            'data': phtempd,
+                        },
+                        {
+                            'content': _['x_row'],
+                            'data': phtempd,
+                        },
+                    ]
+                )
+            if message3:
+                pfooters2.append(
+                    [
+                        {
+                            'content': message3,
+                            'data': phtempd,
+                        },
+                        {
+                            'content': '',
+                            'data': phtempd,
+                        },
+                    ]
+                )
+        #
+        data['headers'] = pheaders2
+        data['footers'] = pfooters2
         #
         stop()
         #
