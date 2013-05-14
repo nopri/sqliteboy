@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.59'
+VERSION = '0.60'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -3952,21 +3952,30 @@ $elif data['command'] == 'report.run':
     </table>
     </form>
 $elif data['command'] == 'report.run.result':
-    <h3>
-    $data['report2']
-    </h3>
-    $if data['search']:
+    $if data.has_key('headers'):
+        <br>
         <table>
-        $for s in data['search']:
+        $for row in data['headers']:
             <tr>
-            <td width='30%'>
-            $s[0]
-            </td>
-            <td>
-            $s[1]
-            </td>
+            $for col in row:
+                $ ccont = col.get('content', '')
+                $ cattr = col.get('data', {})
+                $ ca_style = cattr.get('style', '')
+                <td>
+                    $if cattr.get('type') == 'files.image':
+                        $if ccont:
+                            $if ca_style:
+                                <img src='/fs?sid=$ccont' style='$ca_style'>
+                            $else:
+                                <img src='/fs?sid=$ccont' border='0'>
+                        $else:
+                            $ccont
+                    $else:    
+                        $ccont
+                </td>
             </tr>
         </table>
+        
     <br>
     $ ctr = 0
     $if data['table']:
@@ -3992,12 +4001,32 @@ $elif data['command'] == 'report.run.result':
             </tr>
             $ ctr = ctr + 1
         </table>    
-        $ctr $_['x_row']
-    $else:
-        $if data['result_message']:
-            $data['result_message']
-        $else:
-            $content
+
+    $if data.has_key('footers'):
+        <br>
+        <table>
+        $for row in data['footers']:
+            <tr>
+            $for col in row:
+                $ ccont = col.get('content', '')
+                $ cattr = col.get('data', {})
+                $ ca_style = cattr.get('style', '')
+                <td>
+                    $if cattr.get('type') == 'files.image':
+                        $if ccont:
+                            $if ca_style:
+                                <img src='/fs?sid=$ccont' style='$ca_style'>
+                            $else:
+                                <img src='/fs?sid=$ccont' border='0'>
+                        $else:
+                            $ccont
+                    $else:    
+                        $ccont
+                </td>
+            </tr>
+        </table>
+    
+    <br>
 $elif data['command'] == 'notes':
     <p>
     <i>$data['hint'].capitalize()</i>

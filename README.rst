@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.59
+Documentation for version 0.60
 
 
 .. contents:: 
@@ -168,6 +168,10 @@ Features
   - As of v0.18, report also can be used as form/data entry, using 
     insert SQL query. Custom result message (based on SQL query result), 
     is also supported. 
+    
+  - As of v0.60, headers and footers are supported. If not defined, a 
+    default one will be created. Plain text, SQL Query, and Image are 
+    supported.  
 
 - Files (Extended feature, new in v0.47)
 
@@ -1265,7 +1269,27 @@ Report Code Reference
 - Report also can be used as form/data entry, using insert SQL query. 
   Custom result message (based on SQL query result), is also supported.
   Using free form SQL query, data entry can work with multiple table.
+  
+- Headers and footers are supported. If not defined, a default one will be 
+  created. Plain text, SQL Query, and Image are supported. Headers and
+  footers are rendered as tables (multiple rows/columns; one table for 
+  headers, one table for footers). If there is difference in number of 
+  columns for each row, largest one will be used. 
 
+- Default headers: 
+
+  - First row: first column (report title), second column (report info)
+  
+  - Next row(s): first column (search key), second column (user input)
+
+- Default footers (SELECT SQL): 
+
+  - First row: first column (number of rows), second column ("row(s)"/translated)
+
+- Default footers (NON-SELECT SQL): 
+
+  - First row: first column (message or ""), second column ("")
+  
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -1330,6 +1354,50 @@ Report Code Reference
 |               |   result                |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| headers       | custom headers          | list of list  | optional    |                          |
+|               |                         | of list       |             |                          |
+|               | - must be list of list  |               |             | (please see Example 2    |
+|               |   (rows) of list        |               |             | below)                   |
+|               |   (columns) of three    |               |             |                          |
+|               |   members (each cell)   |               |             |                          |
+|               |   (str, str/int, dict)  |               |             |                          |
+|               |                         |               |             |                          |
+|               | - cell: [type, value,   |               |             |                          |
+|               |   attr]                 |               |             |                          |
+|               |                         |               |             |                          |
+|               | - type: "" (plain text),|               |             |                          |
+|               |   "sql" (sql query),    |               |             |                          |
+|               |   "files.image" (file   |               |             |                          |
+|               |   number in user files) |               |             |                          |
+|               |                         |               |             |                          |
+|               | - value: any valid value|               |             |                          |
+|               |   for type (str is valid|               |             |                          |
+|               |   for types above)      |               |             |                          |
+|               |                         |               |             |                          |
+|               | - attr: {}              |               |             |                          |
+|               |                         |               |             |                          |
+|               | - for "sql" type,       |               |             |                          |
+|               |   $result_row_count will|               |             |                          |
+|               |   be replaced by actual |               |             |                          |
+|               |   row count (or -1),    |               |             |                          |
+|               |   $result_message will  |               |             |                          |
+|               |   be replaced by actual |               |             |                          |
+|               |   message (or "", for   |               |             |                          |
+|               |   custom result         |               |             |                          |
+|               |   message), and each key|               |             |                          |
+|               |   in data will be       |               |             |                          |
+|               |   replaced by user input|               |             |                          |
+|               |   value; quoting is     |               |             |                          |
+|               |   automatically done;   |               |             |                          |
+|               |   sql query must return |               |             |                          |
+|               |   one column: a         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| footers       | custom footers          | list of list  | optional    |                          |
+|               |                         | of list       |             |                          |
+|               | (please see headers)    |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
@@ -1483,7 +1551,7 @@ Report Code Reference
   - tips: use sqliteboy_as_integer function in constraint
     to do integer conversion/comparison
 
-- Example:
+- Example 1:
 ::
 
     {
@@ -1504,6 +1572,58 @@ Report Code Reference
                     "constraint": ["sqliteboy_as_integer", 1, "> 0", "e must be integer"]
                   }
                 ],
+      "security" : {
+                     "run" : ""
+                   }
+    }
+
+- Example 2:
+::
+
+    {
+      "title" : "My Report",
+      "info"  : "Report Information", 
+      "header": ["column a of table1", "e"],
+      "sql"   : "select a.a as 'column a of table1', a.e from table1 a where a.a = $input_a_a and a.e > $a_e",
+      "data"  : [
+                  {
+                    "key"       : "input_a_a",
+                    "label"     : "column a equals",
+                    "reference" : [ ["0", "NO"], ["1", "YES"] ],
+                    "default"   : "1"
+                  },
+                  {
+                    "key"       : "a_e",
+                    "label"     : "e (as integer) >",
+                    "constraint": ["sqliteboy_as_integer", 1, "> 0", "e must be integer"]
+                  }
+                ],
+      "headers"  : [
+                      [
+                          ["files.image", "31", {}],
+                          ["", "My Report", {}]
+                      ],
+                      [
+                          ["", "Date/Time", {}],
+                          ["sql", "select sqliteboy_time3(sqliteboy_time()) as a", {}]
+                      ],
+                      [
+                          ["", "User", {}],
+                          ["sql", "select sqliteboy_x_user() as a", {}]
+                      ],
+                      [
+                          ["", "column a equals", {}],
+                          ["sql", "select $input_a_a as a", {}]
+                      ],
+                      [
+                          ["", "e (as integer) >", {}],
+                          ["sql", "select $a_e as a", {}]
+                      ],
+                      [
+                          ["", "Rows", {}],
+                          ["sql", "select $result_row_count as a", {}]
+                      ]
+                   ],                
       "security" : {
                      "run" : ""
                    }
