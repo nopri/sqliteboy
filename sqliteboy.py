@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.60'
+VERSION = '0.61'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -107,6 +107,7 @@ SK_CALCULATOR = 'calculator'
 SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SK_SYSTEM = 'system'
+SK_SCRIPTS = 'scripts'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
 SKR_CREATE = 'report.create'
@@ -273,6 +274,16 @@ SAMPLE_PAGE = ', '.join([x[3] for x in REGEX_PAGE])
 CALCULATOR_MAX_INPUT = 36
 CALCULATOR_ALLOWED = ''
 PLAIN_CTYPE = 'text/plain'
+SCRIPT_KEY_NAME = 'name'
+SCRIPT_KEY_INFO = 'info'
+SCRIPT_KEY_AUTHOR = 'author'
+SCRIPT_KEY_LICENSE = 'license'
+SCRIPT_KEY_TABLES = 'tables'
+SCRIPT_KEY_FORMS = 'forms'
+SCRIPT_KEY_REPORTS = 'reports'
+SCRIPT_REQ = (
+                SCRIPT_KEY_NAME,
+            )
 
 
 #----------------------------------------------------------------------#
@@ -364,6 +375,7 @@ URLS = (
     '/pages', 'pages',
     '/page/(.*)', 'page',
     '/calculator', 'calculator',
+    '/admin/scripts', 'admin_scripts',
     )
 
 app = None
@@ -1055,6 +1067,9 @@ LANGS = {
             'x_preview': 'preview',
             'x_expression_too_long': 'expression too long',
             'x_expression_invalid': 'invalid expression',            
+            'x_info': 'info',
+            'x_author': 'author',
+            'x_license': 'license',        
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1080,6 +1095,7 @@ LANGS = {
             'tt_files': 'files',
             'tt_pages': 'page',
             'tt_calculator': 'calculator',
+            'tt_scripts': 'scripts',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -1185,6 +1201,7 @@ LANGS = {
             'h_files': '',
             'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
             'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
+            'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -3048,6 +3065,25 @@ def tr_report_text(s, data):
     ret = s
     #
     return ret
+
+def r_scripts():
+    q = 'install.scripts'
+    #
+    content = s_select(q, what='rowid, a, b, c, d, f, g', order='d asc')
+    for c in content:
+        g = {}
+        try:
+            g = json.loads(c.get('g'))
+        except:
+            pass
+        c['info'] = g.get('info', '')
+        c['author'] = g.get('author', '')
+        c['license'] = g.get('license', '')
+        #
+        if not c.get('d', '').strip():
+            continue
+    #
+    return content
     
     
 #----------------------------------------------------------------------#
@@ -4282,6 +4318,53 @@ $elif data['command'] == 'calculator':
         <br>
         $if not res[4]:
             <a href='#' onclick='javascript:document.getElementById("qcalculator").value="$res[2]"'>$_['cmd_use_result']</a>
+$elif data['command'] == 'scripts':
+    <p>
+    $ hint = data['hint'][0].upper() + data['hint'][1:]
+    <i>$hint</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $i
+        </th>
+    $for u in content:
+        <tr>
+        <td>
+            $u['d']
+        </td>
+        <td>
+            $u['info']
+        </td>
+        <td>
+            $u['author']
+        </td>
+        <td>
+            $u['license']
+        </td>        
+        </tr>
+    <tr>
+    <td colspan="4">
+        <input type='file' name='d_new'>
+    </td>
+    </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -7070,6 +7153,35 @@ class calculator:
         #
         sess[SK_CALCULATOR] = [q0, err, msg, t, error]
         raise web.seeother('/calculator')
+
+
+class admin_scripts:
+    def GET(self):
+        start()
+        #
+        data = {
+                'title': _['tt_scripts'],
+                'command': 'scripts',
+                'action_url': '/admin/scripts',
+                'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns': (
+                            _['x_name'], 
+                            _['x_info'], 
+                            _['x_author'], 
+                            _['x_license'], 
+                        ),                                
+                'message': smsgq(SK_SCRIPTS),
+                'hint': _['h_scripts'],
+            }
+        #
+        content = r_scripts()
+        #
+        stop()
+        return T(data, content)
         
 
 #----------------------------------------------------------------------#

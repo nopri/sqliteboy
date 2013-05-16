@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.60
+Documentation for version 0.61
 
 
 .. contents:: 
@@ -40,6 +40,10 @@ Why
 
 - Easy to use, python and web.py based, Web SQLite Manager with 
   user-defined function and many extended features (Free/open source)
+  
+- User-defined functions: number to words (multi language), number format, 
+  table lookup, hash, base64, random, additional date/time, additional 
+  string, regular expression, utility
 
 - If Extended feature is enabled: 
 
@@ -1695,7 +1699,7 @@ Donate
 
 Commercial Support
 ========================================================================
-If you need commercial support (customization, integration, training), 
+If you need commercial support (training, integration), 
 please let me know :) Support is provided by tedut.com. 
 
 
