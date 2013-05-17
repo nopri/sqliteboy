@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.61'
+VERSION = '0.62'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -223,6 +223,7 @@ CSV_CTYPE = 'text/csv'
 BACKUP_BUFFER = 10 * SIZE_KB
 FILES_MAX_NUMBER = 10
 FILES_MAX_SIZE = 1 * SIZE_MB
+SCRIPTS_MAX_SIZE = 32 * SIZE_KB
 SYSTEM_CONFIG = (
                     (
                         'x_files',
@@ -238,6 +239,14 @@ SYSTEM_CONFIG = (
                         'files.max_size.',
                         'files.max_size..%s' %(FILES_MAX_SIZE),
                         FILES_MAX_SIZE,
+                        int,
+                    ),
+                    (
+                        'x_scripts',
+                        'x_max_script_size',
+                        'scripts.max_size.',
+                        'scripts.max_size..%s' %(SCRIPTS_MAX_SIZE),
+                        SCRIPTS_MAX_SIZE,
                         int,
                     ),
                 )
@@ -283,6 +292,9 @@ SCRIPT_KEY_FORMS = 'forms'
 SCRIPT_KEY_REPORTS = 'reports'
 SCRIPT_REQ = (
                 SCRIPT_KEY_NAME,
+                SCRIPT_KEY_TABLES,
+                SCRIPT_KEY_FORMS,
+                SCRIPT_KEY_REPORTS,
             )
 
 
@@ -1070,6 +1082,9 @@ LANGS = {
             'x_info': 'info',
             'x_author': 'author',
             'x_license': 'license',        
+            'x_run_time': 'run (time)',
+            'x_scripts': 'scripts',
+            'x_max_script_size': 'maximum script size',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1171,6 +1186,9 @@ LANGS = {
             'e_report_run_required': 'ERROR: required',
             'e_report_run_constraint': 'ERROR: constraint',
             'e_report_select_general': 'ERROR: processing report',
+            'e_scripts_max_size': 'ERROR: maximum script size exceeded',
+            'e_scripts_syntax_or_required' : 'ERROR: script code error or required keys are not set',
+            'e_scripts_name': 'ERROR: invalid script name',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -1182,6 +1200,7 @@ LANGS = {
             'o_notes': 'OK: notes updated',
             'o_files': 'OK: files updated',
             'o_pages': 'OK: page updated',
+            'o_scripts': 'OK: scripts updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -4346,7 +4365,7 @@ $elif data['command'] == 'scripts':
     $for u in content:
         <tr>
         <td>
-            $u['d']
+            <a href="/admin/script/$u['rowid']">$u['d']</a>
         </td>
         <td>
             $u['info']
@@ -4357,9 +4376,12 @@ $elif data['command'] == 'scripts':
         <td>
             $u['license']
         </td>        
+        <td>
+            $u['f']
+        </td>        
         </tr>
     <tr>
-    <td colspan="4">
+    <td colspan="5">
         <input type='file' name='d_new'>
     </td>
     </tr>
@@ -7173,6 +7195,7 @@ class admin_scripts:
                             _['x_info'], 
                             _['x_author'], 
                             _['x_license'], 
+                            _['x_run_time'],
                         ),                                
                 'message': smsgq(SK_SCRIPTS),
                 'hint': _['h_scripts'],
@@ -7182,6 +7205,85 @@ class admin_scripts:
         #
         stop()
         return T(data, content)
+
+    def POST(self):
+        inp = web.input(d_new={})
+        d_new = inp.d_new
+        #
+        if not hasattr(d_new, 'filename'):
+            raise web.seeother('/admin/scripts')
+        #
+        fname = d_new.filename
+        if not fname:
+            raise web.seeother('/admin/scripts')
+        #
+        code = ''
+        dcode = {}
+        sname = ''
+        g = {}
+        msg = []
+        #
+        try:
+            code = d_new.value
+            size = len(code)
+            smax = r_system('scripts.max_size.')
+            #
+            if size > smax:
+                raise Exception, _['e_scripts_max_size']
+            #
+            dcode = json.loads(code)
+            #
+            for k in SCRIPT_REQ:
+                if not dcode.has_key(k):
+                    raise Exception, _['e_scripts_syntax_or_required']
+            #
+            g['size'] = size
+            g['type'] = d_new.type
+            g['type_options'] = d_new.type_options
+            g['disposition'] = d_new.disposition
+            g['disposition_options'] = d_new.disposition_options            
+        except Exception, e:
+            msg = [
+                    [ fname, str(e) ],
+                ]
+            sess[SK_SCRIPTS] = msg
+            raise web.seeother('/admin/scripts')
+        #
+        sname = dcode.get(SCRIPT_KEY_NAME, '')
+        if isstr(sname):
+            sname = sname.strip()
+        if not isstr(sname) or not sname:
+            msg = [
+                    [ _['e_scripts_name'] ],
+                ]
+            sess[SK_SCRIPTS] = msg
+            raise web.seeother('/admin/scripts')            
+        #
+        try:
+            g['info'] = dcode.get(SCRIPT_KEY_INFO, '')
+            g['author'] = dcode.get(SCRIPT_KEY_AUTHOR, '')
+            g['license'] = dcode.get(SCRIPT_KEY_LICENSE, '')
+            #            
+            gj = json.dumps(g)
+            #
+            r = db.insert(FORM_TBL, 
+                    a='install',
+                    b='scripts',
+                    c=user(),
+                    d=sname,
+                    e=code,
+                    f='',
+                    g=gj
+                )
+            #
+            msg = [
+                    [ _['o_scripts'] ],
+                ]
+            sess[SK_SCRIPTS] = msg            
+        except:
+            pass
+        #
+        raise web.seeother('/admin/scripts')
         
 
 #----------------------------------------------------------------------#
