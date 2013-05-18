@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.63'
+VERSION = '0.64'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -297,6 +297,10 @@ SCRIPT_REQ = (
                 SCRIPT_KEY_FORMS,
                 SCRIPT_KEY_REPORTS,
             )
+SCRIPT_TABLE_COLUMN_LEN = 3
+SCRIPT_TABLE_ERROR = -1
+SCRIPT_TABLE_OK = 0
+SCRIPT_TABLE_EXISTS = 1
 
 
 #----------------------------------------------------------------------#
@@ -3092,23 +3096,31 @@ def tr_report_text(s, data):
     return ret
 
 def r_scripts():
+    ret = []
+    #
     q = 'install.scripts'
     #
-    content = s_select(q, what='rowid, a, b, c, d, f, g', order='d asc')
+    content = s_select(q)
     for c in content:
-        g = {}
+        e = {}
         try:
-            g = json.loads(c.get('g'))
+            e = json.loads(c.get('e'))
         except:
             pass
-        c['info'] = g.get('info', '')
-        c['author'] = g.get('author', '')
-        c['license'] = g.get('license', '')
+        c[SCRIPT_KEY_NAME] = e.get(SCRIPT_KEY_NAME, '')
+        c[SCRIPT_KEY_INFO] = e.get(SCRIPT_KEY_INFO, '')
+        c[SCRIPT_KEY_AUTHOR] = e.get(SCRIPT_KEY_AUTHOR, '')
+        c[SCRIPT_KEY_LICENSE] = e.get(SCRIPT_KEY_LICENSE, '')
         #
-        if not c.get('d', '').strip():
+        cn = c.get(SCRIPT_KEY_NAME, '')
+        if isstr(cn):
+            cn = cn.strip()
+        if not isstr(cn) or not cn:
             continue
+        #
+        ret.append(c)
     #
-    return content
+    return ret
 
 def g_script(script):
     ret = {}
@@ -3127,7 +3139,53 @@ def g_script(script):
     return ret
 
 def xparsescript(script):
-    ret = []
+    ret = {}
+    #
+    e = {}
+    try:
+        e = json.loads(script.get('e'))
+    except:
+        pass
+    #
+    for k in SCRIPT_REQ:
+        if not e.has_key(k):
+            return ret
+    #
+    ttypes = []
+    for x in COLUMN_TYPES:
+        ttypes.append(x[0])
+    tpk = (0, 1)
+    tcode = e.get(SCRIPT_KEY_TABLES, [])
+    if not isinstance(tcode, list):
+        tcode = []
+    tcode2 = []
+    for tt in tcode:
+        tstat = SCRIPT_TABLE_ERROR
+        #
+        if len(tt) < 2:
+            continue
+        #
+        tcols = tt[1:]
+        tcols = [x for x in tcols if isinstance(x, list)]
+        tcols = [x for x in tcols if len(x) == SCRIPT_TABLE_COLUMN_LEN]
+        if not tcols:
+            continue
+        #
+        tcols = [x for x in tcols if validfname(x[0])]
+        tcols = [x for x in tcols if str(x[1]) in ttypes]
+        tcols = [x for x in tcols if x[2] in tpk]
+        if not tcols:
+            continue
+        #
+        tname = tt[0]
+        if not tname in tables():
+            tstat = SCRIPT_TABLE_OK
+        else:
+            tstat = SCRIPT_TABLE_EXISTS
+        #
+        ttemp = [tname, tstat, tcols]
+        tcode2.append(ttemp)
+    ret[SCRIPT_KEY_TABLES] = tcode2
     #
     return ret
     
@@ -4392,7 +4450,7 @@ $elif data['command'] == 'scripts':
     $for u in content:
         <tr>
         <td>
-            <a href="/admin/script/$u['rowid']">$u['d']</a>
+            <a href="/admin/script/$u['rowid']">$u['name']</a>
         </td>
         <td>
             $u['info']
@@ -7287,9 +7345,6 @@ class admin_scripts:
             raise web.seeother('/admin/scripts')            
         #
         try:
-            g['info'] = dcode.get(SCRIPT_KEY_INFO, '')
-            g['author'] = dcode.get(SCRIPT_KEY_AUTHOR, '')
-            g['license'] = dcode.get(SCRIPT_KEY_LICENSE, '')
             g['user'] = user()
             #            
             gj = json.dumps(g)
@@ -7298,7 +7353,7 @@ class admin_scripts:
                     a='install',
                     b='scripts',
                     c='',
-                    d=sname,
+                    d='',
                     e=code,
                     f='',
                     g=gj
