@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.62'
+VERSION = '0.63'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -108,6 +108,7 @@ SK_USERS = 'users'
 SK_HOSTS = 'hosts'
 SK_SYSTEM = 'system'
 SK_SCRIPTS = 'scripts'
+SK_SCRIPT = 'script'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
 SKR_CREATE = 'report.create'
@@ -388,6 +389,7 @@ URLS = (
     '/page/(.*)', 'page',
     '/calculator', 'calculator',
     '/admin/scripts', 'admin_scripts',
+    '/admin/script/(.*)', 'admin_script',
     )
 
 app = None
@@ -1085,6 +1087,8 @@ LANGS = {
             'x_run_time': 'run (time)',
             'x_scripts': 'scripts',
             'x_max_script_size': 'maximum script size',
+            'x_detail': 'detail',
+            'x_system_check': 'system check',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1111,6 +1115,7 @@ LANGS = {
             'tt_pages': 'page',
             'tt_calculator': 'calculator',
             'tt_scripts': 'scripts',
+            'tt_script': 'script',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'cmd_browse': 'browse',
@@ -1221,6 +1226,7 @@ LANGS = {
             'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
             'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
             'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
+            'h_script': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -3103,6 +3109,27 @@ def r_scripts():
             continue
     #
     return content
+
+def g_script(script):
+    ret = {}
+    #
+    scripts = r_scripts()
+    #
+    for s in scripts:
+        rowid = s.get('rowid', '')
+        if not isstr(rowid):
+            continue
+        #
+        if script == rowid:
+            ret = s
+            break
+    #
+    return ret
+
+def xparsescript(script):
+    ret = []
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -7263,13 +7290,14 @@ class admin_scripts:
             g['info'] = dcode.get(SCRIPT_KEY_INFO, '')
             g['author'] = dcode.get(SCRIPT_KEY_AUTHOR, '')
             g['license'] = dcode.get(SCRIPT_KEY_LICENSE, '')
+            g['user'] = user()
             #            
             gj = json.dumps(g)
             #
             r = db.insert(FORM_TBL, 
                     a='install',
                     b='scripts',
-                    c=user(),
+                    c='',
                     d=sname,
                     e=code,
                     f='',
@@ -7284,6 +7312,45 @@ class admin_scripts:
             pass
         #
         raise web.seeother('/admin/scripts')
+
+
+class admin_script:
+    def GET(self, script):
+        start()
+        #
+        scode = g_script(script)
+        if not scode.keys():
+            dflt()
+        #
+        action_button = (
+                            ('run', _['cmd_run'], False, '', 'submit'),
+                        ),
+        #
+        content = xparsescript(scode)
+        #
+        if not content:
+            action_button = ()
+            sess[SK_SCRIPT] = [
+                                [_['e_scripts_syntax_or_required']],
+                            ]
+        #
+        data = {
+                'title': _['tt_script'],
+                'command': 'script',
+                'action_url': '/admin/script',
+                'action_method': 'post',
+                'action_button': action_button,
+                'columns': (
+                            _['x_key'], 
+                            _['x_detail'], 
+                            _['x_system_check'], 
+                        ),                                
+                'message': smsgq(SK_SCRIPT),
+                'hint': _['h_script'],
+            }
+        #
+        stop()
+        return T(data, content)
         
 
 #----------------------------------------------------------------------#

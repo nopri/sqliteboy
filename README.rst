@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.62
+Documentation for version 0.63
 
 
 .. contents:: 
@@ -67,8 +67,7 @@ Why
   calculator, configurable hosts allowed, database backup, system configuration 
   and many others are available as extended features.
   
-- I need simple form (data entry) and reporting solution. This 
-  application is under active development. I use it at work and home. 
+- I need simple form (data entry) and reporting solution (web-based). 
 
 - If you are using Windows, standalone / portable application is 
   available (single file executable). Run from Windows Explorer 
