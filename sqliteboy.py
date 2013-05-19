@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.64'
+VERSION = '0.65'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -152,6 +152,7 @@ FORM_KEY_SUB = 'sub'
 FORM_KEY_MESSAGE = 'message'
 FORM_KEY_SQL2 = 'sql2'
 FORM_REQ = (FORM_KEY_DATA,)
+FORM_REQ_X = (2,) #parsed index
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
                     FORM_KEY_DATA_COLUMN,
                 )
@@ -186,6 +187,7 @@ REPORT_KEY_FOOTERS = 'footers'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
+REPORT_REQ_X = (2, 3,) #parsed index
 REPORT_REQ_DATA = (REPORT_KEY_DATA_KEY,)
 REPORT_REFERENCE_SQL_0 = 'a'
 REPORT_REFERENCE_SQL_1 = 'b'
@@ -301,6 +303,12 @@ SCRIPT_TABLE_COLUMN_LEN = 3
 SCRIPT_TABLE_ERROR = -1
 SCRIPT_TABLE_OK = 0
 SCRIPT_TABLE_EXISTS = 1
+SCRIPT_FORM_ERROR = -1
+SCRIPT_FORM_OK = 0
+SCRIPT_FORM_EXISTS = 1
+SCRIPT_REPORT_ERROR = -1
+SCRIPT_REPORT_OK = 0
+SCRIPT_REPORT_EXISTS = 1
 
 
 #----------------------------------------------------------------------#
@@ -2591,16 +2599,22 @@ def parseform2(code, table):
     return fsub2
 
 def parseform(form):
-    fo = s_select('form.code..%s' %(form))
-    try:
-        fo = fo[0]['e']
-        fo = json.loads(fo)
-    except:
-        fo = {}
+    fo = {}
+    #
+    if isstr(form):
+        fo = s_select('form.code..%s' %(form))
+        try:
+            fo = fo[0]['e']
+            fo = json.loads(fo)
+        except:
+            fo = {}
+    elif isinstance(form, dict):
+        fo = form
     #
     ftitle = fo.get(FORM_KEY_TITLE, form)
     finfo = fo.get(FORM_KEY_INFO, '')
     #single table
+    table = ''
     fdata = fo.get(FORM_KEY_DATA)
     input = []
     colstb = {}
@@ -2777,12 +2791,17 @@ def rfooters(data, cell_len, cell_types):
     return rheaders(data, cell_len, cell_types)
 
 def parsereport(report):
-    fo = s_select('report.code..%s' %(report))
-    try:
-        fo = fo[0]['e']
-        fo = json.loads(fo)
-    except:
-        fo = {}
+    fo = {}
+    #
+    if isstr(report):
+        fo = s_select('report.code..%s' %(report))
+        try:
+            fo = fo[0]['e']
+            fo = json.loads(fo)
+        except:
+            fo = {}
+    elif isinstance(report, dict):
+        fo = report
     #
     ftitle = fo.get(REPORT_KEY_TITLE, report)
     finfo = fo.get(REPORT_KEY_INFO, '')
@@ -3138,6 +3157,18 @@ def g_script(script):
     #
     return ret
 
+def xreqparsed(parsed, required):
+    ret = False
+    #
+    try:
+        for r in required:
+            if not parsed[r]:
+                return ret
+    except:
+        return ret
+    #
+    return True
+
 def xparsescript(script):
     ret = {}
     #
@@ -3167,7 +3198,7 @@ def xparsescript(script):
         #
         tcols = tt[1:]
         tcols = [x for x in tcols if isinstance(x, list)]
-        tcols = [x for x in tcols if len(x) == SCRIPT_TABLE_COLUMN_LEN]
+        tcols = [x for x in tcols if len(x) >= SCRIPT_TABLE_COLUMN_LEN]
         if not tcols:
             continue
         #
@@ -3178,6 +3209,9 @@ def xparsescript(script):
             continue
         #
         tname = tt[0]
+        if not validfname(tname):
+            continue
+        #
         if not tname in tables():
             tstat = SCRIPT_TABLE_OK
         else:
@@ -3186,6 +3220,76 @@ def xparsescript(script):
         ttemp = [tname, tstat, tcols]
         tcode2.append(ttemp)
     ret[SCRIPT_KEY_TABLES] = tcode2
+    #
+    tcode = e.get(SCRIPT_KEY_FORMS, [])
+    if not isinstance(tcode, list):
+        tcode = []
+    tcode2 = []
+    for tt in tcode:
+        tstat = SCRIPT_FORM_ERROR
+        #
+        if len(tt) < 2:
+            continue
+        #
+        tname = tt[0]
+        tcont = tt[1]
+        #
+        if not validfname(tname):
+            continue
+        #
+        tname = tname.strip().lower()
+        #
+        if not isinstance(tcont, dict):
+            continue
+        #
+        parsed = parseform(tcont)
+        if not xreqparsed(parsed, FORM_REQ_X):
+            continue
+        #
+        if not tname in forms():
+            tstat = SCRIPT_FORM_OK
+        else:
+            tstat = SCRIPT_FORM_EXISTS
+        ttemp = [tname, tstat, tcont]
+        tcode2.append(ttemp)
+    ret[SCRIPT_KEY_FORMS] = tcode2            
+    #
+    tcode = e.get(SCRIPT_KEY_REPORTS, [])
+    if not isinstance(tcode, list):
+        tcode = []
+    tcode2 = []
+    for tt in tcode:
+        tstat = SCRIPT_REPORT_ERROR
+        #
+        if len(tt) < 2:
+            continue
+        #
+        tname = tt[0]
+        tcont = tt[1]
+        #
+        if not validfname(tname):
+            continue
+        #
+        tname = tname.strip().lower()
+        #
+        if not isinstance(tcont, dict):
+            continue
+        #
+        parsed = parsereport(tcont)
+        if not xreqparsed(parsed, REPORT_REQ_X):
+            continue
+        #
+        if not tname in reports():
+            tstat = SCRIPT_REPORT_OK
+        else:
+            tstat = SCRIPT_REPORT_EXISTS
+        ttemp = [tname, tstat, tcont]
+        tcode2.append(ttemp)
+    ret[SCRIPT_KEY_REPORTS] = tcode2            
+    #
+    for k in e.keys():
+        if not ret.has_key(k):
+            ret[k] = e.get(k)
     #
     return ret
     
