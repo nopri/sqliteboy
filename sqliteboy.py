@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.65'
+VERSION = '0.66'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -305,10 +305,10 @@ SCRIPT_TABLE_OK = 0
 SCRIPT_TABLE_EXISTS = 1
 SCRIPT_FORM_ERROR = -1
 SCRIPT_FORM_OK = 0
-SCRIPT_FORM_EXISTS = 1
+SCRIPT_FORM_EXISTS = -2
 SCRIPT_REPORT_ERROR = -1
 SCRIPT_REPORT_OK = 0
-SCRIPT_REPORT_EXISTS = 1
+SCRIPT_REPORT_EXISTS = -2
 
 
 #----------------------------------------------------------------------#
@@ -1101,6 +1101,7 @@ LANGS = {
             'x_max_script_size': 'maximum script size',
             'x_detail': 'detail',
             'x_system_check': 'system check',
+            'x_table_exists': 'table already exists, however, additional column(s) will be added if defined in script',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1238,7 +1239,7 @@ LANGS = {
             'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
             'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
             'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
-            'h_script': '',
+            'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error.',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -4576,6 +4577,58 @@ $elif data['command'] == 'scripts':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'script':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    $for i in data['columns']:
+        <th>
+            $i
+        </th>
+        
+    $for i in data['info']:
+        <tr>
+        <td>$i[0]</td>
+        <td>$content.get(i[1], '')</td>
+        <td>&nbsp;</td>
+        </tr>
+        
+    <tr>
+    <td>$_['x_run_time']</td>
+    <td>$data['run']</td>
+    <td>&nbsp;</td>
+    </tr>
+    
+    $ allx = [ ['tables', _['x_table'], data['table_info']], ['forms', _['x_form'], data['form_info']],  ['reports', _['x_report'], data['report_info']] ]
+    $for x in allx:
+        $ k = x[0]
+        $ t = x[1]
+        $ c = x[2]
+        $for i in content[k]:
+            <tr>
+            <td width='20%'>$t</td>
+            <td width='30%'>$i[0]</td>
+            <td>$c.get(i[1], '')</td>
+            </tr>
+    
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -7478,32 +7531,50 @@ class admin_script:
         start()
         #
         scode = g_script(script)
-        if not scode.keys():
+        if not scode:
             dflt()
         #
         action_button = (
                             ('run', _['cmd_run'], False, '', 'submit'),
-                        ),
+                        )
         #
+        run = str(scode.get('f', ''))
         content = xparsescript(scode)
-        #
-        if not content:
-            action_button = ()
-            sess[SK_SCRIPT] = [
-                                [_['e_scripts_syntax_or_required']],
-                            ]
         #
         data = {
                 'title': _['tt_script'],
                 'command': 'script',
                 'action_url': '/admin/script',
                 'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
                 'action_button': action_button,
                 'columns': (
                             _['x_key'], 
                             _['x_detail'], 
                             _['x_system_check'], 
                         ),                                
+                'info': (
+                            (_['x_name'], SCRIPT_KEY_NAME),
+                            (_['x_info'], SCRIPT_KEY_INFO),
+                            (_['x_author'], SCRIPT_KEY_AUTHOR),
+                            (_['x_license'], SCRIPT_KEY_LICENSE),
+                        ),
+                'table_info': {
+                                SCRIPT_TABLE_ERROR: _['th_error'],
+                                SCRIPT_TABLE_OK: _['th_ok'],
+                                SCRIPT_TABLE_EXISTS: _['x_table_exists'],
+                            },
+                'form_info': {
+                                SCRIPT_FORM_ERROR: _['th_error'],
+                                SCRIPT_FORM_OK: _['th_ok'],
+                                SCRIPT_FORM_EXISTS: _['e_form_edit_exists'],
+                            },
+                'report_info': {
+                                SCRIPT_REPORT_ERROR: _['th_error'],
+                                SCRIPT_REPORT_OK: _['th_ok'],
+                                SCRIPT_REPORT_EXISTS: _['e_report_edit_exists'],
+                            },                            
+                'run': run,
                 'message': smsgq(SK_SCRIPT),
                 'hint': _['h_script'],
             }
