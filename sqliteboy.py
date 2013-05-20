@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.66'
+VERSION = '0.67'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -309,6 +309,7 @@ SCRIPT_FORM_EXISTS = -2
 SCRIPT_REPORT_ERROR = -1
 SCRIPT_REPORT_OK = 0
 SCRIPT_REPORT_EXISTS = -2
+JSON_INDENT = 4
 
 
 #----------------------------------------------------------------------#
@@ -1101,7 +1102,8 @@ LANGS = {
             'x_max_script_size': 'maximum script size',
             'x_detail': 'detail',
             'x_system_check': 'system check',
-            'x_table_exists': 'table already exists, however, additional column(s) will be added if defined in script',
+            'x_table_exists': 'table already exists, however, additional column(s) will be added',
+            'x_script_not_runnable': 'could not run this script because nothing is defined, or error(s) found, or has been run before',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -3213,12 +3215,23 @@ def xparsescript(script):
         if not validfname(tname):
             continue
         #
+        ncols = []
         if not tname in tables():
             tstat = SCRIPT_TABLE_OK
+            ncols = tcols
         else:
             tstat = SCRIPT_TABLE_EXISTS
+            #
+            ecols = columns(tname, True)
+            ecols = [x.lower() for x in ecols]
+            for n in tcols:
+                if not n[0].lower() in ecols:
+                    ncols.append(n)
         #
-        ttemp = [tname, tstat, tcols]
+        if not ncols:
+            continue
+        #
+        ttemp = [tname, tstat, tcols, ncols]
         tcode2.append(ttemp)
     ret[SCRIPT_KEY_TABLES] = tcode2
     #
@@ -3251,7 +3264,14 @@ def xparsescript(script):
             tstat = SCRIPT_FORM_OK
         else:
             tstat = SCRIPT_FORM_EXISTS
-        ttemp = [tname, tstat, tcont]
+        #
+        jcont = ''
+        try:
+            jcont = json.dumps(tcont, indent=JSON_INDENT)
+        except:
+            pass
+        #
+        ttemp = [tname, tstat, tcont, jcont]
         tcode2.append(ttemp)
     ret[SCRIPT_KEY_FORMS] = tcode2            
     #
@@ -3284,7 +3304,14 @@ def xparsescript(script):
             tstat = SCRIPT_REPORT_OK
         else:
             tstat = SCRIPT_REPORT_EXISTS
-        ttemp = [tname, tstat, tcont]
+        #
+        jcont = ''
+        try:
+            jcont = json.dumps(tcont, indent=JSON_INDENT)
+        except:
+            pass
+        #        
+        ttemp = [tname, tstat, tcont, jcont]
         tcode2.append(ttemp)
     ret[SCRIPT_KEY_REPORTS] = tcode2            
     #
@@ -3293,6 +3320,47 @@ def xparsescript(script):
             ret[k] = e.get(k)
     #
     return ret
+
+def xokscript(pscript):
+    ret = False
+    #
+    if not isinstance(pscript, dict):
+        return ret
+    #
+    if not pscript:
+        return ret
+    #
+    tables = pscript.get(SCRIPT_KEY_TABLES, [])
+    forms = pscript.get(SCRIPT_KEY_FORMS, [])
+    reports = pscript.get(SCRIPT_KEY_REPORTS, [])
+    #
+    if not tables and not forms and not reports:
+        return ret
+    #
+    errors = 0
+    #
+    alls = [tables, forms, reports]
+    for a in alls:
+        if not isinstance(a, list):
+            errors += 1
+            continue                
+        #
+        for i in a:
+            if not isinstance(i, list):
+                errors += 1
+                continue                
+            #
+            if not len(i) > 2: #check: xparsescript, dirty, at least
+                errors += 1
+                continue
+            #
+            if i[1] < 0: #negative, error
+                errors += 1
+    #
+    if errors:
+        return ret
+    #
+    return True
     
     
 #----------------------------------------------------------------------#
@@ -7540,6 +7608,15 @@ class admin_script:
         #
         run = str(scode.get('f', ''))
         content = xparsescript(scode)
+        #
+        if not xokscript(content):
+            action_button = ()
+            if not sess.get(SK_SCRIPT):
+                sess[SK_SCRIPT] = [
+                                    [
+                                        _['x_script_not_runnable'],
+                                    ],
+                                ]
         #
         data = {
                 'title': _['tt_script'],
