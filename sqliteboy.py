@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.67'
+VERSION = '0.68'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -301,6 +301,7 @@ SCRIPT_REQ = (
             )
 SCRIPT_TABLE_COLUMN_LEN = 3
 SCRIPT_TABLE_ERROR = -1
+SCRIPT_TABLE_COLUMN_CONFLICT = -2
 SCRIPT_TABLE_OK = 0
 SCRIPT_TABLE_EXISTS = 1
 SCRIPT_FORM_ERROR = -1
@@ -309,6 +310,11 @@ SCRIPT_FORM_EXISTS = -2
 SCRIPT_REPORT_ERROR = -1
 SCRIPT_REPORT_OK = 0
 SCRIPT_REPORT_EXISTS = -2
+SCRIPT_VALID_COLUMN_FLAG = (
+                            (None, 0), #none
+                            (None, 1), #primary key
+                            (['integer'], 2), #primary key auto increment
+                        )
 JSON_INDENT = 4
 
 
@@ -1209,6 +1215,7 @@ LANGS = {
             'e_scripts_max_size': 'ERROR: maximum script size exceeded',
             'e_scripts_syntax_or_required' : 'ERROR: script code error or required keys are not set',
             'e_scripts_name': 'ERROR: invalid script name',
+            'e_script_column_conflict': 'ERROR: table already exists and conflicted column(s) found',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -3187,8 +3194,9 @@ def xparsescript(script):
     #
     ttypes = []
     for x in COLUMN_TYPES:
-        ttypes.append(x[0])
-    tpk = (0, 1)
+        if x[1]:
+            ttypes.append(x[0])
+    tpk = [x[1] for x in SCRIPT_VALID_COLUMN_FLAG]
     tcode = e.get(SCRIPT_KEY_TABLES, [])
     if not isinstance(tcode, list):
         tcode = []
@@ -3216,22 +3224,38 @@ def xparsescript(script):
             continue
         #
         ncols = []
+        xxcols = []
         if not tname in tables():
             tstat = SCRIPT_TABLE_OK
             ncols = tcols
         else:
             tstat = SCRIPT_TABLE_EXISTS
             #
+            conflict = False
+            ecolz = {}
+            for z in columns(tname):
+                ecolz[z.get('name').lower()] = z.get('type').lower()
+            #
             ecols = columns(tname, True)
             ecols = [x.lower() for x in ecols]
             for n in tcols:
                 if not n[0].lower() in ecols:
                     ncols.append(n)
+                else:
+                    nl0 = n[0].lower()
+                    nl1 = n[1].lower()
+                    if nl1 != ecolz.get(nl0):
+                        conflict = True
+                        xxcols.append(n)
+            #
+            if conflict:
+                ncols = tcols
+                tstat = SCRIPT_TABLE_COLUMN_CONFLICT
         #
         if not ncols:
             continue
         #
-        ttemp = [tname, tstat, tcols, ncols]
+        ttemp = [tname, tstat, tcols, ncols, xxcols]
         tcode2.append(ttemp)
     ret[SCRIPT_KEY_TABLES] = tcode2
     #
@@ -4683,6 +4707,7 @@ $elif data['command'] == 'script':
     <td>&nbsp;</td>
     </tr>
     
+    $ table_detail = data.get('table_detail', {})
     $ allx = [ ['tables', _['x_table'], data['table_info']], ['forms', _['x_form'], data['form_info']],  ['reports', _['x_report'], data['report_info']] ]
     $for x in allx:
         $ k = x[0]
@@ -4692,7 +4717,24 @@ $elif data['command'] == 'script':
             <tr>
             <td width='20%'>$t</td>
             <td width='30%'>$i[0]</td>
-            <td>$c.get(i[1], '')</td>
+            <td>
+            $c.get(i[1], '')
+            $if k == 'tables':
+                $ zzz = table_detail.get(i[0], [])
+                $if zzz:
+                    <br>
+                    <br>
+                    <table>
+                    $for zz in zzz:
+                        <tr>
+                            $for z in zz:
+                                <td>
+                                    $z
+                                </td>
+                        </tr>
+                    </table>
+                    <br>
+            </td>
             </tr>
     
     </table>
@@ -7618,6 +7660,17 @@ class admin_script:
                                     ],
                                 ]
         #
+        table_detail = {}
+        try:
+            ctables = content.get(SCRIPT_KEY_TABLES)
+            for c in ctables:
+                if c[1] == SCRIPT_TABLE_COLUMN_CONFLICT:
+                    table_detail[c[0]] = c[4]
+                elif c[1] == SCRIPT_TABLE_EXISTS:
+                    table_detail[c[0]] = c[3]
+        except:
+            pass
+        #
         data = {
                 'title': _['tt_script'],
                 'command': 'script',
@@ -7638,6 +7691,7 @@ class admin_script:
                         ),
                 'table_info': {
                                 SCRIPT_TABLE_ERROR: _['th_error'],
+                                SCRIPT_TABLE_COLUMN_CONFLICT: _['e_script_column_conflict'],
                                 SCRIPT_TABLE_OK: _['th_ok'],
                                 SCRIPT_TABLE_EXISTS: _['x_table_exists'],
                             },
@@ -7651,6 +7705,7 @@ class admin_script:
                                 SCRIPT_REPORT_OK: _['th_ok'],
                                 SCRIPT_REPORT_EXISTS: _['e_report_edit_exists'],
                             },                            
+                'table_detail': table_detail,
                 'run': run,
                 'message': smsgq(SK_SCRIPT),
                 'hint': _['h_script'],
