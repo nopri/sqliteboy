@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.68'
+VERSION = '0.69'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -311,9 +311,9 @@ SCRIPT_REPORT_ERROR = -1
 SCRIPT_REPORT_OK = 0
 SCRIPT_REPORT_EXISTS = -2
 SCRIPT_VALID_COLUMN_FLAG = (
-                            (None, 0), #none
-                            (None, 1), #primary key
-                            (['integer'], 2), #primary key auto increment
+                            ([], 0, ''), #none
+                            ([], 1, ''), #primary key
+                            (['integer'], 2, 'primary key autoincrement'), 
                         )
 JSON_INDENT = 4
 
@@ -1216,6 +1216,7 @@ LANGS = {
             'e_scripts_syntax_or_required' : 'ERROR: script code error or required keys are not set',
             'e_scripts_name': 'ERROR: invalid script name',
             'e_script_column_conflict': 'ERROR: table already exists and conflicted column(s) found',
+            'e_script': 'ERROR: script run',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -1228,6 +1229,9 @@ LANGS = {
             'o_files': 'OK: files updated',
             'o_pages': 'OK: page updated',
             'o_scripts': 'OK: scripts updated',
+            'o_script': 'OK: script run',
+            'o_table_create': 'OK: create table',
+            'o_drop': 'OK: drop table',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -7640,6 +7644,11 @@ class admin_script:
     def GET(self, script):
         start()
         #
+        try:
+            itest = int(script)
+        except:
+            dflt()
+        #
         scode = g_script(script)
         if not scode:
             dflt()
@@ -7668,13 +7677,15 @@ class admin_script:
                     table_detail[c[0]] = c[4]
                 elif c[1] == SCRIPT_TABLE_EXISTS:
                     table_detail[c[0]] = c[3]
+                elif c[1] == SCRIPT_TABLE_OK:
+                    table_detail[c[0]] = c[3]
         except:
             pass
         #
         data = {
                 'title': _['tt_script'],
                 'command': 'script',
-                'action_url': '/admin/script',
+                'action_url': '/admin/script/%s' %(script,),
                 'action_method': 'post',
                 'action_enctype': 'multipart/form-data',
                 'action_button': action_button,
@@ -7713,6 +7724,154 @@ class admin_script:
         #
         stop()
         return T(data, content)
+
+    def POST(self, script):
+        inp = web.input()
+        #
+        try:
+            itest = int(script)
+        except:
+            dflt()
+        #
+        scode = g_script(script)
+        if not scode:
+            dflt()
+        #
+        url = '/admin/script/%s' %(script,)
+        #        
+        content = xparsescript(scode)
+        if not xokscript(content):
+            sess[SK_SCRIPT] = [
+                                [
+                                    _['th_error'],
+                                    _['x_script_not_runnable'],
+                                ],
+                            ]
+            raise web.seeother(url)
+        #
+        msg = []
+        script_trans = db.transaction() 
+        newtables = []
+        try:
+            tables = content.get(SCRIPT_KEY_TABLES)
+            for tt in tables:
+                tname = tt[0]
+                tstat = tt[1]
+                tcols = tt[2]
+                ncols = tt[3]
+                xcols = tt[4]
+                #
+                if tstat == SCRIPT_TABLE_EXISTS:
+                    for n in ncols:
+                        q = 'alter table %s add column %s %s' %(
+                            tname,
+                            n[0],
+                            n[1],
+                        )
+                        r = db.query(q)
+                        if r:
+                            msg.append(
+                                        [
+                                            _['o_column'],
+                                            tname,
+                                            n[0],
+                                            n[1],
+                                        ]
+                            )
+                elif tstat == SCRIPT_TABLE_OK:
+                    newcols = []
+                    newpk = []
+                    #
+                    for n in tcols:
+                        if n[2] == 1: #primary key
+                            newcols.append(
+                                '%s %s' %(
+                                            n[0],
+                                            n[1],
+                                        )
+                            )
+                            newpk.append(n[0])
+                        elif n[2] == 0:
+                            newcols.append(
+                                '%s %s' %(
+                                            n[0],
+                                            n[1],
+                                        )
+                            )
+                        else:
+                            for v in SCRIPT_VALID_COLUMN_FLAG:
+                                if v[0] and (n[1] in v[0]) and (n[2] == v[1]):
+                                    newcols.append(
+                                        '%s %s %s' %(
+                                                        n[0],
+                                                        n[1],
+                                                        v[2],
+                                                    )
+                                    )
+                        #
+                    if newpk:
+                        q = 'create table %s(%s, primary key(%s))' %(
+                            tname,
+                            ','.join(newcols),
+                            ','.join(newpk),
+                        )
+                    else:
+                        q = 'create table %s(%s)' %(
+                            tname,
+                            ','.join(newcols),
+                        )                        
+                    #
+                    r = db.query(q)
+                    if r:
+                        msg.append(
+                                    [
+                                        _['o_table_create'],
+                                        tname,
+                                    ]
+                        )
+                        newtables.append(tname)
+            #
+            #
+        except Exception, e:
+            msg.append(
+                        [
+                            _['th_error'],
+                            str(e),
+                        ],
+            )
+            #
+            if newtables:
+                try:
+                    for t in newtables:
+                        q = 'drop table %s' %(t)
+                        db.query(q)
+                        #
+                        msg.append(
+                                    [
+                                        _['o_drop'],
+                                        t,
+                                    ]
+                        )
+                except:
+                    pass
+            #
+            msg.append(
+                        [
+                            _['e_script']
+                        ],
+            )
+            script_trans.rollback()
+        else:
+            msg.append(
+                        [
+                            _['o_script']
+                        ],
+            )
+            script_trans.commit()
+        #
+        sess[SK_SCRIPT] = msg
+        #
+        raise web.seeother(url)
         
 
 #----------------------------------------------------------------------#
