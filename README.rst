@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.69
+Documentation for version 0.70
 
 
 .. contents:: 
@@ -64,8 +64,12 @@ Why
   CSV, etc).
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
-  calculator, configurable hosts allowed, database backup, system configuration 
-  and many others are available as extended features.
+  calculator, configurable hosts allowed, database backup, system configuration, 
+  Scripts and others are available as extended features
+  
+  sqliteboy script (simple JSON syntax, single file) can be used to automate 
+  the creation of tables (including addition of columns, for existing table), 
+  forms or reports
   
 - I need simple form (data entry) and reporting solution (web-based) 
 
@@ -203,6 +207,19 @@ Features
   - URL: /page/<user>
   
   - Please read PAGE CODE REFERENCE section (below)
+
+- Scripts (Extended feature, new in v0.71)
+
+  - Simple script, to automate the creation of tables
+    (including addition of columns, for existing table), 
+    forms or reports 
+    
+  - Solution can be deployed in form of script, that could be uploaded
+    and run by admin 
+
+  - Simple syntax (JSON) in single file
+
+  - Please read SCRIPT CODE REFERENCE section (below)
 
 - Browse table
 
@@ -882,7 +899,7 @@ Form Code Reference
 
 - No trailling comma in dict or list
 
-- Python dict
+- Python dict (keys are case-sensitive)
 
 - Only single table is supported. If you need to write to another 
   table after form data is saved, you can use additional SQL query 
@@ -1265,7 +1282,7 @@ Report Code Reference
 
 - No trailling comma in dict or list
 
-- Python dict
+- Python dict (keys are case-sensitive)
 
 - All key (HTML input) in data is required. See Keys (data) below.
 
@@ -1686,6 +1703,245 @@ Number To Words Reference
   (that is, very very long long number), so this is valid and supported number:
   999999999999999999999999999.999999999999999999999999999999999999999999999999999999
    
+
+Script Code Reference
+========================================================================
+
+- Script can be used to automate the creation of tables 
+  (including addition of columns, for existing table),
+  forms or reports 
+  
+- Solution can be deployed in form of script, that could be uploaded
+  and run by admin 
+  
+- Notes on tables:
+
+  - Multiple tables support
+  
+  - For each table, script developer must define valid columns 
+  
+  - For each column, script developer must define valid name, type and
+    flag 
+    
+  - Valid column type: integer, real, char, varchar, text, blob, null
+  
+  - Valid column flag: 0, 1 (primary key), 2 (only for integer: 
+    primary key autoincrement)
+    
+  - Multiple primary key support (column flag 1 for multiple columns; do 
+    not use both flag 1 and 2 in same table) 
+    
+  - Currently, default values is not supported
+  
+  - For existing table, addition of columns is supported 
+    
+    - Developer could define columns and only non-existing ones will be added 
+    
+    - Existing columns, if defined, will be compared. Error, if there is 
+      mismatch between new column type and existing column type.
+      
+- Notes on forms, reports:
+  
+  - Multiple forms, reports support
+  
+  - Error, if there is existing form or report 
+  
+  - Please read FORM CODE REFERENCE section (forms) or 
+    REPORT CODE REFERENCE section (reports)
+    
+- Only valid value(s) will be read 
+
+- Script could not be run if there is error
+
+- If there is exception while the script is running, any newly created 
+  table (if empty), form or report will be deleted. However, newly added 
+  columns could not be deleted (easily). 
+  
+- Script is designed to be run only once
+
+- Must be valid JSON syntax (json.org)
+
+- Must be put in single file
+
+- String (including keys below) must be double-quoted 
+  (between " and ")
+
+- No trailling comma in dict or list
+
+- Python dict (keys are case-sensitive)
+  
+- Keys:
+
++---------------+-------------------------+---------------+-------------+--------------------------+
+| Key           | Description             | Type          | Status      | Example                  |
++===============+=========================+===============+=============+==========================+
+| name          | script name             | str           | required    | "my script 1"            |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| tables        | tables definition       | list of list  | required    | (please see Examples     |
+|               |                         |               |             | below)                   |
+|               | - must be list of list  |               |             |                          |
+|               |   (table) or []         |               |             |                          |
+|               |                         |               |             |                          |
+|               | - for each table:       |               |             |                          |
+|               |   ["tablename",         |               |             |                          |
+|               |   [column], ...]        |               |             |                          |
+|               |                         |               |             |                          |
+|               | - for each [column]:    |               |             |                          |
+|               |   ["name", "type", flag]|               |             |                          |
+|               |   (please read notes    |               |             |                          |
+|               |   above)                |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| forms         | forms definition        | list of list  | required    | (please see Examples     |
+|               |                         |               |             | below)                   |
+|               | - must be list of list  |               |             |                          |
+|               |   (form) or []          |               |             |                          |
+|               |                         |               |             |                          |
+|               | - for each form:        |               |             |                          |
+|               |   ["formname",          |               |             |                          |
+|               |   {formcode}]           |               |             |                          |
+|               |                         |               |             |                          |
+|               | - formcode: valid form  |               |             |                          |
+|               |   code (dict)           |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| reports       | reports definition      | list of list  | required    | (please see Examples     |
+|               |                         |               |             | below)                   |
+|               | - must be list of list  |               |             |                          |
+|               |   (report) or []        |               |             |                          |
+|               |                         |               |             |                          |
+|               | - for each report:      |               |             |                          |
+|               |   ["reportname",        |               |             |                          |
+|               |   {reportcode}]         |               |             |                          |
+|               |                         |               |             |                          |
+|               | - reportcode: valid     |               |             |                          |
+|               |   report code (dict)    |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| info          | script information      | str           | optional    | "Script Information"     |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| author        | author information      | str           | optional    | "(c) Author <email>"     |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| license       | license information     | str           | optional    | "license"                |
++---------------+-------------------------+---------------+-------------+--------------------------+
+
+- Example 1:
+::
+
+    {
+        "name": "my script",
+        "info": "Script Information",
+        "author": "(c) Author <email>",
+        "license": "GPL",
+        "tables": [
+                        [
+                            "new_table",
+                            ["a", "integer", 1],
+                            ["b", "integer", 1],
+                            ["c", "integer", 1],
+                            ["d", "text", 0]
+                        ]
+                    ],
+        "forms": [
+                    ],
+        "reports": [
+                    ]
+    }
+
+- Example 2:
+::
+
+    {
+        "name": "my script 1",
+        "info": "Script Information",
+        "author": "(c) Author <email>",
+        "license": "GPL",
+        "tables": [
+                        [
+                            "new_table_1",
+                            ["a", "integer", 1],
+                            ["b", "integer", 1],
+                            ["c", "integer", 1],
+                            ["d", "text", 0]
+                        ],
+                        [
+                            "new_table_2",
+                            ["a", "integer", 2],
+                            ["b", "integer", 0],
+                            ["c", "integer", 0],
+                            ["d", "text", 0]
+                        ]
+                    ],
+        "forms": [
+                        [
+                            "new_form_1",
+                            {
+                              "title" : "New Form 1",
+                              "info"  : "Form Information", 
+                              "data"  : [
+                                          {
+                                            "table"     : "new_table_1",
+                                            "column"    : "a"
+                                          },
+                                          {
+                                            "table"     : "new_table_1",
+                                            "column"    : "b"
+                                          }
+                                        ],
+                              "security" : {
+                                             "run" : ""
+                                           }
+                            }                        
+                        ],
+                        [
+                            "new_form_2",
+                            {
+                              "title" : "New Form 2",
+                              "info"  : "Form Information", 
+                              "data"  : [
+                                          {
+                                            "table"     : "new_table_2",
+                                            "column"    : "c"
+                                          },
+                                          {
+                                            "table"     : "new_table_2",
+                                            "column"    : "d"
+                                          }
+                                        ],
+                              "security" : {
+                                             "run" : ""
+                                           }
+                            }                        
+                        ]    
+                    ],
+        "reports": [
+                        [
+                            "new_report_1",
+                            {
+                              "title" : "New Report 1",
+                              "info"  : "Report Information", 
+                              "header": ["a", "b"],
+                              "sql"   : "select a,b from new_table_1 a where a > $input_a or b > $input_b",
+                              "data"  : [
+                                          {
+                                            "key"       : "input_a",
+                                            "label"     : "column a >",
+                                            "default"   : "0"
+                                          },
+                                          {
+                                            "key"       : "input_b",
+                                            "label"     : "column b >",
+                                            "default"   : "0"
+                                          }
+                                        ],
+                              "security" : {
+                                             "run" : ""
+                                           }
+                            }
+                        ]
+                    ]
+    }
+
 
 Donate
 ========================================================================

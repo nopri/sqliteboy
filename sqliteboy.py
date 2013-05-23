@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.69'
+VERSION = '0.70'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1252,7 +1252,7 @@ LANGS = {
             'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
             'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
             'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
-            'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error.',
+            'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error. Backup before running a script is recommended.',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -7751,10 +7751,12 @@ class admin_script:
         #
         msg = []
         script_trans = db.transaction() 
+        oldtables = tables()
+        oldtables = [x.lower() for x in oldtables]
         newtables = []
         try:
-            tables = content.get(SCRIPT_KEY_TABLES)
-            for tt in tables:
+            stables = content.get(SCRIPT_KEY_TABLES)
+            for tt in stables:
                 tname = tt[0]
                 tstat = tt[1]
                 tcols = tt[2]
@@ -7808,6 +7810,7 @@ class admin_script:
                                                         v[2],
                                                     )
                                     )
+                                    break
                         #
                     if newpk:
                         q = 'create table %s(%s, primary key(%s))' %(
@@ -7843,6 +7846,9 @@ class admin_script:
             if newtables:
                 try:
                     for t in newtables:
+                        if t.lower() in oldtables:
+                            continue
+                        #
                         q = 'drop table %s' %(t)
                         db.query(q)
                         #
