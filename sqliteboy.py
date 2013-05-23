@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.70'
+VERSION = '0.71'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1176,6 +1176,7 @@ LANGS = {
             'cmd_report': 'go',
             'cmd_view': 'view',
             'cmd_use_result': 'use the result',
+            'cmd_scripts': 'scripts',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
@@ -1225,6 +1226,8 @@ LANGS = {
             'o_hosts': 'OK: hosts updated',
             'o_system': 'OK: system configuration updated',
             'o_form_run': 'OK: data saved',
+            'o_form_create': 'OK: create form',
+            'o_report_create': 'OK: create report',
             'o_notes': 'OK: notes updated',
             'o_files': 'OK: files updated',
             'o_pages': 'OK: page updated',
@@ -2444,12 +2447,13 @@ def sysinfo():
     #
     s_adm = _['x_no']
     if isadmin(): 
-        s_adm = '%s %s %s %s %s' %(
+        s_adm = '%s %s %s %s %s %s' %(
             _['x_yes'], 
             link('/admin/users', _['cmd_users']),
             link('/admin/hosts', _['cmd_hosts']),
             link('/admin/system', _['cmd_system']),
             link('/admin/backup', _['cmd_backup']),
+            link('/admin/scripts', _['cmd_scripts']),
             )
     if isnosb(): s_adm = _['x_not_applicable']
     #
@@ -2612,7 +2616,7 @@ def parseform2(code, table):
     #
     return fsub2
 
-def parseform(form):
+def parseform(form, virtual={}):
     fo = {}
     #
     if isstr(form):
@@ -2639,8 +2643,17 @@ def parseform(form):
         except:
             table = ''
         #
-        cols = columns(table)
-        colsn = columns(table, name_only=True)
+        cols = []
+        colsn = []
+        if isinstance(virtual, dict) and virtual:
+            try:
+                cols = columns(table) + virtual.get(table, [])
+                colsn = [x.get('name') for x in cols]
+            except:
+                pass
+        else:
+            cols = columns(table)
+            colsn = columns(table, name_only=True)
         #
         for fd in fdata:
             if not type(fd) == type({}):
@@ -3205,6 +3218,7 @@ def xparsescript(script):
     if not isinstance(tcode, list):
         tcode = []
     tcode2 = []
+    virtual_tables = {}
     for tt in tcode:
         tstat = SCRIPT_TABLE_ERROR
         #
@@ -3261,6 +3275,22 @@ def xparsescript(script):
         #
         ttemp = [tname, tstat, tcols, ncols, xxcols]
         tcode2.append(ttemp)
+        #
+        try:
+            tnamel = tname.lower()
+            if not virtual_tables.has_key(tnamel):
+                virtual_tables[tnamel] = []
+            for n in ncols:
+                vt = {
+                        'name': n[0], 
+                        'type': n[1],
+                    }
+                vtt = virtual_tables.get(tnamel, [])
+                vtt.append(vt)
+                virtual_tables[tnamel] = vtt
+        except:
+            pass
+        #
     ret[SCRIPT_KEY_TABLES] = tcode2
     #
     tcode = e.get(SCRIPT_KEY_FORMS, [])
@@ -3284,7 +3314,7 @@ def xparsescript(script):
         if not isinstance(tcont, dict):
             continue
         #
-        parsed = parseform(tcont)
+        parsed = parseform(tcont, virtual=virtual_tables)
         if not xreqparsed(parsed, FORM_REQ_X):
             continue
         #
@@ -7728,6 +7758,7 @@ class admin_script:
     def POST(self, script):
         inp = web.input()
         #
+        itest = -1
         try:
             itest = int(script)
         except:
@@ -7835,6 +7866,57 @@ class admin_script:
                         newtables.append(tname)
             #
             #
+            sforms = content.get(SCRIPT_KEY_FORMS)
+            for tt in sforms:
+                tname = tt[0]
+                tstat = tt[1]
+                tcont = tt[2]
+                jcont = tt[3]
+                #
+                if tstat == SCRIPT_FORM_OK:
+                    r = db.insert(FORM_TBL,
+                            a='form',
+                            b='code',
+                            d=tname.lower(),
+                            e=jcont
+                        )
+                    if r:
+                        msg.append(
+                                    [
+                                        _['o_form_create'],
+                                        tname,
+                                    ]
+                        )                        
+            #
+            #
+            sreports = content.get(SCRIPT_KEY_REPORTS)
+            for tt in sreports:
+                tname = tt[0]
+                tstat = tt[1]
+                tcont = tt[2]
+                jcont = tt[3]
+                #
+                if tstat == SCRIPT_REPORT_OK:
+                    r = db.insert(FORM_TBL,
+                            a='report',
+                            b='code',
+                            d=tname.lower(),
+                            e=jcont
+                        )
+                    if r:
+                        msg.append(
+                                    [
+                                        _['o_report_create'],
+                                        tname,
+                                    ]
+                        )
+            #
+            db.update(FORM_TBL, where='rowid=$script', 
+                f=sqliteboy_time3(sqliteboy_time()),
+                vars = {
+                    'script': itest,
+                }
+            )
         except Exception, e:
             msg.append(
                         [
@@ -7847,6 +7929,9 @@ class admin_script:
                 try:
                     for t in newtables:
                         if t.lower() in oldtables:
+                            continue
+                        #
+                        if db.select(t).list():
                             continue
                         #
                         q = 'drop table %s' %(t)
