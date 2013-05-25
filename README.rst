@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.71
+Documentation for version 0.72
 
 
 .. contents:: 
@@ -1731,7 +1731,7 @@ Script Code Reference
   - Multiple primary key support (column flag 1 for multiple columns; do 
     not use both flag 1 and 2 in same table) 
     
-  - Currently, default values is not supported
+  - Currently, default value is not supported
   
   - For existing table, addition of columns is supported 
     

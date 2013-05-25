@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.71'
+VERSION = '0.72'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -4773,6 +4773,15 @@ $elif data['command'] == 'script':
     
     </table>
     </form>
+    
+    <br>
+    <br>
+    <textarea style="width: 100%;" rows=10 readonly>
+    $data['code']
+    </textarea>
+    <br>
+    <br>
+    
 $else:
     $:content
 </body>
@@ -7712,6 +7721,8 @@ class admin_script:
         except:
             pass
         #
+        ecode = str(scode.get('e', ''))
+        #
         data = {
                 'title': _['tt_script'],
                 'command': 'script',
@@ -7748,6 +7759,7 @@ class admin_script:
                             },                            
                 'table_detail': table_detail,
                 'run': run,
+                'code': ecode,
                 'message': smsgq(SK_SCRIPT),
                 'hint': _['h_script'],
             }
@@ -7785,6 +7797,8 @@ class admin_script:
         oldtables = tables()
         oldtables = [x.lower() for x in oldtables]
         newtables = []
+        newforms = []
+        newreports = []
         try:
             stables = content.get(SCRIPT_KEY_TABLES)
             for tt in stables:
@@ -7874,6 +7888,9 @@ class admin_script:
                 jcont = tt[3]
                 #
                 if tstat == SCRIPT_FORM_OK:
+                    if tname.lower() in newforms:
+                        continue
+                    #
                     r = db.insert(FORM_TBL,
                             a='form',
                             b='code',
@@ -7887,6 +7904,7 @@ class admin_script:
                                         tname,
                                     ]
                         )                        
+                        newforms.append(tname.lower())
             #
             #
             sreports = content.get(SCRIPT_KEY_REPORTS)
@@ -7897,6 +7915,9 @@ class admin_script:
                 jcont = tt[3]
                 #
                 if tstat == SCRIPT_REPORT_OK:
+                    if tname.lower() in newreports:
+                        continue
+                    #
                     r = db.insert(FORM_TBL,
                             a='report',
                             b='code',
@@ -7910,6 +7931,7 @@ class admin_script:
                                         tname,
                                     ]
                         )
+                        newreports.append(tname.lower())
             #
             db.update(FORM_TBL, where='rowid=$script', 
                 f=sqliteboy_time3(sqliteboy_time()),
