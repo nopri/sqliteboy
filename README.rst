@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.72
+Documentation for version 0.73
 
 
 .. contents:: 
@@ -266,6 +266,8 @@ Features
 - Drop table 
 
 - CSV export 
+
+- Copy table
 
 - Create table
 
@@ -1754,7 +1756,7 @@ Script Code Reference
 - Script could not be run if there is error
 
 - If there is exception while the script is running, any newly created 
-  table (if empty), form or report will be deleted. However, newly added 
+  table (if empty) will be explicitly deleted. However, newly added 
   columns could not be deleted (easily). 
   
 - Script is designed to be run only once

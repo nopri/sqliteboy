@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.72'
+VERSION = '0.73'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -72,6 +72,7 @@ DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
 DEFAULT_TEXTAREA_COLS = 40
 DEFAULT_TEXTAREA_ROWS = 15
+SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
 HOST_CUSTOM = '2'
@@ -96,6 +97,7 @@ SKT_P_EDIT = 'position'
 SKT_M_COLUMN = 'column'
 SKT_M_RENAME = 'rename'
 SKT_M_DROP = 'drop'
+SKT_M_COPY = 'copy'
 SKQ = 'query'
 SK_CREATE = 'create'
 SK_LOGIN = 'login'
@@ -316,6 +318,11 @@ SCRIPT_VALID_COLUMN_FLAG = (
                             (['integer'], 2, 'primary key autoincrement'), 
                         )
 JSON_INDENT = 4
+COPY_TARGET_EXCLUDE = [
+                    FORM_TBL,
+                    DEFAULT_TABLE,
+                    SEQUENCE_TABLE,
+            ]
 
 
 #----------------------------------------------------------------------#
@@ -380,6 +387,7 @@ URLS = (
     '/table/rename', 'table_rename',
     '/table/drop', 'table_drop',
     '/table/csv', 'table_csv',
+    '/table/copy', 'table_copy',
     '/table/create', 'table_create',
     '/query', 'query',
     '/table/row/(.*)', 'table_row',
@@ -1054,6 +1062,7 @@ LANGS = {
             'x_rename': 'rename to',
             'x_empty': 'empty',
             'x_column_number': 'number of column',
+            'x_column': 'column(s)',
             'x_table_name': 'table name',
             'x_yes': 'yes',
             'x_no': 'no',
@@ -1110,6 +1119,9 @@ LANGS = {
             'x_system_check': 'system check',
             'x_table_exists': 'table already exists, however, additional column(s) will be added',
             'x_script_not_runnable': 'could not run this script because nothing is defined, or error(s) found, or has been run before',
+            'x_copy_to': 'to',
+            'x_copy_from': 'from',
+            'x_copy_columns_none': 'no identical column found',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1139,12 +1151,14 @@ LANGS = {
             'tt_script': 'script',
             'th_error': 'ERROR',
             'th_ok': 'OK',
+            'tt_copy': 'copy',
             'cmd_browse': 'browse',
             'cmd_insert': 'insert',
             'cmd_column': 'column',
             'cmd_rename': 'rename',
             'cmd_table_drop': 'drop',
             'cmd_export_csv': 'csv',
+            'cmd_copy': 'copy',
             'cmd_table_create': 'create',
             'cmd_query': 'query',
             'cmd_query_src': 'query',
@@ -1218,6 +1232,7 @@ LANGS = {
             'e_scripts_name': 'ERROR: invalid script name',
             'e_script_column_conflict': 'ERROR: table already exists and conflicted column(s) found',
             'e_script': 'ERROR: script run',
+            'e_copy': 'ERROR: copy table',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -1235,6 +1250,7 @@ LANGS = {
             'o_script': 'OK: script run',
             'o_table_create': 'OK: create table',
             'o_drop': 'OK: drop table',
+            'o_copy': 'OK: copy table',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -1256,6 +1272,7 @@ LANGS = {
             'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
             'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
             'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error. Backup before running a script is recommended.',
+            'h_copy': 'hint: copy content of source table to existing destination table (insert), only for identical column(s) (name and type)',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -2325,6 +2342,7 @@ def menugen():
                     ['rename', _['cmd_rename']],
                     ['table_drop', _['cmd_table_drop']],
                     ['export_csv', _['cmd_export_csv']],
+                    ['copy', _['cmd_copy']],
                     ['table_create', _['cmd_table_create']],
                     ['query', _['cmd_query']],
                 )
@@ -4782,6 +4800,45 @@ $elif data['command'] == 'script':
     <br>
     <br>
     
+$elif data['command'] == 'copy':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+        <tr>
+            <td>
+            $_['x_copy_from']
+            </td>
+            <td>
+            $data['table']
+            <input type='hidden' name='table' value='$data["table"]'>
+            </td>            
+        </tr>
+        <tr>
+            <td>
+            $_['x_copy_to']
+            </td>
+            <td>
+            $data['target'].render()
+            </td>            
+        </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -4867,6 +4924,7 @@ class table_action:
             ('rename', '/table/rename?table=' + table),
             ('table_drop', '/table/drop?table=' + table),
             ('export_csv', '/table/csv?table=' + table),
+            ('copy', '/table/copy?table=' + table),
             ('table_create', '/table/create'),
             ('query', '/query'),
         )
@@ -7985,6 +8043,138 @@ class admin_script:
         sess[SK_SCRIPT] = msg
         #
         raise web.seeother(url)
+
+
+class table_copy:
+    def GET(self):
+        start()
+        #
+        table = web.input(table='').table
+        if not table in tables(): 
+            dflt()
+        #
+        excludes = COPY_TARGET_EXCLUDE[:]
+        excludes.append(table)
+        target = tables(exclude=excludes)
+        #
+        action_button = (
+                            ('copy', _['cmd_copy'], False, '', 'submit'),
+                        )
+        if not target:
+            action_button = ()
+        #
+        data = {
+                'title': _['tt_copy'],
+                'command': 'copy',
+                'action_url': '/table/copy',
+                'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
+                'action_button': action_button,
+                'table': table,
+                'target': web.form.Dropdown('target', target),
+                'message': smsgq(SKT_M_COPY),
+                'hint': _['h_copy'],
+            }
+        #
+        content = ''
+        #
+        stop()
+        return T(data, content)
+
+    def POST(self):
+        inp = web.input(table='', target='')
+        table = inp.table.lower().strip()
+        target = inp.target.lower().strip()
+        #
+        if not table or not target:
+            dflt()
+        #
+        if target == table:
+            dflt()
+        #
+        oldtables = tables()
+        oldtables = [x.lower() for x in oldtables]
+        if not table in oldtables or not target in oldtables:
+            dflt()
+        #
+        scols = columns(table)
+        tcols = columns(target)
+        if not scols or not tcols:
+            dflt()
+        #
+        sdcols = {}
+        tdcols = {}
+        sall = (
+                (
+                    scols,
+                    sdcols, 
+                ),
+                (
+                    tcols,
+                    tdcols,
+                ),
+            )
+        for a in sall:
+            s = a[0]
+            d = a[1]
+            #
+            for c in s:
+                cname = c.get('name').lower()
+                ctype = c.get('type').lower()
+                if cname and ctype:
+                    d[cname] = ctype
+        #
+        ncols = []
+        for d in tdcols.keys():
+            if sdcols.has_key(d):
+                sd = sdcols.get(d)
+                td = tdcols.get(d)
+                if sd and td:
+                    if sd == td:
+                        ncols.append(d)
+        #
+        ncols = [x for x in ncols if validfname(x)]
+        ncols.sort()
+        #
+        msg = [
+                [
+                    _['x_column'],
+                    ','.join(ncols), 
+                ]
+            ]
+        #
+        try:
+            if not ncols:
+                raise Exception, _['x_copy_columns_none']
+            #
+            q = '''
+                insert into %s (%s) select %s from %s
+                ''' %(
+                        target,
+                        ','.join(ncols),
+                        ','.join(ncols),
+                        table,
+                    )
+            r = db.query(q)
+            msg.append(
+                        [
+                            _['o_copy'],
+                            _['x_row'],
+                            str(r),
+                        ]
+            )
+
+        except Exception, e:
+            msg.append(
+                        [
+                            _['e_copy'],
+                            str(e),
+                        ]
+            )
+        #
+        sess[SKT_M_COPY] = msg
+        #
+        raise web.seeother('/table/copy?table=' + table)
         
 
 #----------------------------------------------------------------------#
