@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.73'
+VERSION = '0.74'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -98,6 +98,7 @@ SKT_M_COLUMN = 'column'
 SKT_M_RENAME = 'rename'
 SKT_M_DROP = 'drop'
 SKT_M_COPY = 'copy'
+SKT_M_EMPTY = 'empty'
 SKQ = 'query'
 SK_CREATE = 'create'
 SK_LOGIN = 'login'
@@ -323,6 +324,11 @@ COPY_TARGET_EXCLUDE = [
                     DEFAULT_TABLE,
                     SEQUENCE_TABLE,
             ]
+EMPTY_EXCLUDE = [
+                    FORM_TBL,
+                    DEFAULT_TABLE,
+                    SEQUENCE_TABLE,
+            ]            
 
 
 #----------------------------------------------------------------------#
@@ -385,6 +391,7 @@ URLS = (
     '/table/browse/(.*)', 'table_browse',
     '/table/column', 'table_column',
     '/table/rename', 'table_rename',
+    '/table/empty', 'table_empty',
     '/table/drop', 'table_drop',
     '/table/csv', 'table_csv',
     '/table/copy', 'table_copy',
@@ -1126,6 +1133,7 @@ LANGS = {
             'tt_edit': 'edit',
             'tt_column': 'column',
             'tt_rename': 'rename',
+            'tt_empty': 'empty',
             'tt_drop': 'drop',
             'tt_query': 'query',
             'tt_create': 'create',
@@ -1156,6 +1164,7 @@ LANGS = {
             'cmd_insert': 'insert',
             'cmd_column': 'column',
             'cmd_rename': 'rename',
+            'cmd_table_empty': 'empty',
             'cmd_table_drop': 'drop',
             'cmd_export_csv': 'csv',
             'cmd_copy': 'copy',
@@ -1193,12 +1202,14 @@ LANGS = {
             'cmd_scripts': 'scripts',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
+            'cf_empty': 'confirm empty table',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
             'e_access_forbidden': 'access forbidden',
             'e_connect': 'ERROR: unable to connect to',
             'e_insert': 'ERROR: insert into table',
             'e_edit': 'ERROR: update table',
             'e_rename': 'ERROR: alter table (rename)',
+            'e_empty': 'ERROR: empty table',
             'e_drop': 'ERROR: drop table',
             'e_table_exists': 'ERROR: table already exists',
             'e_open_file': 'ERROR: open file',
@@ -1251,10 +1262,12 @@ LANGS = {
             'o_table_create': 'OK: create table',
             'o_drop': 'OK: drop table',
             'o_copy': 'OK: copy table',
+            'o_empty': 'OK: empty table',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
             'h_rename': '',
+            'h_empty': '',
             'h_drop': '',
             'h_query': 'hint: only one statement at a time is supported',
             'h_create': 'hint: please do not put whitespace in table name',
@@ -2087,6 +2100,20 @@ def proc_udf(handle):
 def proc_misc(handle):
     return handle()
 
+def proc_account_check(handle):
+    if not isnosb():
+        a = s_select('user.account')
+        if not a:
+            db.insert(FORM_TBL, 
+                a='user', 
+                b='account', 
+                d=DEFAULT_ADMIN_USER, 
+                e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), 
+                f='1'
+            )
+    #
+    return handle()
+
 def allows():
     ret = ''
     hosts = {
@@ -2340,6 +2367,7 @@ def menugen():
                     ['insert', _['cmd_insert']],
                     ['column', _['cmd_column']],
                     ['rename', _['cmd_rename']],
+                    ['table_empty', _['cmd_table_empty']],
                     ['table_drop', _['cmd_table_drop']],
                     ['export_csv', _['cmd_export_csv']],
                     ['copy', _['cmd_copy']],
@@ -4839,6 +4867,29 @@ $elif data['command'] == 'copy':
         </tr>
     </table>
     </form>
+$elif data['command'] == 'empty':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    <tr>
+    <td>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -4922,6 +4973,7 @@ class table_action:
             ('insert', '/table/row/' + table + '?mode=%s' %(MODE_INSERT)),
             ('column', '/table/column?table=' + table),
             ('rename', '/table/rename?table=' + table),
+            ('table_empty', '/table/empty?table=' + table),
             ('table_drop', '/table/drop?table=' + table),
             ('export_csv', '/table/csv?table=' + table),
             ('copy', '/table/copy?table=' + table),
@@ -8175,6 +8227,61 @@ class table_copy:
         sess[SKT_M_COPY] = msg
         #
         raise web.seeother('/table/copy?table=' + table)
+
+
+class table_empty:
+    def GET(self):
+        start()
+        #
+        table = web.input(table='').table
+        table = str(table)
+        table = table.lower().strip()
+        #
+        if not table in tables(): 
+            dflt()
+        #
+        if table in EMPTY_EXCLUDE:
+            dflt()
+        #
+        data = {
+            'title': '%s - %s' %(table, _['tt_empty']),
+            'command': 'empty',
+            'table': table,
+            'hidden': (('table', table), ('confirm', '1')),
+            'action_url': '/table/empty',
+            'action_method': 'post',
+            'action_button': (
+                                ('empty', _['cf_empty'], False, '', 'submit'),
+                            ),
+            'message': smsg(table, SKT_M_EMPTY),
+            'hint': _['h_empty'],
+        }
+        #
+        content = ''
+        #
+        stop()
+        return T(data, content)
+        
+    def POST(self):
+        input = web.input(table='', confirm='')
+        table = input.table.lower().strip()
+        confirm = input.confirm.strip()
+        if not table in tables() or not confirm: 
+            dflt()
+        #
+        if table in EMPTY_EXCLUDE:
+            dflt()
+        #
+        q = 'delete from %s' %(table)
+        try:
+            db.query(q)
+            sess.table[table][SKT_M_EMPTY] = _['o_empty']
+        except Exception, e:
+            msg = '%s: %s' %(_['e_empty'], str(e))
+            sess.table[table][SKT_M_EMPTY] = msg
+        #
+        redir = '/table/empty?table=%s' %(table)
+        raise web.seeother(redir)
         
 
 #----------------------------------------------------------------------#
@@ -8230,6 +8337,7 @@ if __name__ == '__main__':
     app.add_processor(proc_login)
     app.add_processor(proc_nosb)
     app.add_processor(proc_udf)
+    app.add_processor(proc_account_check)
     app.add_processor(proc_misc)
     #
     web.httpserver.runsimple(app.wsgifunc(), (DEFAULT_ADDR, port))

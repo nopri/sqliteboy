@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.73
+Documentation for version 0.74
 
 
 .. contents:: 
@@ -262,6 +262,8 @@ Features
   - Multiple column addition
 
 - Rename table
+
+- Empty table 
 
 - Drop table 
 
