@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.74
+Documentation for version 0.75
 
 
 .. contents:: 
@@ -145,6 +145,11 @@ Features
     example, write to another table). Previously, one might use report 
     if need to write to several tables. Last insert rowid value is 
     provided.
+
+  - As of v0.75, insert into table can be disabled by setting insert key
+    to zero/negative value. This is useful if you need to update data in 
+    table(s), using additional SQL query statement(s). By default, 
+    form/subform save will insert new row(s) into table(s).  
   
 - Report Support (Extended feature, new in v0.16)
 
@@ -214,7 +219,7 @@ Features
     (including addition of columns, for existing table), 
     forms or reports 
     
-  - Solution can be deployed in form of script, that could be uploaded
+  - Solution can be deployed in form of script, that can be uploaded
     and run by admin 
 
   - Simple syntax (JSON) in single file
@@ -927,6 +932,13 @@ Form Code Reference
   table). Previously, one might use report if need to write to several 
   tables. Last insert rowid value is provided.
 
+- Insert into table can be disabled by setting insert key to zero/negative 
+  value. This is useful if you need to update data in table(s), using 
+  additional SQL query statement(s). By default, form/subform save will 
+  insert new row(s) into table(s). Please note that setting insert key 
+  to zero/negative value will also set last insert rowid/query result 
+  to same value as insert value. 
+
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -1012,6 +1024,15 @@ Form Code Reference
 |               |   executed in           |               |             |                          |
 |               |   transaction (after    |               |             |                          |
 |               |   form data is saved)   |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| insert        | prevent insert new      | int           | optional    |                          |
+|               | row(s) into table(s)    |               |             |                          |
+|               | on form/subform save,   |               |             |                          |
+|               | if zero/negative value  |               |             |                          |
+|               | is given                |               |             |                          |
+|               |                         |               |             |                          |
+|               | (noted above)           |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
@@ -1715,7 +1736,7 @@ Script Code Reference
   (including addition of columns, for existing table),
   forms or reports 
   
-- Solution can be deployed in form of script, that could be uploaded
+- Solution can be deployed in form of script, that can be uploaded
   and run by admin 
   
 - Notes on tables:

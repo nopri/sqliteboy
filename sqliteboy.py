@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.74'
+VERSION = '0.75'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -154,6 +154,7 @@ FORM_KEY_DATA_ONSAVE = 'onsave'
 FORM_KEY_SUB = 'sub'
 FORM_KEY_MESSAGE = 'message'
 FORM_KEY_SQL2 = 'sql2'
+FORM_KEY_INSERT = 'insert'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_X = (2,) #parsed index
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
@@ -166,6 +167,7 @@ FORM_ONSAVE_SQL_RET = 'onsave'
 FORM_SUB_ROWS_DEFAULT = [5, 1]#rows, required rows
 FORM_MESSAGE_LEN = 3
 FORM_MESSAGE_VAR_RESULT = '$result'
+FORM_INSERT_DEFAULT = 1
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -2785,7 +2787,13 @@ def parseform(form, virtual={}):
         sql2 = []
     sql2 = [str(x) for x in sql2 if isstr(x)]
     #
-    return [ftitle, finfo, input, fsub2, message2, sql2]
+    finsert = fo.get(FORM_KEY_INSERT)
+    try:
+        finsert = int(finsert)
+    except:
+        finsert = FORM_INSERT_DEFAULT
+    #
+    return [ftitle, finfo, input, fsub2, message2, sql2, finsert]
 
 def reqreport(report):
     try:
@@ -4873,7 +4881,9 @@ $elif data['command'] == 'empty':
     </p>
     $if data['message']:
         <div>
-            $data['message']
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
         </div>
     <form action="$data['action_url']" method="$data['action_method']">
     $for h in data['hidden']:
@@ -6243,12 +6253,14 @@ class form_run:
         fsub = None
         message2 = None
         fsql2 = None
+        finsert = FORM_INSERT_DEFAULT
         try:
             pform = parseform(form)
             finput = pform[2]
             fsub = pform[3]
             message2 = pform[4]
             fsql2 = pform[5]
+            finsert = pform[6]
         except:
             pform = None
             fsub = None
@@ -6414,22 +6426,28 @@ class form_run:
                         ','.join(okeys),
                         ','.join(okeys2),
                     )
-                form_res = db.query(q, vars=ocols)
                 #
-                form_last = db.query('select last_insert_rowid() as x')[0]['x']
+                #insert?
+                form_res = finsert
+                form_last = finsert
                 #
-                #subform save
-                if (fsub_table in tables()) and (fsub_all2) and (fsub_ref in columns(fsub_table, True)):
-                    for f in fsub_all2:
-                        f[fsub_ref] = form_last
-                        fkeys = f.keys()
-                        fkeys2 = ['$'+x for x in fkeys]
-                        fq = 'insert into %s(%s) values(%s)' %(
-                                fsub_table,
-                                ','.join(fkeys),
-                                ','.join(fkeys2)
-                            )
-                        db.query(fq, f)
+                if finsert > 0:
+                    form_res = db.query(q, vars=ocols)
+                    #
+                    form_last = db.query('select last_insert_rowid() as x')[0]['x']
+                    #
+                    #subform save
+                    if (fsub_table in tables()) and (fsub_all2) and (fsub_ref in columns(fsub_table, True)):
+                        for f in fsub_all2:
+                            f[fsub_ref] = form_last
+                            fkeys = f.keys()
+                            fkeys2 = ['$'+x for x in fkeys]
+                            fq = 'insert into %s(%s) values(%s)' %(
+                                    fsub_table,
+                                    ','.join(fkeys),
+                                    ','.join(fkeys2)
+                                )
+                            db.query(fq, f)
                 #
                 #custom SQL (sql2)
                 ocols['last_insert_rowid'] = form_last
@@ -8272,13 +8290,26 @@ class table_empty:
         if table in EMPTY_EXCLUDE:
             dflt()
         #
+        msg = []
+        #
         q = 'delete from %s' %(table)
         try:
-            db.query(q)
-            sess.table[table][SKT_M_EMPTY] = _['o_empty']
+            r = db.query(q)
+            msg = [
+                    [
+                        _['o_empty'],
+                        str(r),
+                    ]
+                ]
         except Exception, e:
-            msg = '%s: %s' %(_['e_empty'], str(e))
-            sess.table[table][SKT_M_EMPTY] = msg
+            msg = [
+                    [
+                        _['e_empty'],
+                        str(e),
+                    ]
+                ]
+        #
+        sess.table[table][SKT_M_EMPTY] = msg
         #
         redir = '/table/empty?table=%s' %(table)
         raise web.seeother(redir)
