@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.75'
+VERSION = '0.76'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -54,6 +54,7 @@ CHECK_SAME_THREAD=False
 FORM_TBL = '_sqliteboy_'
 FORM_URL_INIT = '/sqliteboy/init'
 FORM_FIELDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+FORM_FIELDS_R1 = ['rowid', 'rowtime']
 FORM_FIELD_TYPE = 'text'
 FORM_SPLIT = '.'
 FORM_VALID = None
@@ -1131,6 +1132,7 @@ LANGS = {
             'x_copy_to': 'to',
             'x_copy_from': 'from',
             'x_copy_columns_none': 'no identical column found',
+            'x_sqliteboy_x_update': 'updating %s table, please wait...' %(FORM_TBL),
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -2992,9 +2994,23 @@ def nqtype(ftype):
     #
     return ret 
 
-def s_init():
+def s_init_q(table=FORM_TBL):
     af = [x + ' ' + FORM_FIELD_TYPE for x in FORM_FIELDS]
-    cmd = 'CREATE TABLE %s(%s)' %(FORM_TBL, ','.join(af))
+    #
+    ret = '''
+        CREATE TABLE %s (
+                rowid integer primary key autoincrement, 
+                rowtime integer default (datetime('now', 'localtime')),
+                %s
+            )
+        ''' %(
+                table, ','.join(af)
+            )
+    #
+    return ret
+
+def s_init():
+    cmd = s_init_q()
     db.query(cmd)
     prepsess()
     db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER, 
@@ -3473,6 +3489,67 @@ def xokscript(pscript):
         return ret
     #
     return True
+
+def s_isold():
+    ret = False
+    #
+    if isnosb():
+        return ret
+    #
+    cols = columns(FORM_TBL, True)
+    #
+    for r in FORM_FIELDS_R1:
+        if not r in cols:
+            ret = True
+            break
+    #
+    return ret
+    
+def s_xupdate():
+    allt = tables()
+    while True:
+        newtbl = '%s_%s' %(FORM_TBL, random.randint(0, 100000))
+        if not newtbl in allt:
+            break
+    #
+    ret = 0
+    rows = ret
+    #
+    #
+    try:
+        q = s_init_q(newtbl)
+        db.query(q)
+    except:
+        return ret
+    #
+    try:
+        cols = columns(FORM_TBL, True)
+        q = '''
+                insert into %s(%s) select %s from %s
+            ''' %(
+                newtbl,
+                ','.join(cols),
+                ','.join(cols),
+                FORM_TBL,
+            )
+        rows = db.query(q)
+    except:
+        return ret
+    #
+    try:
+        q = 'drop table %s' %(FORM_TBL)
+        db.query(q)
+    except:
+        return ret
+    #
+    try:
+        q = 'alter table %s rename to %s' %(newtbl, FORM_TBL)
+        db.query(q)
+    except:
+        return ret
+    #
+    ret = rows
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -8370,6 +8447,21 @@ if __name__ == '__main__':
     app.add_processor(proc_udf)
     app.add_processor(proc_account_check)
     app.add_processor(proc_misc)
+    #
+    if s_isold():
+        log('')
+        log(_['x_sqliteboy_x_update'])
+        xupdate = s_xupdate()
+        if xupdate:
+            log('%s: %s %s' %(
+                _['th_ok'],
+                str(xupdate),
+                _['x_row'],
+                )
+            )
+        else:
+            log(_['th_error'])
+        log('')
     #
     web.httpserver.runsimple(app.wsgifunc(), (DEFAULT_ADDR, port))
     
