@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.76'
+VERSION = '0.77'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -73,6 +73,8 @@ DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
 DEFAULT_TEXTAREA_COLS = 40
 DEFAULT_TEXTAREA_ROWS = 15
+DEFAULT_ERROR_INT = -1
+DEFAULT_ERROR_STR = ''
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -101,6 +103,7 @@ SKT_M_DROP = 'drop'
 SKT_M_COPY = 'copy'
 SKT_M_EMPTY = 'empty'
 SKQ = 'query'
+SKV = 'vacuum'
 SK_CREATE = 'create'
 SK_LOGIN = 'login'
 SK_PASSWORD = 'password'
@@ -332,6 +335,7 @@ EMPTY_EXCLUDE = [
                     DEFAULT_TABLE,
                     SEQUENCE_TABLE,
             ]            
+PRAGMA_FREELIST_COUNT = 'freelist_count'
 
 
 #----------------------------------------------------------------------#
@@ -400,6 +404,7 @@ URLS = (
     '/table/copy', 'table_copy',
     '/table/create', 'table_create',
     '/query', 'query',
+    '/vacuum', 'vacuum',
     '/table/row/(.*)', 'table_row',
     '/table/blob/(.*)', 'table_blob',
     '/table/save', 'table_save',
@@ -1115,6 +1120,8 @@ LANGS = {
             'x_max_file_size_error': 'maximum file size exceeded',
             'x_file_name': 'file name',
             'x_file_size': 'size',
+            'x_database_size': 'size of database file',
+            'x_unused_pages': 'number of unused pages',
             'x_shared': 'shared',
             'x_preview': 'preview',
             'x_expression_too_long': 'expression too long',
@@ -1164,6 +1171,7 @@ LANGS = {
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'tt_copy': 'copy',
+            'tt_vacuum': 'vacuum',
             'cmd_browse': 'browse',
             'cmd_insert': 'insert',
             'cmd_column': 'column',
@@ -1204,9 +1212,11 @@ LANGS = {
             'cmd_view': 'view',
             'cmd_use_result': 'use the result',
             'cmd_scripts': 'scripts',
+            'cmd_vacuum': 'vacuum',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
+            'cf_vacuum': 'confirm vacuum database',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
             'e_access_forbidden': 'access forbidden',
             'e_connect': 'ERROR: unable to connect to',
@@ -1267,6 +1277,7 @@ LANGS = {
             'o_drop': 'OK: drop table',
             'o_copy': 'OK: copy table',
             'o_empty': 'OK: empty table',
+            'o_vacuum': 'OK: vacuum database',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -1290,6 +1301,7 @@ LANGS = {
             'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
             'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error. Backup before running a script is recommended.',
             'h_copy': 'hint: copy content of source table to existing destination table (insert), only for identical column(s) (name and type)',
+            'h_vacuum': 'hint: vacuum command will rebuild the entire database and may reduce the size of database file. Please make sure there is enough free space, at least twice the size of the original database file. This command may change the rowids of rows in any tables that do not have an explicit integer primary key column.',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -2054,7 +2066,7 @@ def proc_admin_check(handle):
     path = web.ctx.fullpath.lower()
     if not isnosb():
         if not sess.admin == 1:
-            if path.startswith('/query') or path.startswith('/table') or path.startswith('/admin') or path.startswith('/form/edit') or path.startswith('/report/edit'):
+            if path.startswith('/vacuum') or path.startswith('/query') or path.startswith('/table') or path.startswith('/admin') or path.startswith('/form/edit') or path.startswith('/report/edit'):
                 if sess.user:
                     return _['e_access_forbidden']
                 else:
@@ -2377,6 +2389,7 @@ def menugen():
                     ['copy', _['cmd_copy']],
                     ['table_create', _['cmd_table_create']],
                     ['query', _['cmd_query']],
+                    ['vacuum', _['cmd_vacuum']],
                 )
             ])
     #
@@ -3549,6 +3562,21 @@ def s_xupdate():
         return ret
     #
     ret = rows
+    return ret
+
+def p_pragma(pragma, default=''):
+    ret = default
+    #
+    try:
+        r = db.query('pragma $pragma', 
+                vars={
+                        'pragma': web.sqlliteral(pragma),
+                    }
+            ).list()
+        ret = r[0].get(pragma)
+    except:
+        pass
+    #
     return ret
     
     
@@ -4977,6 +5005,44 @@ $elif data['command'] == 'empty':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'vacuum':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <br>
+    <table>
+    $for i in data['info']:
+        <tr>
+            <td>
+                $i[0]
+            </td>
+            <td>
+                $i[1]
+            </td>
+        </tr>
+    </table>
+    <br>    
+    <form action="$data['action_url']" method="$data['action_method']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    <tr>
+    <td>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -5066,6 +5132,7 @@ class table_action:
             ('copy', '/table/copy?table=' + table),
             ('table_create', '/table/create'),
             ('query', '/query'),
+            ('vacuum', '/vacuum'),
         )
         #
         prepsess()
@@ -8390,6 +8457,71 @@ class table_empty:
         #
         redir = '/table/empty?table=%s' %(table)
         raise web.seeother(redir)
+
+
+class vacuum:
+    def GET(self):
+        start()
+        #
+        data = {
+            'title': '%s' %(_['tt_vacuum']),
+            'command': 'vacuum',
+            'hidden': (('confirm', '1'),),
+            'action_url': '/vacuum',
+            'action_method': 'post',
+            'action_button': (
+                                ('vacuum', _['cf_vacuum'], False, '', 'submit'),
+                            ),
+            'message': smsgq(SKV),
+            'info': [
+                        [
+                            _['x_database_size'],
+                            size(),
+                        ],
+                        [
+                            _['x_unused_pages'],
+                            p_pragma(
+                                PRAGMA_FREELIST_COUNT, 
+                                default=DEFAULT_ERROR_INT
+                            ),
+                        ],
+                    ],
+            'hint': _['h_vacuum'],
+        }
+        #
+        content = ''
+        #
+        stop()
+        return T(data, content)
+    
+    def POST(self):
+        inp = web.input(confirm='')
+        confirm = inp.confirm.strip()
+        #
+        if not confirm:
+            dflt()
+        #
+        msg = []
+        #
+        q = 'vacuum'
+        try:
+            r = db.query(q)
+            msg = [
+                    [
+                        _['o_vacuum'],
+                    ]
+                ]
+        except Exception, e:
+            msg = [
+                    [
+                        _['th_error'],
+                        str(e),
+                    ]
+                ]
+        #
+        sess[SKV] = msg
+        #
+        raise web.seeother('/vacuum')
         
 
 #----------------------------------------------------------------------#

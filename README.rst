@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.76
+Documentation for version 0.77
 
 
 .. contents:: 
@@ -292,6 +292,8 @@ Features
   - Free form SQL Query
 
   - Automatically view query output (as integer or table)
+
+- Vacuum
 
 - User account (Extended feature)
 
