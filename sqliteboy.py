@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.77'
+VERSION = '0.78'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -131,6 +131,15 @@ COLUMN_TYPES = (
                 ('blob', 1),
                 ('null', 1),
             ) #type, used in add column
+COLUMN_CONVERT = {
+                    'integer': 'sqliteboy_as_integer',
+                    'real': 'sqliteboy_as_float',
+                    'char': 'sqliteboy_strs',
+                    'varchar': 'sqliteboy_strs',
+                    'text': 'sqliteboy_strs',
+                    'blob': 'sqliteboy_strs',
+                }
+COLUMN_CONVERT_DEFAULT = 'sqliteboy_strs'
 MAX_COLUMN_ADD = 3
 CUSTOM_RT = {
                 'query': 4,
@@ -1855,6 +1864,70 @@ def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, defau
     return ret
 SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3))
 
+def sqliteboy_split1(s, separator, table, column):
+    ret = 0
+    #
+    s = str(s)
+    separator = str(separator)
+    table = str(table).strip().lower()
+    column = str(column).strip().lower()
+    #
+    if not s.strip():
+        return ret
+    #
+    if not table in tables():
+        return ret
+    #
+    if not column in columns(table, True):
+        return ret
+    #
+    if separator.strip():
+        data = s.split(separator)
+    else:
+        data = s.split()
+    if not data:
+        return ret
+    #
+    if hasws(table) or hasws(column):
+        return ret
+    #
+    cols = columnst(table)
+    colt = cols.get(column)
+    f = COLUMN_CONVERT.get(colt)
+    if not f:
+        f = COLUMN_CONVERT_DEFAULT
+    #
+    func = globals().get(f)
+    if not callable(func):
+        return ret
+    #
+    count = 0
+    t = db.transaction()
+    try:
+        for d in data:
+            x = func(d)
+            r = db.query(
+                    '''
+                        insert into $table ($column) values($data)
+                    ''',
+                    vars = {
+                            'table': web.sqlliteral(table),
+                            'column': web.sqlliteral(column),
+                            'data': x,
+                        }
+                )
+            if r:
+                count += 1
+    except:
+        t.rollback()
+        return ret
+    else:
+        t.commit()
+        ret = count
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_split1', 4, sqliteboy_split1))    
+
 def sqliteboy_http_remote_addr():
     return web.ctx.ip
 SQLITE_UDF.append(('sqliteboy_http_remote_addr', 0, sqliteboy_http_remote_addr))
@@ -2281,7 +2354,7 @@ def tables(first_blank=False, exclude=EXCLUDE_TABLE):
     #
     r = db.select('sqlite_master', 
             where='type="table"',
-            what='name',
+            what='lower(name) as name',
             order="name asc")
     for i in r:
         if hasws(i.name): continue #whitespace in table name
@@ -2303,11 +2376,28 @@ def columns(table, name_only=False):
     #
     for i in r:
         if name_only == True:
-            ret.append(i.name)
+            ret.append(i.name.lower())
         else:
             d = {}
             for k in i.keys(): d[k.lower()] = i[k]
             ret.append(d)
+    #
+    return ret
+
+def columnst(table):
+    ret = {}
+    #
+    cols = columns(table)
+    if not cols:
+        return ret
+    #
+    for k in cols:
+        kn = k.get('name', '')
+        kt = k.get('type', '')
+        kn = str(kn).strip().lower()
+        kt = str(kt).strip().lower()
+        if kn and kt:
+            ret[kn] = kt
     #
     return ret
 
@@ -5532,8 +5622,8 @@ class table_rename:
         
     def POST(self):
         input = web.input(table='', name='')
-        table = input.table.strip()
-        name = input.name.strip()
+        table = input.table.strip().lower()
+        name = input.name.strip().lower()
         if not table in tables() or not name: 
             dflt()
         #
@@ -5773,7 +5863,7 @@ class table_create:
     def POST(self):
         input = web.input(count=0, table='', step='', name=[], type=[], pk=[], default=[])
         count = input.count
-        table = input.table.strip()
+        table = input.table.strip().lower()
         step = input.step.strip()
         name = [x.strip() for x in input.name]
         type = [x.strip() for x in input.type]

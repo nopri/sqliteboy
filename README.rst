@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.77
+Documentation for version 0.78
 
 
 .. contents:: 
@@ -881,6 +881,30 @@ User-defined Function
         sqliteboy_lookup3(12345, 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
         -> ':('
         
+- sqliteboy_split1(s, separator, table, column)
+  ::
+  
+      split string s using separator as the delimiter string and 
+      insert into table (column) for each member in list
+      
+      (column type will be detected and conversion will be done)
+      
+      argument    :
+         s (input string)
+         separator (separator string)
+         table (table to insert)
+         column (column in table)
+
+      return value: 
+        number of row(s) inserted into table, or 0
+
+      example     : 
+        sqliteboy_split1('h.e.l.l.o.w.o.r.l.d', '.', 'test_split', 'c')
+        -> 10 
+        
+        sqliteboy_split1('hello', '', 'test_split', 'c')
+        -> 1  
+
 - sqliteboy_http_remote_addr()
   ::
   
