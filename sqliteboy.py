@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.78'
+VERSION = '0.79'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1217,11 +1217,12 @@ LANGS = {
             'cmd_run': 'run',
             'cmd_form_create': 'create',
             'cmd_report_create': 'create',
-            'cmd_report': 'go',
+            'cmd_report': 'report',
             'cmd_view': 'view',
             'cmd_use_result': 'use the result',
             'cmd_scripts': 'scripts',
             'cmd_vacuum': 'vacuum',
+            'cmd_go': 'go',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
@@ -1416,6 +1417,19 @@ def sqliteboy_randrange(a, b):
     #
     return random.randrange(a, b)
 SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
+
+def sqliteboy_is_datetime(s):
+    ret = 0
+    #
+    try:
+        s = s.strip()
+        p = time.strptime(s, PYTIME_FORMAT)
+        ret = 1
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_is_datetime', 1, sqliteboy_is_datetime))
 
 def sqliteboy_time():
     return time.time()
@@ -1864,13 +1878,15 @@ def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, defau
     return ret
 SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3))
 
-def sqliteboy_split1(s, separator, table, column):
+def sqliteboy_split1(s, separator, table, column, convert):
     ret = 0
     #
     s = str(s)
     separator = str(separator)
     table = str(table).strip().lower()
     column = str(column).strip().lower()
+    if not sqliteboy_is_integer(convert) or convert < 0:
+        convert = 0
     #
     if not s.strip():
         return ret
@@ -1905,7 +1921,11 @@ def sqliteboy_split1(s, separator, table, column):
     t = db.transaction()
     try:
         for d in data:
-            x = func(d)
+            if convert:
+                x = func(d)
+            else:
+                x = d
+            #
             r = db.query(
                     '''
                         insert into $table ($column) values($data)
@@ -1919,14 +1939,79 @@ def sqliteboy_split1(s, separator, table, column):
             if r:
                 count += 1
     except:
-        t.rollback()
         return ret
     else:
         t.commit()
         ret = count
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_split1', 4, sqliteboy_split1))    
+SQLITE_UDF.append(('sqliteboy_split1', 5, sqliteboy_split1))    
+
+def sqliteboy_list_datetime1(s, n, interval, table, column, local):
+    ret = 0
+    #
+    s = str(s).strip()
+    table = str(table).strip().lower()
+    column = str(column).strip().lower()
+    #
+    if not sqliteboy_is_integer(n) or n < 1:
+        return ret
+    #
+    if not sqliteboy_is_integer(interval) or interval == 0:
+        return ret
+    #
+    if not sqliteboy_is_integer(local) or local < 0:
+        local = 0
+    #
+    if not table in tables():
+        return ret
+    #
+    if not column in columns(table, True):
+        return ret
+    #
+    tnow = sqliteboy_time()
+    if not s:
+        s = sqliteboy_time3(tnow)
+    #
+    if not sqliteboy_is_datetime(s):
+        return ret
+    #
+    t2 = sqliteboy_time2(s)
+    #
+    count = 0
+    t = db.transaction()
+    try:
+        for i in range(n):
+            if local:
+                t3 = sqliteboy_time3(t2)
+            else:
+                t3 = sqliteboy_time4(t2)
+            #
+            if not t3:
+                continue
+            #
+            r = db.query(
+                    '''
+                        insert into $table ($column) values($data)
+                    ''', 
+                    vars={
+                        'table': web.sqlliteral(table),
+                        'column': web.sqlliteral(column),
+                        'data': t3,
+                    }
+                )
+            if r:
+                count += 1
+            #
+            t2 += interval
+    except:
+        return ret
+    else:
+        t.commit()
+        ret = count
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_list_datetime1', 6, sqliteboy_list_datetime1))
 
 def sqliteboy_http_remote_addr():
     return web.ctx.ip
@@ -6424,7 +6509,7 @@ class form_run:
         input = ()
         sub = ()
         action_button = (
-                            ('save', _['cmd_save'], False, '', 'submit'),
+                            ('save', _['cmd_go'], False, '', 'submit'),
                         )
         ftitle = ''
         finfo = ''
@@ -7036,7 +7121,7 @@ class report_run:
         #
         input = ()
         action_button = (
-                            ('report', _['cmd_report'], False, '', 'submit'),
+                            ('report', _['cmd_go'], False, '', 'submit'),
                         )
         ftitle = ''
         finfo = ''

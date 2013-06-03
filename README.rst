@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.78
+Documentation for version 0.79
 
 
 .. contents:: 
@@ -147,7 +147,7 @@ Features
     provided.
 
   - As of v0.75, insert into table can be disabled by setting insert key
-    to zero/negative value. This is useful if you need to update data in 
+    to zero/negative value. This is useful if you need to update/delete data in 
     table(s), using additional SQL query statement(s). By default, 
     form/subform save will insert new row(s) into table(s).  
   
@@ -453,6 +453,8 @@ User-defined Function
 - sqliteboy_b64decode(s)
 
 - sqliteboy_randrange(a, b)
+
+- sqliteboy_is_datetime(s)
 
 - sqliteboy_time()
 
@@ -881,29 +883,86 @@ User-defined Function
         sqliteboy_lookup3(12345, 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
         -> ':('
         
-- sqliteboy_split1(s, separator, table, column)
+- sqliteboy_split1(s, separator, table, column, convert)
   ::
   
       split string s using separator as the delimiter string and 
       insert into table (column) for each member in list
-      
-      (column type will be detected and conversion will be done)
-      
       argument    :
          s (input string)
          separator (separator string)
          table (table to insert)
          column (column in table)
+         convert(0=no conversion, 1=convert to column type if applicable (or to string) )
 
       return value: 
         number of row(s) inserted into table, or 0
 
       example     : 
-        sqliteboy_split1('h.e.l.l.o.w.o.r.l.d', '.', 'test_split', 'c')
+        sqliteboy_split1('h.e.l.l.o.w.o.r.l.d', '.', 'test_split', 'c', 1)
         -> 10 
         
-        sqliteboy_split1('hello', '', 'test_split', 'c')
+        sqliteboy_split1('hello', '', 'test_split', 'c', 0)
         -> 1  
+
+- sqliteboy_list_datetime1(s, n, interval, table, column, local)
+  ::
+  
+      generate list of datetime starting with s (inclusive), 
+      as much as n, with interval,
+      and insert into table (column) for each member in list
+      argument    :
+         s (YYYY-MM-DD HH:MM:SS)
+         n (as much as, must be > 0)
+         interval (interval in seconds, must not zero)
+         table (table to insert)
+         column (column in table)
+         local (0=UTC, 1=local)
+
+      return value: 
+        number of row(s) inserted into table, or 0
+
+      example     : 
+        (local timezone is UTC+7)
+        
+        sqliteboy_list_datetime1('', 5, 60*60*24, 'test_date', 'a', 1)
+        -> 5
+        (data in table)
+        2013-06-03 23:13:27 
+        2013-06-04 23:13:27 
+        2013-06-05 23:13:27 
+        2013-06-06 23:13:27  
+        2013-06-07 23:13:27 
+        
+        sqliteboy_list_datetime1('', 5, 60*60*24, 'test_date', 'a', 0)
+        -> 5
+        (data in table)
+        2013-06-03 16:14:09 
+        2013-06-04 16:14:09  
+        2013-06-05 16:14:09 
+        2013-06-06 16:14:09 
+        2013-06-07 16:14:09 
+        
+        sqliteboy_list_datetime1('', 5, -60*60*24, 'test_date', 'a', 1)
+        -> 5
+        (data in table)
+        2013-06-03 23:14:55 
+        2013-06-02 23:14:55 
+        2013-06-01 23:14:55 
+        2013-05-31 23:14:55 
+        2013-05-30 23:14:55 
+
+        sqliteboy_list_datetime1('2013-01-01 00:00:00', 5, 60*60, 'test_date', 'a', 1)
+        -> 5
+        (data in table)
+        2013-01-01 00:00:00 
+        2013-01-01 01:00:00 
+        2013-01-01 02:00:00 
+        2013-01-01 03:00:00 
+        2013-01-01 04:00:00 
+
+      tips        :
+         empty s: current date/time (localtime)
 
 - sqliteboy_http_remote_addr()
   ::
@@ -959,7 +1018,7 @@ Form Code Reference
   tables. Last insert rowid value is provided.
 
 - Insert into table can be disabled by setting insert key to zero/negative 
-  value. This is useful if you need to update data in table(s), using 
+  value. This is useful if you need to update/delete data in table(s), using 
   additional SQL query statement(s). By default, form/subform save will 
   insert new row(s) into table(s). Please note that setting insert key 
   to zero/negative value will also set last insert rowid/query result 
