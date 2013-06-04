@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.79'
+VERSION = '0.80'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -239,6 +239,9 @@ PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 PYTIME_FORMAT_BACKUP = '%Y-%m-%d_%H-%M-%S'
 REGEX_EMAIL = r'^[\w\.\+-]+@[\w\.-]+\.[a-zA-Z]+$'
 DAYS_IN_YEAR = 365.2425
+DAYS_IN_MONTH_AVERAGE = round( (DAYS_IN_YEAR / float(12)), 2)
+DAYS_IN_MONTH_30 = 30
+DAYS_IN_MONTH_31 = 31
 CSV_SUFFIX = '.csv'
 CSV_CTYPE = 'text/csv'
 BACKUP_BUFFER = 10 * SIZE_KB
@@ -1464,9 +1467,9 @@ def sqliteboy_time5(s1, s2, mode):
         mode = 0
     #
     tnow = sqliteboy_time()
-    if not s1.strip():
+    if not s1.strip() or not sqliteboy_is_datetime(s1):
         s1 = sqliteboy_time3(tnow)
-    if not s2.strip():
+    if not s2.strip() or not sqliteboy_is_datetime(s2):
         s2 = sqliteboy_time3(tnow)
     #
     t1 = sqliteboy_time2(s1)
@@ -1490,6 +1493,61 @@ def sqliteboy_time5(s1, s2, mode):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_time5', 3, sqliteboy_time5)) 
+
+def sqliteboy_time6(f, year, month, day, mode):
+    ret = ''
+    #
+    try:
+        f = float(f)
+    except:
+        return ret
+    #
+    year = str(year)
+    month = str(month)
+    day = str(day)
+    #
+    if not sqliteboy_is_integer(mode) or mode < 0:
+        mode = 0
+    #
+    if 'e' in str(f).lower():
+        return ret
+    #
+    f1, f2 = str(f).split('.')
+    try:
+        y = int(f1)
+    except:
+        return ret
+    #
+    leftm = f - y
+    fm = float(leftm * 12) 
+    m1, m2 = str(fm).split('.')
+    try:
+        m = int(round(float(m1), 0))
+    except:
+        return ret
+    #
+    leftd = fm - m
+    d = int(round(leftd * DAYS_IN_MONTH_AVERAGE, 0))
+    d30 = int(round(leftd * DAYS_IN_MONTH_30, 0))
+    d31 = int(round(leftd * DAYS_IN_MONTH_31, 0))
+    #
+    dd = d
+    if mode == 1:
+        dd = d30
+    elif mode == 2:
+        dd = d31
+    #
+    ret = '%s%s%s%s%s%s' %(
+            y,
+            year,
+            m,
+            month,
+            dd,
+            day
+        )
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_time6', 5, sqliteboy_time6))
 
 def sqliteboy_is_leap(n):
     ret = 0

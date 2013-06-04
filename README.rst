@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.79
+Documentation for version 0.80
 
 
 .. contents:: 
@@ -519,8 +519,51 @@ User-defined Function
          -> 1.08432718724 
       
       tips        :
-         empty s1 or s2: current date/time (localtime)
+         empty/invalid s1 or s2: current date/time (localtime)
          use sqliteboy_number_format() to format the result
+
+- sqliteboy_time6(f, year, month, day, mode)
+  ::
+  
+      format the difference between two dates in
+      y (years) m (months) d (days) format
+      argument    :
+         f (number, in year, use sqliteboy_time5 function (mode=5) )
+         year (year string)
+         month (month string)
+         day (day string)
+         mode (1=30.44 days/month, 1=30 days/month, 2=31 days/month)
+         
+      example     :
+         sqliteboy_time6(sqliteboy_time5('2010-11-12 01:02:03', '2011-12-13 11:12:13', 5), ' years ', ' months ', ' days ', 0)
+         -> 1 years 1 months 1 days 
+         
+         sqliteboy_time6(sqliteboy_time5('2010-11-12 01:02:03', '2011-10-11 11:12:13', 5), ' years ', ' months ', ' days ', 0)
+         -> 0 years 10 months 29 days 
+      
+         sqliteboy_time6(sqliteboy_time5('2013-01-01 10:20:30', '2013-01-02 10:20:30', 5), ' years ', ' months ', ' days ', 0)
+         -> 0 years 0 months 1 days 
+         
+         sqliteboy_time6(sqliteboy_time5('2013-01-02 10:20:30', '2013-01-01 10:20:30', 5), ' years ', ' months ', ' days ', 0)
+         -> 0 years 0 months -1 days 
+         
+         sqliteboy_time6(1000, ' years ', ' months ', ' days ', 0)
+         -> 1000 years 0 months 0 days 
+         
+         sqliteboy_time6(1.5, ' years ', ' months ', ' days ', 0)
+         -> 1 years 6 months 0 days  
+         
+         sqliteboy_time6(1.24, ' years ', ' months ', ' days ', 0)
+         -> 1 years 2 months 27 days 
+         
+         sqliteboy_time6(1.24, ' years ', ' months ', ' days ', 1)
+         -> 1 years 2 months 26 days 
+         
+         sqliteboy_time6(1.24, ' years, ', ' months, ', ' days', 0)
+         -> 1 years, 2 months, 27 days 
+         
+         sqliteboy_time6(1.24, ' tahun ', ' bulan ', ' hari ', 0)
+         -> 1 tahun 2 bulan 27 hari 
 
 - sqliteboy_is_leap(n)
   ::
