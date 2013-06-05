@@ -46,7 +46,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.80'
+VERSION = '0.81'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -348,6 +348,11 @@ EMPTY_EXCLUDE = [
                     SEQUENCE_TABLE,
             ]            
 PRAGMA_FREELIST_COUNT = 'freelist_count'
+SERVER_COMMAND_SEPARATOR = '-'
+SERVER_COMMAND_ALL = {
+                        'generate_favicon': 'scmd_favicon',
+                        'generate_pyinstaller': 'scmd_pyinstaller',
+                    }
 
 
 #----------------------------------------------------------------------#
@@ -1152,6 +1157,8 @@ LANGS = {
             'x_copy_from': 'from',
             'x_copy_columns_none': 'no identical column found',
             'x_sqliteboy_x_update': 'updating %s table, please wait...' %(FORM_TBL),
+            'x_please_wait': 'please wait...',
+            'x_server_command_mode': 'server command mode',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -3809,6 +3816,21 @@ def p_pragma(pragma, default=''):
         ret = r[0].get(pragma)
     except:
         pass
+    #
+    return ret
+
+def scmd_favicon(data):
+    ret = ''
+    #
+    try:
+        cmd = data[0]
+        out = data[1]
+        f = open(out, 'wb')
+        f.write(favicon())
+        f.close()
+        ret = out
+    except:
+        return ret
     #
     return ret
     
@@ -8785,6 +8807,40 @@ if __name__ == '__main__':
         port = int(sys.argv[2])
     except:
         port = DEFAULT_PORT
+    #
+    #server command check
+    scmd_ret = 0
+    try:
+        scmd = sys.argv[3].split(SERVER_COMMAND_SEPARATOR)
+        if not scmd:
+            raise Exception
+        #
+        scmd = [x.lower() for x in scmd if x.strip()]
+        scmd0 = scmd[0]
+        if not scmd0 in SERVER_COMMAND_ALL.keys():
+            raise Exception
+        #
+        sfuncn = SERVER_COMMAND_ALL.get(scmd0)
+        sfunc = globals().get(sfuncn)
+        if not callable(sfunc):
+            raise Exception
+        #
+        log(_['x_server_command_mode'])
+        log(_['x_please_wait'])
+        log(scmd0)
+        sret = sfunc(scmd)
+        #
+        if sret:
+            log(sret)
+            scmd_ret = 3
+        else:
+            scmd_ret = 4
+    except:
+        pass
+    #
+    if scmd_ret:
+        sys.exit(scmd_ret)
+    #
     #
     try:
         db = web.database(
