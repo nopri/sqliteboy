@@ -17,36 +17,14 @@
 # - bare except:
 # - PEP8 violations :)
 #
-# # pyinstaller 2.0 spec #
-# # python <path/to/pyinstaller.py> <spec>
-#
-#    a = Analysis(['sqliteboy.py'])
-#
-#    a.datas += [
-#                ('sqliteboy.py', 'sqliteboy.py', 'DATA'),
-#                ('README.rst', 'README.rst', 'DATA'),
-#            ]
-#
-#    pyz = PYZ(a.pure)
-#
-#    exe = EXE(
-#                pyz, 
-#                a.scripts, 
-#                a.binaries, 
-#                a.datas, 
-#                name="sqliteboy.exe",
-#                icon="favicon.ico",
-#                console=True,
-#                debug=False
-#            )
-#
+
 
 #----------------------------------------------------------------------#
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.81'
+VERSION = '0.82'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -75,6 +53,8 @@ DEFAULT_TEXTAREA_COLS = 40
 DEFAULT_TEXTAREA_ROWS = 15
 DEFAULT_ERROR_INT = -1
 DEFAULT_ERROR_STR = ''
+DEFAULT_WIN_EXE = '%s.exe' %(NAME)
+DEFAULT_WIN_MD5 = '%s.md5' %(DEFAULT_WIN_EXE)
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -354,6 +334,67 @@ SERVER_COMMAND_ALL = {
                         'generate_pyinstaller': 'scmd_pyinstaller',
                     }
 
+PYINSTALLER_SPEC = '''
+# $title $command
+# $datetime
+
+a = Analysis([r'$source_path'])
+
+a.datas += [
+            ('$source', r'$source_path', 'DATA'),
+            ('$readme', r'$readme_path', 'DATA'),
+        ]
+
+pyz = PYZ(a.pure)
+
+exe = EXE(
+            pyz, 
+            a.scripts, 
+            a.binaries, 
+            a.datas, 
+            name=r'$output',
+            icon=r'$icon',
+            console=True,
+            debug=False
+        )
+
+#
+import os 
+try: 
+   from hashlib import md5
+except ImportError:
+   from md5 import md5
+
+#
+content = open(r'$output', 'rb').read()
+content_md5 = md5(content).hexdigest()
+content_lines = [
+            '# $title $command',
+            '# $datetime',
+            '',
+            '%s %s' %(content_md5, r'$output'),
+            '',
+        ]
+file_md5 = open(r'$output_md5', 'w')
+for i in content_lines:
+    line = '%s%s' %(i, os.linesep)
+    file_md5.write(line)
+file_md5.close()
+
+#
+try:
+    content_check = open(r'$output_md5', 'r').readlines()
+    content_check = [x.strip() for x in content_check if not x.startswith('#')]
+    content_check = [x for x in content_check if x]
+    content_check_md5 = content_check[0].split()[0].strip()
+    if content_check_md5 == content_md5:
+        print 'OK'
+except:
+    pass
+    
+
+'''
+
 
 #----------------------------------------------------------------------#
 # MODULE                                                               #
@@ -363,9 +404,11 @@ import os
 if getattr(sys, 'frozen', None):
     CURDIR = sys._MEIPASS
     CWDIR = os.getcwd()
+    SCURDIR = CWDIR
 else:
     CURDIR = os.path.dirname(__file__)
     CWDIR = CURDIR
+    SCURDIR = os.getcwd()
 
 import time
 import decimal
@@ -3819,15 +3862,68 @@ def p_pragma(pragma, default=''):
     #
     return ret
 
+def scmdx_path(f):
+    ret = ''
+    #
+    try:
+        f = os.path.basename(f)
+        f = os.path.join(SCURDIR, f)
+        f = os.path.abspath(f)
+        ret = f
+    except:
+        return ret
+    #
+    return ret
+
 def scmd_favicon(data):
     ret = ''
     #
     try:
         cmd = data[0]
+        #
         out = data[1]
+        out = scmdx_path(out)
+        #
         f = open(out, 'wb')
         f.write(favicon())
         f.close()
+        #
+        ret = out
+    except:
+        return ret
+    #
+    return ret
+
+def scmd_pyinstaller(data):
+    ret = ''
+    #
+    try:
+        cmd = data[0]
+        #
+        out = data[1]
+        out = scmdx_path(out)
+        #
+        ico = data[2]
+        ico = scmdx_path(ico)
+        #
+        tpl = string.Template(PYINSTALLER_SPEC)
+        tplo = tpl.substitute(tpl, 
+                title=TITLE,
+                command=cmd,
+                source=URL_SOURCE[2],
+                readme=URL_README[2],
+                source_path=os.path.join(CURDIR, URL_SOURCE[2]),
+                readme_path=os.path.join(CURDIR, URL_README[2]),
+                output=DEFAULT_WIN_EXE,
+                icon=ico,
+                output_md5=DEFAULT_WIN_MD5,
+                datetime=sqliteboy_time3(sqliteboy_time())
+            )
+        #
+        f = open(out, 'wb')
+        f.write(tplo)
+        f.close()
+        #
         ret = out
     except:
         return ret
