@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.82'
+VERSION = '0.83'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -55,6 +55,8 @@ DEFAULT_ERROR_INT = -1
 DEFAULT_ERROR_STR = ''
 DEFAULT_WIN_EXE = '%s.exe' %(NAME)
 DEFAULT_WIN_MD5 = '%s.md5' %(DEFAULT_WIN_EXE)
+DEFAULT_FAVICON = '%s.ico' %(NAME)
+DEFAULT_SPEC = '%s.spec' %(NAME)
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -159,7 +161,7 @@ FORM_ONSAVE_SQL_VALUE = 'value'
 FORM_ONSAVE_SQL_RET = 'onsave'
 FORM_SUB_ROWS_DEFAULT = [5, 1]#rows, required rows
 FORM_MESSAGE_LEN = 3
-FORM_MESSAGE_VAR_RESULT = '$result'
+FORM_MESSAGE_VAR_RESULT = 'result'
 FORM_INSERT_DEFAULT = 1
 #
 REPORT_KEY_DATA_TYPES = ['integer']
@@ -332,6 +334,7 @@ SERVER_COMMAND_SEPARATOR = '-'
 SERVER_COMMAND_ALL = {
                         'generate_favicon': 'scmd_favicon',
                         'generate_pyinstaller': 'scmd_pyinstaller',
+                        'generate_build': 'scmd_build',    
                     }
 
 PYINSTALLER_SPEC = '''
@@ -1328,7 +1331,7 @@ LANGS = {
             'o_password': 'OK: password changed',
             'o_hosts': 'OK: hosts updated',
             'o_system': 'OK: system configuration updated',
-            'o_form_run': 'OK: data saved',
+            'o_form_run': 'OK: form run',
             'o_form_create': 'OK: create form',
             'o_report_create': 'OK: create report',
             'o_notes': 'OK: notes updated',
@@ -3884,6 +3887,9 @@ def scmd_favicon(data):
         out = data[1]
         out = scmdx_path(out)
         #
+        if os.path.exists(out):
+            raise Exception
+        #
         f = open(out, 'wb')
         f.write(favicon())
         f.close()
@@ -3920,11 +3926,36 @@ def scmd_pyinstaller(data):
                 datetime=sqliteboy_time3(sqliteboy_time())
             )
         #
+        if os.path.exists(out):
+            raise Exception        
+        #
+        if not os.path.exists(ico):
+            raise Exception
+        #
         f = open(out, 'wb')
         f.write(tplo)
         f.close()
         #
         ret = out
+    except:
+        return ret
+    #
+    return ret
+
+def scmd_build(data):
+    ret = ''
+    #
+    try:
+        cmd = data[0]
+        #
+        d1 = ['generate_favicon', DEFAULT_FAVICON]
+        r1 = scmd_favicon(d1)
+        #
+        d2 = ['generate_pyinstaller', DEFAULT_SPEC, r1]
+        r2 = scmd_pyinstaller(d2)
+        #
+        ret = '%s %s' %(r1, r2)
+        ret = ret.strip()
     except:
         return ret
     #
@@ -6963,8 +6994,10 @@ class form_run:
                     elif form_res > 0:
                         message2b = message2[2]
                     message2b = str(message2b)
-                    message3 = message2b.replace(FORM_MESSAGE_VAR_RESULT, 
-                        str(form_res))
+                    #
+                    message2b = string.Template(message2b)
+                    ocols[FORM_MESSAGE_VAR_RESULT] = str(form_res)
+                    message3 = message2b.safe_substitute(ocols)
                 #
                 sess[SKF_RUN] = [ [message3] ]
             except Exception, e:

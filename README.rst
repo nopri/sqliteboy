@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.82
+Documentation for version 0.83
 
 
 .. contents:: 
@@ -1126,7 +1126,16 @@ Form Code Reference
 |               |   actual SQL Query      |               |             |                          |
 |               |   result                |               |             |                          |
 |               |                         |               |             |                          |
+|               | - $<column> will be     |               |             |                          |
+|               |   replaced by user input|               |             |                          |
+|               |   value for that column |               |             |                          |
 |               |                         |               |             |                          |
+|               | - $last_insert_rowid    |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   last_insert_rowid()   |               |             |                          |
+|               |   function call result  |               |             |                          |
+|               |   (after insert to main |               |             |                          |
+|               |   table)                |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | sql2          | additional sql query    | list          | optional    |                          |
