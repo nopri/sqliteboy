@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.83'
+VERSION = '0.84'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -336,6 +336,12 @@ SERVER_COMMAND_ALL = {
                         'generate_pyinstaller': 'scmd_pyinstaller',
                         'generate_build': 'scmd_build',    
                     }
+SHORTCUT_TYPE_FORM = 'form'
+SHORTCUT_TYPE_REPORT = 'report'
+SHORTCUT_ALL = [
+                    SHORTCUT_TYPE_FORM,
+                    SHORTCUT_TYPE_REPORT,
+                ]
 
 PYINSTALLER_SPEC = '''
 # $title $command
@@ -362,6 +368,7 @@ exe = EXE(
         )
 
 #
+import sys
 import os 
 try: 
    from hashlib import md5
@@ -391,7 +398,7 @@ try:
     content_check = [x for x in content_check if x]
     content_check_md5 = content_check[0].split()[0].strip()
     if content_check_md5 == content_md5:
-        print 'OK'
+        sys.stdout.write('OK' + os.linesep)
 except:
     pass
     
@@ -483,9 +490,11 @@ URLS = (
     '/admin/backup', 'admin_backup',
     '/form/action', 'form_action',
     '/form/run/(.*)', 'form_run',
+    '/form/shortcut/(.*)', 'form_shortcut',
     '/form/edit', 'form_edit',
     '/report/action', 'report_action',
     '/report/run/(.*)', 'report_run',
+    '/report/shortcut/(.*)', 'report_shortcut',
     '/report/edit', 'report_edit',
     '/notes', 'notes',
     '/files', 'files',
@@ -1279,6 +1288,7 @@ LANGS = {
             'cmd_scripts': 'scripts',
             'cmd_vacuum': 'vacuum',
             'cmd_go': 'go',
+            'cmd_shortcut': 'shortcut',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
@@ -2609,6 +2619,7 @@ def forms(first_blank=False, obj='form.code'):
         except:
             pass
     #
+    ret = [str(x).lower() for x in ret]
     ret.sort()
     return ret
     
@@ -2685,6 +2696,7 @@ def menugen():
         #
         formact =  [
                     ['run', _['cmd_run']],
+                    ['shortcut', _['cmd_shortcut']],
                 ]
         for af in aform1:
             if not canform(FORM_KEY_SECURITY_RUN, af):
@@ -2707,6 +2719,18 @@ def menugen():
                 f2, 
                 formact,
             ])
+        #
+        shortcut_form = r_shortcuts().get(SHORTCUT_TYPE_FORM)
+        if shortcut_form:
+            ret.append(
+                [
+                    '/form/run',
+                    'get',
+                    '',
+                    [], 
+                    [],
+                    shortcut_form,
+                ])            
     #
     if not isnosb() and sess.user:
         arep = reports(first_blank=True)
@@ -2714,6 +2738,7 @@ def menugen():
         #
         repact =  [
                     ['run', _['cmd_run']],
+                    ['shortcut', _['cmd_shortcut']],
                 ]
         for af in arep1:
             if not canreport(REPORT_KEY_SECURITY_RUN, af):
@@ -2736,6 +2761,18 @@ def menugen():
                 f3, 
                 repact,
             ])
+        #
+        shortcut_report = r_shortcuts().get(SHORTCUT_TYPE_REPORT)
+        if shortcut_report:
+            ret.append(
+                [
+                    '/report/run',
+                    'get',
+                    '',
+                    [], 
+                    [],
+                    shortcut_report,
+                ])                        
     #
     return ret
 
@@ -3960,6 +3997,92 @@ def scmd_build(data):
         return ret
     #
     return ret
+
+def shortcut(t, name):
+    ret = False
+    #
+    t = str(t).strip().lower()
+    name = str(name).strip().lower()
+    #
+    if not t in SHORTCUT_ALL:
+        return ret
+    #
+    if not validfname(name):
+        return ret
+    #
+    alls = []
+    if t == SHORTCUT_TYPE_FORM:
+        alls = forms()
+    elif t == SHORTCUT_TYPE_REPORT:
+        alls = reports()
+    if not name in alls:
+        return ret
+    #
+    q = 'my.shortcuts.%s.%s.%s' %(
+                                user(),
+                                name,
+                                t,
+                            )
+    allq = s_select(q)
+    #
+    if not allq:
+        try:
+            r = db.insert(FORM_TBL,
+                        a='my',
+                        b='shortcuts',
+                        c=user(),
+                        d=name,
+                        e=t
+                )
+            ret = True
+        except:
+            return ret
+    else:
+        try:
+            r = db.delete(FORM_TBL,
+                        where='a=$a and b=$b and c=$c and d=$d and e=$e',
+                        vars={
+                                'a': 'my',
+                                'b': 'shortcuts',
+                                'c': user(),
+                                'd': name,
+                                'e': t,
+                            }
+                )
+            ret = True
+        except:
+            return ret
+    #
+    return ret
+
+def r_shortcuts():
+    q = 'my.shortcuts.%s' %(user())
+    res = s_select(q)
+    #
+    sform = []
+    sreport = []
+    #
+    for i in res:
+        t = i.get('e')
+        n = i.get('d')
+        if not t or not n:
+            continue
+        #
+        if not isstr(t) or not isstr(n):
+            continue
+        #
+        n = n.strip().lower()
+        if t == SHORTCUT_TYPE_FORM:
+            sform.append(n)
+        elif t == SHORTCUT_TYPE_REPORT:
+            sreport.append(n)
+    #
+    ret = {
+            SHORTCUT_TYPE_FORM: sform,
+            SHORTCUT_TYPE_REPORT: sreport,
+            }
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -4077,22 +4200,30 @@ $for i in menugen():
     <td width='12%'>
     $i[2].capitalize()
     </td>
-    <td width='25%'>
-    $if i[0] == '/table/action':
-        $if data.has_key('table'):
-            $i[3].set_value(data['table'])
-    $elif i[0] == '/form/action':
-        $if data.has_key('form'):
-            $i[3].set_value(data['form'])
-    $elif i[0] == '/report/action':
-        $if data.has_key('report'):
-            $i[3].set_value(data['report'])
-    $i[3].render()
-    </td>
-    <td>
-    $for j in i[4]:
-        <input type='submit' name='$j[0]' value='$j[1]'>
-    </td>
+    $if len(i) == 6:
+        <td colspan='2'>
+        $if i[5]:
+            $for i5 in i[5]:
+                <a href='$i[0]/$i5'>$i5</a>&nbsp;
+        </td>
+    $else:
+        <td width='25%'>
+        $if i[0] == '/table/action':
+            $if data.has_key('table'):
+                $i[3].set_value(data['table'])
+        $elif i[0] == '/form/action':
+            $if data.has_key('form'):
+                $i[3].set_value(data['form'])
+        $elif i[0] == '/report/action':
+            $if data.has_key('report'):
+                $i[3].set_value(data['report'])
+        $if i[3]:
+            $i[3].render()
+        </td>
+        <td>
+        $for j in i[4]:
+            <input type='submit' name='$j[0]' value='$j[1]'>
+        </td>
     </tr>
     </table>
     </form>
@@ -5448,6 +5579,7 @@ GLBL = {
     'isblob'    : isblob,
     'pk_sym'    : PK_SYM,
     'user'      : user,
+    'shortcuts' : r_shortcuts,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -6690,6 +6822,7 @@ class form_action:
         form = input.form.strip()
         redir = (
             ('run', '/form/run/' + form),
+            ('shortcut', '/form/shortcut/' + form),
             ('edit', '/form/edit?form=' + form),
             ('create', '/form/edit?mode=' + MODE_INSERT),
         )
@@ -7162,6 +7295,7 @@ class report_action:
         report = input.report.strip()
         redir = (
             ('run', '/report/run/' + report),
+            ('shortcut', '/report/shortcut/' + report),
             ('edit', '/report/edit?report=' + report),
             ('create', '/report/edit?mode=' + MODE_INSERT),
         )
@@ -8906,6 +9040,62 @@ class vacuum:
         sess[SKV] = msg
         #
         raise web.seeother('/vacuum')
+
+
+class form_shortcut:
+    def GET(self, form):
+        start()
+        #
+        form = form.strip().lower()
+        if not form or not form in forms():
+            dflt()
+        #
+        if not canform(FORM_KEY_SECURITY_RUN, form):
+            dflt()
+        #
+        if not validfname(form):
+            dflt()
+        #
+        res = shortcut(SHORTCUT_TYPE_FORM, form)
+        #
+        data = {
+                }
+        content = ''
+        #
+        stop()
+        #
+        if not res:
+            dflt()
+        else:
+            raise web.seeother('/?form=%s' %(form))
+
+
+class report_shortcut:
+    def GET(self, report):
+        start()
+        #
+        report = report.strip().lower()
+        if not report or not report in reports():
+            dflt()
+        #
+        if not canreport(REPORT_KEY_SECURITY_RUN, report):
+            dflt()
+        #
+        if not validfname(report):
+            dflt()
+        #
+        res = shortcut(SHORTCUT_TYPE_REPORT, report)
+        #
+        data = {
+                }
+        content = ''
+        #
+        stop()
+        #
+        if not res:
+            dflt()
+        else:
+            raise web.seeother('/?report=%s' %(report))
         
 
 #----------------------------------------------------------------------#

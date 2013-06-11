@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation for version 0.83
+Documentation version 0.84
 
 
 .. contents:: 
@@ -337,6 +337,8 @@ Features
 - Database backup (admin) (Extended feature)
 
 - System configuration (admin) (Extended feature, new in v0.43)
+
+- Shortcut (form, report) (Extended feature, new in v0.84)
 
 - Human readable database size (GB, MB, KB, B)
 
