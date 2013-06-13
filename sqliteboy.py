@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.84'
+VERSION = '0.85'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -192,7 +192,7 @@ REPORT_REQ_DATA = (REPORT_KEY_DATA_KEY,)
 REPORT_REFERENCE_SQL_0 = 'a'
 REPORT_REFERENCE_SQL_1 = 'b'
 REPORT_MESSAGE_LEN = 3
-REPORT_MESSAGE_VAR_RESULT = '$result'
+REPORT_MESSAGE_VAR_RESULT = 'result'
 REPORT_HEADERS_CELL_LEN = 3
 REPORT_FOOTERS_CELL_LEN = 3
 REPORT_HEADERS_CELL_TYPES = [
@@ -342,6 +342,8 @@ SHORTCUT_ALL = [
                     SHORTCUT_TYPE_FORM,
                     SHORTCUT_TYPE_REPORT,
                 ]
+PRINT_DATA_KEY = 'output_printer'
+PRINT_DATA_VALUE = 1
 
 PYINSTALLER_SPEC = '''
 # $title $command
@@ -1288,6 +1290,7 @@ LANGS = {
             'cmd_scripts': 'scripts',
             'cmd_vacuum': 'vacuum',
             'cmd_go': 'go',
+            'cmd_go_print': 'go (print)',
             'cmd_shortcut': 'shortcut',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
@@ -4083,6 +4086,18 @@ def r_shortcuts():
             }
     #
     return ret
+
+def u_print(inp, data):
+    if not isinstance(data, dict):
+        return data
+    #
+    if not hasattr(inp, 'has_key'):
+        return data
+    #
+    if inp.has_key(PRINT_DATA_KEY):
+        data[PRINT_DATA_KEY] = PRINT_DATA_VALUE
+    #
+    return data
     
     
 #----------------------------------------------------------------------#
@@ -4106,47 +4121,82 @@ T_BASE = '''$def with (data, content)
 <link rel='SHORTCUT ICON' href='/favicon.ico'>
 <title>$title(data['title'], '')</title>
 <meta charset='utf-8'>
-<style>
-*
-{
-    font-family     : Courier;
-    font-size       : 12pt;
-}
-table
-{
-    border-collapse : collapse;
-    width           : 100%;
-}
-td
-{
-    border          : 1px solid grey;
-    padding         : 2px;
-}
-th
-{
-    background-color: #406080;
-    border          : 1px solid grey;
-    padding         : 2px;
-    color           : white;
-}
-th a
-{
-    color           : white;
-    text-decoration : none;
-}
-tr:nth-child(odd)
-{
-    background-color: #cccccc;
-}
-tr:nth-child(even)
-{
-    background-color: #eeeeee;
-}
-select
-{
-    width           : 95%;
-}
-</style>
+$if data.has_key(print_data_key):
+    <style>
+    *
+    {
+        font-family     : Courier;
+        font-size       : 12pt;
+    }
+    table
+    {
+        border-collapse : collapse;
+        width           : 100%;
+    }
+    td
+    {
+        border          : 1px solid grey;
+        padding         : 2px;
+    }
+    th
+    {
+        border          : 1px solid grey;
+        padding         : 2px;
+    }
+    select
+    {
+        width           : 95%;
+    }
+    .main_menu
+    {
+        display         : none;
+    }    
+    </style>    
+$else:    
+    <style>
+    *
+    {
+        font-family     : Courier;
+        font-size       : 12pt;
+    }
+    table
+    {
+        border-collapse : collapse;
+        width           : 100%;
+    }
+    td
+    {
+        border          : 1px solid grey;
+        padding         : 2px;
+    }
+    th
+    {
+        background-color: #406080;
+        border          : 1px solid grey;
+        padding         : 2px;
+        color           : white;
+    }
+    th a
+    {
+        color           : white;
+        text-decoration : none;
+    }
+    tr:nth-child(odd)
+    {
+        background-color: #cccccc;
+    }
+    tr:nth-child(even)
+    {
+        background-color: #eeeeee;
+    }
+    select
+    {
+        width           : 95%;
+    }
+    .main_menu
+    {
+    }
+    </style>
 <script>
 function toggle(src, dst)
 {
@@ -4160,6 +4210,7 @@ function toggle(src, dst)
 </head>
 <body>
 
+<div class='main_menu'>
 <table>
 <tr>
 <td>$title(data['title'])</td>
@@ -4230,6 +4281,7 @@ $for i in menugen():
 </td>
 </tr>
 </table>
+</div>
 
 <br>
 $if data['command'] == 'browse':
@@ -5580,6 +5632,8 @@ GLBL = {
     'pk_sym'    : PK_SYM,
     'user'      : user,
     'shortcuts' : r_shortcuts,
+    'print_data_key': PRINT_DATA_KEY,
+    'print_data_value': PRINT_DATA_VALUE,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -7465,6 +7519,7 @@ class report_run:
         input = ()
         action_button = (
                             ('report', _['cmd_go'], False, '', 'submit'),
+                            (PRINT_DATA_KEY, _['cmd_go_print'], False, '', 'submit'),
                         )
         ftitle = ''
         finfo = ''
@@ -7644,6 +7699,7 @@ class report_run:
                 raise web.seeother('/report/run/%s' %(report))
         #
         r_row_count = -1
+        r_report_result = -1
         #
         data = {
                 'title': '%s - %s' %(_['tt_report_run_result'], report), 
@@ -7670,13 +7726,16 @@ class report_run:
                 elif content > 0:
                     message2b = message2[2]
                 #
-                message3 = message2b.replace(REPORT_MESSAGE_VAR_RESULT, 
-                    str(content))
+                message2b = string.Template(message2b)
+                ocols[REPORT_MESSAGE_VAR_RESULT] = content
+                message3 = message2b.safe_substitute(ocols)                
             except:
                 pass
         else:
             content = content.list()
             r_row_count = len(content)
+            ocols[REPORT_MESSAGE_VAR_RESULT] = r_report_result
+        #
         data['result_message'] = message3
         #
         ocols[REPORT_RESULT_ROW_COUNT] = r_row_count
@@ -7848,6 +7907,8 @@ class report_run:
         #
         data['headers'] = pheaders2
         data['footers'] = pfooters2
+        #
+        data = u_print(input, data)
         #
         stop()
         #

@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation version 0.84
+Documentation version 0.85
 
 
 .. contents:: 
@@ -61,7 +61,8 @@ Why
   Reporting wizard also supports form field predefined values, default 
   value and constraint (checking before reporting query is executed). 
   Future version of reporting will support custom output format (PDF, 
-  CSV, etc).
+  CSV, etc). Printer friendly version of report result is supported 
+  in default output format (HTML). 
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
   calculator, configurable hosts allowed, database backup, system configuration, 
@@ -184,6 +185,9 @@ Features
   - As of v0.60, headers and footers are supported. If not defined, a 
     default one will be created. Plain text, SQL Query, and Image are 
     supported.  
+    
+  - As of v0.85, printer friendly version of report result is supported 
+    in default output format (HTML)
 
 - Files (Extended feature, new in v0.47)
 
@@ -1474,6 +1478,9 @@ Report Code Reference
 
   - First row: first column (message or ""), second column ("")
   
+- Printer friendly version of report result is supported in default 
+  output format (HTML) 
+
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -1537,6 +1544,10 @@ Report Code Reference
 |               |   actual SQL Query      |               |             |                          |
 |               |   result                |               |             |                          |
 |               |                         |               |             |                          |
+|               | - $<column> will be     |               |             |                          |
+|               |   replaced by user input|               |             |                          |
+|               |   value for that column |               |             |                          |
+|               |                         |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -1566,6 +1577,10 @@ Report Code Reference
 |               |   $result_row_count will|               |             |                          |
 |               |   be replaced by actual |               |             |                          |
 |               |   row count (or -1),    |               |             |                          |
+|               |   $result will          |               |             |                          |
+|               |   be replaced by sql    |               |             |                          |
+|               |   query result (integer/|               |             |                          |
+|               |   non-select, or -1),   |               |             |                          |
 |               |   $result_message will  |               |             |                          |
 |               |   be replaced by actual |               |             |                          |
 |               |   message (or "", for   |               |             |                          |
