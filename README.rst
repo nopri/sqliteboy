@@ -8,7 +8,7 @@ sqliteboy
     GPL
 
 
-Documentation version 0.85
+Documentation version 0.86
 
 
 .. contents:: 
@@ -17,7 +17,7 @@ Documentation version 0.85
 Screenshots And Wiki And Presentation
 ========================================================================
 
-- screenshot, possibly not up-to-date:  
+- screenshot, probably not up-to-date:  
   https://github.com/nopri/sqliteboy/wiki
 
 - Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  

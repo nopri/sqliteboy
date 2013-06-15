@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.85'
+VERSION = '0.86'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -57,6 +57,7 @@ DEFAULT_WIN_EXE = '%s.exe' %(NAME)
 DEFAULT_WIN_MD5 = '%s.md5' %(DEFAULT_WIN_EXE)
 DEFAULT_FAVICON = '%s.ico' %(NAME)
 DEFAULT_SPEC = '%s.spec' %(NAME)
+DEFAULT_WEBPY_STATIC = ['static']
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -344,6 +345,7 @@ SHORTCUT_ALL = [
                 ]
 PRINT_DATA_KEY = 'output_printer'
 PRINT_DATA_VALUE = 1
+IMPORT_ERROR_CODE = 255
 
 PYINSTALLER_SPEC = '''
 # $title $command
@@ -438,14 +440,12 @@ try:
 except ImportError:
    from md5 import md5
 
-import json
 import urllib
 import hashlib
 import base64
 
 import platform
 import struct
-import sqlite3
 
 import re
 
@@ -456,8 +456,27 @@ from HTMLParser import HTMLParser
 
 import calendar
 
-import web
-web.config.debug = False
+try:
+    import sqlite3    
+    
+    import json
+
+    import web
+    web.config.debug = False
+    
+except Exception, e:
+    lsep = os.linesep
+    emsg = '%s%s%s%s%s%s%s' %(
+                TITLE,
+                lsep,
+                APP_DESC,
+                lsep,
+                lsep,
+                str(e),
+                lsep
+            )
+    sys.stderr.write(emsg)
+    sys.exit(IMPORT_ERROR_CODE)
 
 
 #----------------------------------------------------------------------#
@@ -1296,6 +1315,7 @@ LANGS = {
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
             'cf_vacuum': 'confirm vacuum database',
+            'e_db_static': 'ERROR: database file must not be placed in static directory',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
             'e_access_forbidden': 'access forbidden',
             'e_connect': 'ERROR: unable to connect to',
@@ -4098,6 +4118,19 @@ def u_print(inp, data):
         data[PRINT_DATA_KEY] = PRINT_DATA_VALUE
     #
     return data
+
+def c_db_static(db):
+    ret = False
+    #
+    db = os.path.abspath(db)
+    dirn = os.path.dirname(db)
+    dirn = os.path.basename(dirn)
+    dirn = str(dirn).lower()
+    #
+    if dirn in DEFAULT_WEBPY_STATIC:
+        ret = True
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -9221,6 +9254,10 @@ if __name__ == '__main__':
     if scmd_ret:
         sys.exit(scmd_ret)
     #
+    if c_db_static(dbfile):
+        log(dbfile, stream=sys.stderr)
+        log(_['e_db_static'], stream=sys.stderr)
+        sys.exit(5)
     #
     try:
         db = web.database(
