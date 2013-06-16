@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.86'
+VERSION = '0.87'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -455,6 +455,8 @@ import cStringIO
 from HTMLParser import HTMLParser
 
 import calendar
+
+import copy
 
 try:
     import sqlite3    
@@ -1539,12 +1541,20 @@ def sqliteboy_time3(f):
         return ''
 SQLITE_UDF.append(('sqliteboy_time3', 1, sqliteboy_time3))
 
+def sqliteboy_time3a():
+    return sqliteboy_time3(sqliteboy_time())
+SQLITE_UDF.append(('sqliteboy_time3a', 0, sqliteboy_time3a))
+
 def sqliteboy_time4(f):
     try:
         return time.strftime(PYTIME_FORMAT, time.gmtime(f))
     except:
         return ''
 SQLITE_UDF.append(('sqliteboy_time4', 1, sqliteboy_time4))
+
+def sqliteboy_time4a():
+    return sqliteboy_time4(sqliteboy_time())
+SQLITE_UDF.append(('sqliteboy_time4a', 0, sqliteboy_time4a))
 
 def sqliteboy_time5(s1, s2, mode):
     s1 = str(s1)
@@ -3743,7 +3753,7 @@ def xparsescript(script):
         if not isinstance(tcont, dict):
             continue
         #
-        parsed = parseform(tcont, virtual=virtual_tables)
+        parsed = parseform(copy.deepcopy(tcont), virtual=virtual_tables)
         if not xreqparsed(parsed, FORM_REQ_X):
             continue
         #
@@ -3783,7 +3793,7 @@ def xparsescript(script):
         if not isinstance(tcont, dict):
             continue
         #
-        parsed = parsereport(tcont)
+        parsed = parsereport(copy.deepcopy(tcont))
         if not xreqparsed(parsed, REPORT_REQ_X):
             continue
         #

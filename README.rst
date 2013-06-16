@@ -6,9 +6,9 @@ sqliteboy
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
+    Version 0.87
 
 
-Documentation version 0.86
 
 
 .. contents:: 
@@ -487,6 +487,11 @@ User-defined Function
          -> 1970-01-01 07:00:01
          -> timezone is UTC+7 
 
+- sqliteboy_time3a()
+  ::
+  
+      alias for sqliteboy_time3(sqliteboy_time())
+
 - sqliteboy_time4(f)
   ::
   
@@ -497,6 +502,11 @@ User-defined Function
       example     :
          sqliteboy_time4(1)
          -> 1970-01-01 00:00:01
+
+- sqliteboy_time4a()
+  ::
+  
+      alias for sqliteboy_time4(sqliteboy_time())
 
 - sqliteboy_time5(s1, s2, mode)
   ::
