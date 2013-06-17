@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.87'
+VERSION = '0.88'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2906,11 +2906,14 @@ def reqform(form):
     #
     return True
 
-def fref(reference):
+def fref(reference, execute_sql=True):
     reference2 = 0
     if (type(reference) in [type(''), type(u'')]) and reference:#query
         reference2 = []
         try:
+            if not execute_sql:
+                reference = ''
+            #
             res = db.query(reference)
             for r in res:
                 reference2.append(
@@ -2933,7 +2936,7 @@ def fref(reference):
     #
     return reference2
     
-def fdef(default):
+def fdef(default, execute_sql=True):
     default2 = default
     if not default2:
         default2 = ''
@@ -2955,6 +2958,10 @@ def fdef(default):
                 defsq = ''
             #
             defq = 'select %s(%s) as f' %(deff, defsq)
+            #
+            if not execute_sql:
+                defq = ''
+            #
             defr = db.query(defq).list()
             if defr:
                 default2 = defr[0]['f']
@@ -2963,7 +2970,7 @@ def fdef(default):
     #
     return default2
     
-def parseform2(code, table):
+def parseform2(code, table, execute_sql=True):
     fsub = code
     if not type(fsub) == type([]):
         fsub = []
@@ -3014,14 +3021,14 @@ def parseform2(code, table):
                 if not dl: 
                     dl = dc
                 #
-                reference2 = fref(reference)
+                reference2 = fref(reference, execute_sql)
                 #
                 reference3 = None
                 if type(reference2) == type([]):
                     dcname = '%s.%s' %(fsub_table, dc)
                     reference3 = web.form.Dropdown(dcname, args=reference2)
                 #
-                default2 = fdef(default)
+                default2 = fdef(default, execute_sql)
                 #
                 if reference3:
                     reference3.set_value(default2)
@@ -3035,7 +3042,7 @@ def parseform2(code, table):
     #
     return fsub2
 
-def parseform(form, virtual={}):
+def parseform(form, virtual={}, execute_sql=True):
     fo = {}
     #
     if isstr(form):
@@ -3096,13 +3103,13 @@ def parseform(form, virtual={}):
                             if c.get('pk', 0) == 1:
                                 label = '%s%s' %(label, PK_SYM)
                     #
-                    reference2 = fref(reference)
+                    reference2 = fref(reference, execute_sql)
                     #
                     reference3 = None
                     if type(reference2) == type([]):
                         reference3 = web.form.Dropdown(col, args=reference2)
                     #
-                    default2 = fdef(default)
+                    default2 = fdef(default, execute_sql)
                     #
                     if reference3:
                         try:
@@ -3143,7 +3150,7 @@ def parseform(form, virtual={}):
                     )
     #
     fsub = fo.get(FORM_KEY_SUB, [])
-    fsub2 = parseform2(fsub, table)
+    fsub2 = parseform2(fsub, table, execute_sql)
     #
     message1 = fo.get(FORM_KEY_MESSAGE, [])  
     if not type(message1) == type([]):
@@ -3242,7 +3249,7 @@ def rheaders(data, cell_len, cell_types):
 def rfooters(data, cell_len, cell_types):
     return rheaders(data, cell_len, cell_types)
 
-def parsereport(report):
+def parsereport(report, execute_sql=True):
     fo = {}
     #
     if isstr(report):
@@ -3292,13 +3299,13 @@ def parsereport(report):
             constraint = fd.get(REPORT_KEY_DATA_CONSTRAINT, [])
             type1 = fd.get(REPORT_KEY_DATA_TYPE, '').lower().strip()
             #
-            reference2 = fref(reference)
+            reference2 = fref(reference, execute_sql)
             #
             reference3 = None
             if type(reference2) == type([]):
                 reference3 = web.form.Dropdown(key, args=reference2)
             #
-            default2 = fdef(default)
+            default2 = fdef(default, execute_sql)
             #
             if reference3:
                 try:
@@ -3753,7 +3760,7 @@ def xparsescript(script):
         if not isinstance(tcont, dict):
             continue
         #
-        parsed = parseform(copy.deepcopy(tcont), virtual=virtual_tables)
+        parsed = parseform(copy.deepcopy(tcont), virtual=virtual_tables, execute_sql=False)
         if not xreqparsed(parsed, FORM_REQ_X):
             continue
         #
@@ -3793,7 +3800,7 @@ def xparsescript(script):
         if not isinstance(tcont, dict):
             continue
         #
-        parsed = parsereport(copy.deepcopy(tcont))
+        parsed = parsereport(copy.deepcopy(tcont), execute_sql=False)
         if not xreqparsed(parsed, REPORT_REQ_X):
             continue
         #

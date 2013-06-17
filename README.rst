@@ -6,7 +6,7 @@ sqliteboy
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.87
+    Version 0.88
 
 
 
@@ -14,7 +14,7 @@ sqliteboy
 .. contents:: 
 
 
-Screenshots And Wiki And Presentation
+Links
 ========================================================================
 
 - screenshot, probably not up-to-date:  
@@ -31,6 +31,9 @@ Screenshots And Wiki And Presentation
 
 - SQLiteBoy Presentation (ppt format)
   http://tedut.com/sqliteboy.ppt
+  
+- Script: medical_record
+  http://tedut.com/sqliteboy-script-medical_record.json
   
 - More: https://github.com/nopri/sqliteboy/wiki/_pages
 
