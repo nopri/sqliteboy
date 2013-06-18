@@ -1,12 +1,12 @@
-sqliteboy
-========================================================================
+
 ::
 
+    SQLiteBoy
     Simple Web SQLite Manager/Form/Report Application
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.88
+    Version 0.89
 
 
 
@@ -14,31 +14,8 @@ sqliteboy
 .. contents:: 
 
 
-Links
-========================================================================
 
-- screenshot, probably not up-to-date:  
-  https://github.com/nopri/sqliteboy/wiki
-
-- Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  
-  https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
-  
-- Tutorial: simple medical record
-  https://github.com/nopri/sqliteboy/wiki/Tutorial-simple-medical-record
-
-- Tutorial: install sqliteboy on ACRyan Playon!HD Mini2 ACRPV73800
-  https://github.com/nopri/sqliteboy/wiki/Tutorial-install-sqliteboy-on-ACRyan-Playon!HD-Mini2-ACRPV73800
-
-- SQLiteBoy Presentation (ppt format)
-  http://tedut.com/sqliteboy.ppt
-  
-- Script: medical_record
-  http://tedut.com/sqliteboy-script-medical_record.json
-  
-- More: https://github.com/nopri/sqliteboy/wiki/_pages
-
-
-Why
+What Is SQLiteBoy
 ========================================================================
 
 - Easy to use, python and web.py based, Web SQLite Manager with 
@@ -75,13 +52,38 @@ Why
   the creation of tables (including addition of columns, for existing table), 
   forms or reports
   
-- I need simple form (data entry) and reporting solution (web-based) 
-
 - If you are using Windows, standalone / portable application is 
   available (single file executable). Run from Windows Explorer 
   (double-click), no command line needed. Can be run from USB Flash 
   Disk. Can be run by standard user.
   
+
+Links
+========================================================================
+
+- Standalone Windows Application:
+  http://tedut.com/sqliteboy.exe
+
+- screenshot, probably not up-to-date:  
+  https://github.com/nopri/sqliteboy/wiki
+
+- Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  
+  https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
+  
+- Tutorial: simple medical record:
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-simple-medical-record
+
+- Tutorial: install sqliteboy on ACRyan Playon!HD Mini2 ACRPV73800:
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-install-sqliteboy-on-ACRyan-Playon!HD-Mini2-ACRPV73800
+
+- SQLiteBoy Presentation (ppt format):
+  http://tedut.com/sqliteboy.ppt
+  
+- Script: medical_record:
+  http://tedut.com/sqliteboy-script-medical_record.json
+  
+- More: https://github.com/nopri/sqliteboy/wiki/_pages
+
 
 Features
 ========================================================================
@@ -279,7 +281,7 @@ Features
 
 - Drop table 
 
-- CSV export 
+- CSV export/import 
 
 - Copy table
 

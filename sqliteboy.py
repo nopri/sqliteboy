@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.88'
+VERSION = '0.89'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -85,6 +85,7 @@ SKT_M_RENAME = 'rename'
 SKT_M_DROP = 'drop'
 SKT_M_COPY = 'copy'
 SKT_M_EMPTY = 'empty'
+SKT_M_IMPORT = 'import'
 SKQ = 'query'
 SKV = 'vacuum'
 SK_CREATE = 'create'
@@ -330,6 +331,11 @@ EMPTY_EXCLUDE = [
                     DEFAULT_TABLE,
                     SEQUENCE_TABLE,
             ]            
+IMPORT_EXCLUDE = [
+                    FORM_TBL,
+                    DEFAULT_TABLE,
+                    SEQUENCE_TABLE,
+            ]            
 PRAGMA_FREELIST_COUNT = 'freelist_count'
 SERVER_COMMAND_SEPARATOR = '-'
 SERVER_COMMAND_ALL = {
@@ -493,7 +499,8 @@ URLS = (
     '/table/rename', 'table_rename',
     '/table/empty', 'table_empty',
     '/table/drop', 'table_drop',
-    '/table/csv', 'table_csv',
+    '/table/export/csv', 'table_export_csv',
+    '/table/import/csv', 'table_import_csv',
     '/table/copy', 'table_copy',
     '/table/create', 'table_create',
     '/query', 'query',
@@ -1265,6 +1272,7 @@ LANGS = {
             'tt_calculator': 'calculator',
             'tt_scripts': 'scripts',
             'tt_script': 'script',
+            'tt_import_csv': 'import',
             'th_error': 'ERROR',
             'th_ok': 'OK',
             'tt_copy': 'copy',
@@ -1275,7 +1283,8 @@ LANGS = {
             'cmd_rename': 'rename',
             'cmd_table_empty': 'empty',
             'cmd_table_drop': 'drop',
-            'cmd_export_csv': 'csv',
+            'cmd_export_csv': 'export',
+            'cmd_import_csv': 'import',
             'cmd_copy': 'copy',
             'cmd_table_create': 'create',
             'cmd_query': 'query',
@@ -1359,6 +1368,7 @@ LANGS = {
             'e_script_column_conflict': 'ERROR: table already exists and conflicted column(s) found',
             'e_script': 'ERROR: script run',
             'e_copy': 'ERROR: copy table',
+            'e_import_csv': 'ERROR: import csv',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -1379,6 +1389,7 @@ LANGS = {
             'o_copy': 'OK: copy table',
             'o_empty': 'OK: empty table',
             'o_vacuum': 'OK: vacuum database',
+            'o_import_csv': 'OK: import csv',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -1403,6 +1414,7 @@ LANGS = {
             'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error. Backup before running a script is recommended.',
             'h_copy': 'hint: copy content of source table to existing destination table (insert), only for identical column(s) (name and type)',
             'h_vacuum': 'hint: vacuum command will rebuild the entire database and may reduce the size of database file. Please make sure there is enough free space, at least twice the size of the original database file. This command may change the rowids of rows in any tables that do not have an explicit integer primary key column.',
+            'h_import_csv': 'hint: import CSV file (Excel dialect) into table (insert). First row will be read as column(s).',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -2716,6 +2728,7 @@ def menugen():
                     ['table_empty', _['cmd_table_empty']],
                     ['table_drop', _['cmd_table_drop']],
                     ['export_csv', _['cmd_export_csv']],
+                    ['import_csv', _['cmd_import_csv']],
                     ['copy', _['cmd_copy']],
                     ['table_create', _['cmd_table_create']],
                     ['query', _['cmd_query']],
@@ -5658,6 +5671,36 @@ $elif data['command'] == 'vacuum':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'import':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for h in data['hidden']:
+        <input type='hidden' name='$h[0]' value='$h[1]'>
+    <table>
+    <tr>
+    <td>
+        <input type='file' name='f'>
+    </td>
+    </tr>
+    <tr>
+    <td>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+    </td>
+    </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -5746,7 +5789,8 @@ class table_action:
             ('rename', '/table/rename?table=' + table),
             ('table_empty', '/table/empty?table=' + table),
             ('table_drop', '/table/drop?table=' + table),
-            ('export_csv', '/table/csv?table=' + table),
+            ('export_csv', '/table/export/csv?table=' + table),
+            ('import_csv', '/table/import/csv?table=' + table),
             ('copy', '/table/copy?table=' + table),
             ('table_create', '/table/create'),
             ('query', '/query'),
@@ -6224,7 +6268,7 @@ class table_drop:
         dflt()        
 
 
-class table_csv:
+class table_export_csv:
     def GET(self):
         table = web.input(table='').table
         if not table in tables(): 
@@ -8935,6 +8979,9 @@ class table_copy:
         if target == table:
             dflt()
         #
+        if target in COPY_TARGET_EXCLUDE:
+            dflt()
+        #        
         oldtables = tables()
         oldtables = [x.lower() for x in oldtables]
         if not table in oldtables or not target in oldtables:
@@ -9002,6 +9049,7 @@ class table_copy:
             msg.append(
                         [
                             _['o_copy'],
+                            target,
                             _['x_row'],
                             str(r),
                         ]
@@ -9207,6 +9255,118 @@ class report_shortcut:
             dflt()
         else:
             raise web.seeother('/?report=%s' %(report))
+
+
+class table_import_csv:
+    def GET(self):
+        start()
+        #
+        table = web.input(table='').table
+        table = str(table)
+        table = table.strip().lower()
+        #
+        if not table in tables(): 
+            dflt()
+        #
+        if table in IMPORT_EXCLUDE:
+            dflt()
+        #
+        data = {
+            'title': '%s - %s' %(table, _['tt_import_csv']),
+            'command': 'import',
+            'table': table,
+            'hidden': (('table', table),),
+            'action_enctype': 'multipart/form-data',
+            'action_url': '/table/import/csv',
+            'action_method': 'post',
+            'action_button': (
+                                ('import', _['cmd_import_csv'], False, '', 'submit'),
+                            ),
+            'message': smsg(table, SKT_M_IMPORT),
+            'hint': _['h_import_csv'],
+        }
+        #
+        content = ''
+        #
+        stop()
+        return T(data, content)
+        
+    def POST(self):
+        inp = web.input(table='', f={})
+        table = inp.table.strip().lower()
+        f = inp.f
+        #
+        redir = '/table/import/csv?table=%s' %(table)        
+        #
+        if not table in tables(): 
+            dflt()
+        #
+        if table in IMPORT_EXCLUDE:
+            dflt()
+        #
+        try:
+            if not f.value.strip():
+                raise Exception
+        except:
+            raise web.seeother(redir)
+        #
+        cols = columns(table, True)
+        if not cols:
+            dflt()
+        #
+        msg = []
+        counter = 0
+        #
+        x1 = ','.join(cols)
+        c2 = ['$'+x for x in cols]
+        x2 = ','.join(c2)
+        #
+        t = db.transaction()
+        try:
+            reader = csv.DictReader(f.file, fieldnames=cols)
+            for i in reader:
+                if reader.line_num == 1: #header:
+                    continue
+                #
+                i2 = {}
+                for k in i.keys():
+                    if isstr(k):
+                        i2[k.lower()] = i.get(k)
+                #
+                v = {}
+                for k in cols:
+                    v[k] = i2.get(k)
+                #
+                q = 'insert into %s(%s) values(%s)' %(
+                        table,
+                        x1,
+                        x2
+                    )
+                r = db.query(q, vars=v)
+                if r:
+                    counter += 1
+            #
+            t.commit()
+            #
+            msg = [
+                    [
+                        _['o_import_csv'],
+                        _['x_row'],
+                        str(counter),
+                    ]
+                ]            
+        except Exception, e:
+            t.rollback()
+            msg = [
+                    [
+                        _['e_import_csv'],
+                        str(e),
+                    ]
+                ]            
+        #
+        sess.table[table][SKT_M_IMPORT] = msg
+        #
+        raise web.seeother(redir)        
         
 
 #----------------------------------------------------------------------#
