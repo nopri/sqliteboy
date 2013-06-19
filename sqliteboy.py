@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.89'
+VERSION = '0.90'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -58,6 +58,7 @@ DEFAULT_WIN_MD5 = '%s.md5' %(DEFAULT_WIN_EXE)
 DEFAULT_FAVICON = '%s.ico' %(NAME)
 DEFAULT_SPEC = '%s.spec' %(NAME)
 DEFAULT_WEBPY_STATIC = ['static']
+DEFAULT_QUERY_EXPORT = 'query.csv'
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -1288,6 +1289,7 @@ LANGS = {
             'cmd_copy': 'copy',
             'cmd_table_create': 'create',
             'cmd_query': 'query',
+            'cmd_query_export_csv': 'query (export)',
             'cmd_query_src': 'query',
             'cmd_delete_selected': 'delete selected',
             'cmd_edit_selected': 'edit selected',
@@ -6335,6 +6337,7 @@ class query:
             'action_method': 'post',
             'action_button': (
                                 ('query', _['cmd_query'], False, '', 'submit'),
+                                ('query_export', _['cmd_query_export_csv'], False, '', 'submit'),
                             ),
             'hint': _['h_query'],
             'message': smsgq('query'),
@@ -6351,23 +6354,56 @@ class query:
             raise web.seeother('/query')
         #
         start()
+        qerr = 0
         try:
             msg = db.query(q)
             err = _['th_ok']
             multi = 1
-            if type(msg) == type(1):
+            if isinstance(msg, (int, long, float)):
                 multi = 0 
         except Exception, e:
             msg = e.message
             err = _['th_error']
             multi = 0
+            qerr = 1
         #
         stop()
         t = rt()
         #
         prepsess()
-        sess.query = [q, err, multi, msg, t]
-        raise web.seeother('/query')
+        #
+        if web.input().has_key('query_export') and not qerr and multi:
+            fout = cStringIO.StringIO()
+            writer = csv.writer(fout)
+            #
+            keys = []
+            counter = 0
+            for i in msg:
+                if counter == 0:
+                    keys = i.keys()
+                    writer.writerow(keys)
+                #
+                line = []
+                for k in keys:
+                    v = i.get(k)
+                    if isblob(v):
+                        v = base64.b64encode(v)
+                    line.append(v)
+                #
+                writer.writerow(line)
+                counter += 1
+            #
+            content = fout.getvalue()
+            #
+            disposition = 'attachment; filename=' + '%s' %(DEFAULT_QUERY_EXPORT)
+            web.header('Content-Type', CSV_CTYPE)
+            web.header('Content-Disposition', disposition)
+            return content            
+        else:
+            sess.query = [q, err, multi, msg, t]
+            raise web.seeother('/query')
+        #
+        dflt()
 
 
 class table_create:
@@ -9323,7 +9359,7 @@ class table_import_csv:
         #
         t = db.transaction()
         try:
-            reader = csv.DictReader(f.file, fieldnames=cols)
+            reader = csv.DictReader(f.file)
             for i in reader:
                 if reader.line_num == 1: #header:
                     continue
@@ -9335,7 +9371,16 @@ class table_import_csv:
                 #
                 v = {}
                 for k in cols:
+                    if not i2.has_key(k):
+                        continue
                     v[k] = i2.get(k)
+                #
+                if not v.keys():
+                    continue
+                #
+                for k in cols:
+                    if not v.has_key(k):
+                        v[k] = None
                 #
                 q = 'insert into %s(%s) values(%s)' %(
                         table,

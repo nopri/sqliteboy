@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.89
+    Version 0.90
 
 
 
@@ -301,6 +301,8 @@ Features
   - Free form SQL Query
 
   - Automatically view query output (as integer or table)
+  
+  - Export query result to CSV (if applicable)
 
 - Vacuum
 
