@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.91'
+VERSION = '0.92'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -4324,7 +4324,10 @@ def pr_style(default, x):
 def pr_all(execute_sql=True):
     ret = []
     #
-    res = s_select('user.account..%s' %(user()))
+    if isnosb():
+        res = []
+    else:
+        res = s_select('user.account..%s' %(user()))
     try:
         if len(res) != 1:
             raise Exception
