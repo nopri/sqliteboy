@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.90'
+VERSION = '0.91'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -101,6 +101,7 @@ SK_HOSTS = 'hosts'
 SK_SYSTEM = 'system'
 SK_SCRIPTS = 'scripts'
 SK_SCRIPT = 'script'
+SK_PROFILE = 'profile'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
 SKR_CREATE = 'report.create'
@@ -416,6 +417,146 @@ except:
 
 '''
 
+PROFILE_STYLE_PRINT = '''
+                                *
+                                {
+                                    font-family     : Courier;
+                                    font-size       : 12pt;
+                                }
+                                table
+                                {
+                                    border-collapse : collapse;
+                                    width           : 100%;
+                                }
+                                td
+                                {
+                                    border          : 1px solid grey;
+                                    padding         : 2px;
+                                }
+                                th
+                                {
+                                    border          : 1px solid grey;
+                                    padding         : 2px;
+                                }
+                                select
+                                {
+                                    width           : 95%;
+                                }
+                                .main_menu
+                                {
+                                    display         : none;
+                                }                                
+                    '''
+PROFILE_ITEM_STYLE = [
+                        [
+                            PROFILE_STYLE_PRINT,
+                            '''
+                                *
+                                {
+                                    font-family     : Courier;
+                                    font-size       : 12pt;
+                                }
+                                table
+                                {
+                                    border-collapse : collapse;
+                                    width           : 100%;
+                                }
+                                td
+                                {
+                                    border          : 1px solid grey;
+                                    padding         : 2px;
+                                }
+                                th
+                                {
+                                    background-color: #406080;
+                                    border          : 1px solid grey;
+                                    padding         : 2px;
+                                    color           : white;
+                                }
+                                th a
+                                {
+                                    color           : white;
+                                    text-decoration : none;
+                                }
+                                tr:nth-child(odd)
+                                {
+                                    background-color: #cccccc;
+                                }
+                                tr:nth-child(even)
+                                {
+                                    background-color: #eeeeee;
+                                }
+                                select
+                                {
+                                    width           : 95%;
+                                }
+                                .main_menu
+                                {
+                                }                            
+                            '''
+                        ],
+                        [
+                            PROFILE_STYLE_PRINT,
+                            '''
+                                *
+                                {
+                                    font-family     : Courier;
+                                    font-size       : 12pt;
+                                }
+                                table
+                                {
+                                    border-collapse : collapse;
+                                    width           : 100%;
+                                }
+                                td
+                                {
+                                    border          : 1px solid #ecc765;
+                                    padding         : 2px;
+                                }
+                                th
+                                {
+                                    background-color: #e19000;
+                                    border          : 1px solid #ecc765;
+                                    padding         : 2px;
+                                    color           : white;
+                                }
+                                th a
+                                {
+                                    color           : white;
+                                    text-decoration : none;
+                                }
+                                tr:nth-child(odd)
+                                {
+                                    background-color: #f3e2c1;
+                                }
+                                tr:nth-child(even)
+                                {
+                                    background-color: #ffffff;
+                                }
+                                select
+                                {
+                                    width           : 95%;
+                                }
+                                .main_menu
+                                {
+                                }                            
+                            '''
+                        ],
+                    ]
+PROFILE_ALL = [
+                [
+                    'style',
+                    'x_style',
+                    [
+                        [0, 'A'],
+                        [1, 'B'],
+                    ],
+                    0,
+                    'pr_style',
+                    int,
+                ],
+            ]
+
 
 #----------------------------------------------------------------------#
 # MODULE                                                               #
@@ -535,6 +676,7 @@ URLS = (
     '/calculator', 'calculator',
     '/admin/scripts', 'admin_scripts',
     '/admin/script/(.*)', 'admin_script',
+    '/profile', 'profile',
     )
 
 app = None
@@ -1245,6 +1387,7 @@ LANGS = {
             'x_sqliteboy_x_update': 'updating %s table, please wait...' %(FORM_TBL),
             'x_please_wait': 'please wait...',
             'x_server_command_mode': 'server command mode',
+            'x_style': 'style',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1278,6 +1421,7 @@ LANGS = {
             'th_ok': 'OK',
             'tt_copy': 'copy',
             'tt_vacuum': 'vacuum',
+            'tt_profile': 'profile',
             'cmd_browse': 'browse',
             'cmd_insert': 'insert',
             'cmd_column': 'column',
@@ -1324,6 +1468,7 @@ LANGS = {
             'cmd_go': 'go',
             'cmd_go_print': 'go (print)',
             'cmd_shortcut': 'shortcut',
+            'cmd_profile': 'profile',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
@@ -1371,6 +1516,7 @@ LANGS = {
             'e_script': 'ERROR: script run',
             'e_copy': 'ERROR: copy table',
             'e_import_csv': 'ERROR: import csv',
+            'e_profile': 'ERROR: could not update profile',
             'o_insert': 'OK: insert into table',
             'o_edit': 'OK: update table',
             'o_column': 'OK: alter table (column)',
@@ -1392,6 +1538,7 @@ LANGS = {
             'o_empty': 'OK: empty table',
             'o_vacuum': 'OK: vacuum database',
             'o_import_csv': 'OK: import csv',
+            'o_profile': 'OK: profile updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -1417,6 +1564,7 @@ LANGS = {
             'h_copy': 'hint: copy content of source table to existing destination table (insert), only for identical column(s) (name and type)',
             'h_vacuum': 'hint: vacuum command will rebuild the entire database and may reduce the size of database file. Please make sure there is enough free space, at least twice the size of the original database file. This command may change the rowids of rows in any tables that do not have an explicit integer primary key column.',
             'h_import_csv': 'hint: import CSV file (Excel dialect) into table (insert). First row will be read as column(s).',
+            'h_profile': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob, please use browse menu if applicable]',
         },
@@ -2428,6 +2576,7 @@ def proc_nosb(handle):
             path.startswith('/pages') or \
             path.startswith('/page') or \
             path.startswith('/calculator') or \
+            path.startswith('/profile') or \
             path.startswith('/admin'):
                 raise web.seeother('/')
     #
@@ -4163,6 +4312,67 @@ def c_db_static(db):
         ret = True
     #
     return ret
+
+def pr_style(default, x):
+    ret = PROFILE_ITEM_STYLE[default]
+    #
+    if x < len(PROFILE_ITEM_STYLE):
+        ret = PROFILE_ITEM_STYLE[x]
+    #
+    return ret
+
+def pr_all(execute_sql=True):
+    ret = []
+    #
+    res = s_select('user.account..%s' %(user()))
+    try:
+        if len(res) != 1:
+            raise Exception
+        #
+        res = res[0]
+        g0 = res.get('g')
+        g = json.loads(g0)
+    except:
+        g = {}
+    #
+    for i in PROFILE_ALL:
+        name = i[0]
+        label = i[1]
+        value = fref(i[2], execute_sql)
+        func = i[5]
+        #
+        dflt = i[3]
+        if g.has_key(name):
+            dflt = g.get(name)
+        dflt = func(dflt)
+        #
+        check = globals().get(i[4])
+        rcheck = check(i[3], dflt)
+        #
+        value2 = None
+        if isinstance(value, list):
+            value2 = web.form.Dropdown(name, args=value)
+        if value2:
+            try:
+                value2.set_value(dflt)
+            except:
+                pass        
+        #
+        data = [name, label, value, dflt, rcheck, value2, func]
+        ret.append(data)
+    #
+    return ret
+
+def pr_get(name):
+    ret = None
+    #
+    res = pr_all(False)
+    for i in res:
+        if i[0] == name:
+            ret = i[4]
+            break
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -4180,6 +4390,7 @@ SQLITE_UDF.append(('sqliteboy_x_user', 0, sqliteboy_x_user))
 # TEMPLATE                                                             #
 #----------------------------------------------------------------------#
 T_BASE = '''$def with (data, content)
+$ pr_get_style = pr_get('style')
 <!DOCTYPE html>
 <html>
 <head>
@@ -4188,79 +4399,11 @@ T_BASE = '''$def with (data, content)
 <meta charset='utf-8'>
 $if data.has_key(print_data_key):
     <style>
-    *
-    {
-        font-family     : Courier;
-        font-size       : 12pt;
-    }
-    table
-    {
-        border-collapse : collapse;
-        width           : 100%;
-    }
-    td
-    {
-        border          : 1px solid grey;
-        padding         : 2px;
-    }
-    th
-    {
-        border          : 1px solid grey;
-        padding         : 2px;
-    }
-    select
-    {
-        width           : 95%;
-    }
-    .main_menu
-    {
-        display         : none;
-    }    
+    $pr_get_style[0]
     </style>    
 $else:    
     <style>
-    *
-    {
-        font-family     : Courier;
-        font-size       : 12pt;
-    }
-    table
-    {
-        border-collapse : collapse;
-        width           : 100%;
-    }
-    td
-    {
-        border          : 1px solid grey;
-        padding         : 2px;
-    }
-    th
-    {
-        background-color: #406080;
-        border          : 1px solid grey;
-        padding         : 2px;
-        color           : white;
-    }
-    th a
-    {
-        color           : white;
-        text-decoration : none;
-    }
-    tr:nth-child(odd)
-    {
-        background-color: #cccccc;
-    }
-    tr:nth-child(even)
-    {
-        background-color: #eeeeee;
-    }
-    select
-    {
-        width           : 95%;
-    }
-    .main_menu
-    {
-    }
+    $pr_get_style[1]    
     </style>
 <script>
 function toggle(src, dst)
@@ -4282,6 +4425,7 @@ function toggle(src, dst)
 <td align='right' width='25%'>
 $if user():
     $user() <a href='/password'>$_['cmd_password']</a>
+    <a href='/profile'>$_['cmd_profile']</a> 
     <a href='/files'>$_['cmd_files']</a> 
     <a href='/notes'>$_['cmd_notes']</a> 
     <a href='/pages'>$_['cmd_pages']</a> 
@@ -5703,6 +5847,47 @@ $elif data['command'] == 'import':
     </tr>
     </table>
     </form>
+$elif data['command'] == 'profile':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    $ pro0 = content[0]
+    <table>
+    $for i in pro0:
+        $ i0 = i[0]
+        $ i1 = i[1]
+        $ i2 = i[2]
+        $ i3 = i[3]
+        $ i5 = i[5]
+        <tr>
+            <td width='30%'>
+                $_[i1]
+            </td>
+            <td>
+                $if i5:
+                    $i5.render()
+                $else:
+                    <input type='text' name='$i0' value='$i3'>
+            </td>
+        </tr>
+    </table>
+    <br>
+    </form>
 $else:
     $:content
 </body>
@@ -5729,6 +5914,7 @@ GLBL = {
     'shortcuts' : r_shortcuts,
     'print_data_key': PRINT_DATA_KEY,
     'print_data_value': PRINT_DATA_VALUE,
+    'pr_get'    : pr_get,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -9412,6 +9598,75 @@ class table_import_csv:
         sess.table[table][SKT_M_IMPORT] = msg
         #
         raise web.seeother(redir)        
+
+
+class profile:
+    def GET(self):
+        start()
+        #
+        data = {
+            'title': '%s' %(_['tt_profile']),
+            'command': 'profile',
+            'action_enctype': 'multipart/form-data',
+            'action_url': '/profile',
+            'action_method': 'post',
+            'action_button': (
+                                ('save', _['cmd_save'], False, '', 'submit'),
+                            ),
+            'message': smsgq(SK_PROFILE),
+            'hint': _['h_profile'],
+        }
+        #
+        content = [
+                    pr_all(),
+                ]
+        #
+        stop()
+        return T(data, content)
+        
+    def POST(self):
+        inp = web.input()
+        #
+        msg = []
+        p = {}
+        #
+        a = pr_all()
+        for i in a:
+            name = i[0]
+            func = i[6]
+            if inp.has_key(name):
+                value = inp.get(name)  
+                try:
+                    value = func(value)
+                except:
+                    pass
+                p[name] = value
+        #
+        try:
+            p = json.dumps(p)
+            r = db.update(FORM_TBL, g=p, 
+                    where='a=$a and b=$b and d=$d',
+                    vars={
+                        'a': 'user',
+                        'b': 'account',
+                        'd': user(),
+                    }
+                )
+            msg = [
+                    [
+                        _['o_profile'],
+                    ]
+                ]                        
+        except:
+            msg = [
+                    [
+                        _['e_profile'],
+                    ]
+                ]                        
+        #
+        sess[SK_PROFILE] = msg
+        #
+        raise web.seeother('/profile')
         
 
 #----------------------------------------------------------------------#
