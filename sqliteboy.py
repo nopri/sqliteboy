@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.92'
+VERSION = '0.93'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -242,6 +242,7 @@ SYSTEM_CONFIG = (
                         'files.max_number..%s' %(FILES_MAX_NUMBER),
                         FILES_MAX_NUMBER,
                         int,
+                        0,
                     ),
                     (
                         'x_files',
@@ -250,6 +251,7 @@ SYSTEM_CONFIG = (
                         'files.max_size..%s' %(FILES_MAX_SIZE),
                         FILES_MAX_SIZE,
                         int,
+                        0,
                     ),
                     (
                         'x_scripts',
@@ -258,6 +260,16 @@ SYSTEM_CONFIG = (
                         'scripts.max_size..%s' %(SCRIPTS_MAX_SIZE),
                         SCRIPTS_MAX_SIZE,
                         int,
+                        0,
+                    ),
+                    (
+                        'x_users',
+                        'x_user_defined_profile',
+                        'users.profile.',
+                        'users.profile..%s' %(''),
+                        '',
+                        str,
+                        1,
                     ),
                 )
 NOTFOUND_CHECK = [
@@ -554,8 +566,13 @@ PROFILE_ALL = [
                     0,
                     'pr_style',
                     int,
+                    0,
                 ],
             ]
+PROFILE_USER_DEFINED_LEN = 4
+PROFILE_USER_DEFINED_HANDLER = 'pr_user'
+PROFILE_USER_DEFINED_TYPE = str
+PROFILE_USER_DEFINED_LEVEL = 1
 
 
 #----------------------------------------------------------------------#
@@ -1335,6 +1352,7 @@ LANGS = {
             'x_python_version': 'Python version',
             'x_extended_features': 'extended features',
             'x_user': 'user',
+            'x_users': 'users',
             'x_delete': 'delete',
             'x_password': 'password',
             'x_admin': 'admin',
@@ -1388,6 +1406,7 @@ LANGS = {
             'x_please_wait': 'please wait...',
             'x_server_command_mode': 'server command mode',
             'x_style': 'style',
+            'x_user_defined_profile': 'user-defined profile', 
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -4313,6 +4332,13 @@ def c_db_static(db):
     #
     return ret
 
+def pr_user(default, x):
+    ret = default
+    if x:
+        ret = x
+    #
+    return ret
+
 def pr_style(default, x):
     ret = PROFILE_ITEM_STYLE[default]
     #
@@ -4321,13 +4347,18 @@ def pr_style(default, x):
     #
     return ret
 
-def pr_all(execute_sql=True):
+def pr_all(execute_sql=True, usr=None):
     ret = []
     #
     if isnosb():
         res = []
+        upr = ''
     else:
-        res = s_select('user.account..%s' %(user()))
+        if usr is None:
+            usr = user()
+        res = s_select('user.account..%s' %(usr))
+        upr = r_system('users.profile.')
+    #
     try:
         if len(res) != 1:
             raise Exception
@@ -4338,7 +4369,42 @@ def pr_all(execute_sql=True):
     except:
         g = {}
     #
-    for i in PROFILE_ALL:
+    upr1 = []
+    try:
+        upr1 = json.loads(upr)
+        if not isinstance(upr1, list):
+            raise Exception
+    except:
+        pass
+    #
+    upr2 = []
+    spr = [x[0] for x in PROFILE_ALL]
+    for i in upr1:
+        if not isinstance(i, list):
+            continue
+        if not len(i) == PROFILE_USER_DEFINED_LEN:
+            continue
+        #
+        name = str(i[0]).strip().lower()
+        label = str(i[1])
+        if not validfname(name):
+            continue
+        if name in spr:
+            continue
+        #
+        data = [ 
+                    name, 
+                    label, 
+                    i[2], 
+                    i[3], 
+                    PROFILE_USER_DEFINED_HANDLER,
+                    PROFILE_USER_DEFINED_TYPE,
+                    PROFILE_USER_DEFINED_LEVEL,
+                ]
+        upr2.append(data)
+    #
+    pall = PROFILE_ALL + upr2
+    for i in pall:
         name = i[0]
         label = i[1]
         value = fref(i[2], execute_sql)
@@ -4352,6 +4418,22 @@ def pr_all(execute_sql=True):
         check = globals().get(i[4])
         rcheck = check(i[3], dflt)
         #
+        level = i[6]
+        if level == PROFILE_USER_DEFINED_LEVEL:
+            if isinstance(value, list):
+                uvalue = []
+                for v in value:
+                    if isinstance(v, list):
+                        uv = []
+                        for iv in v:
+                            if iv is not None: 
+                                ivv = PROFILE_USER_DEFINED_TYPE(iv)
+                            else:
+                                ivv = ''
+                            uv.append(ivv)
+                        uvalue.append(uv)
+                value = uvalue
+        #
         value2 = None
         if isinstance(value, list):
             value2 = web.form.Dropdown(name, args=value)
@@ -4361,21 +4443,24 @@ def pr_all(execute_sql=True):
             except:
                 pass        
         #
-        data = [name, label, value, dflt, rcheck, value2, func]
+        data = [name, label, value, dflt, rcheck, value2, func, level]
         ret.append(data)
     #
     return ret
 
-def pr_get(name):
+def pr_get0(name, usr):
     ret = None
     #
-    res = pr_all(False)
+    res = pr_all(False, usr)
     for i in res:
         if i[0] == name:
             ret = i[4]
             break
     #
     return ret
+    
+def pr_get(name):
+    return pr_get0(name, user())
     
     
 #----------------------------------------------------------------------#
@@ -4387,6 +4472,27 @@ def sqliteboy_x_user():
     else:
         return user()
 SQLITE_UDF.append(('sqliteboy_x_user', 0, sqliteboy_x_user))
+
+def sqliteboy_x_profile(u, field):
+    ret = ''
+    #
+    u = str(u)
+    field = str(field)
+    #
+    if isnosb(): 
+        return ret
+    #
+    try:
+        ret = pr_get0(field, u)
+    except:
+        return ret
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_x_profile', 2, sqliteboy_x_profile))
+
+def sqliteboy_x_my(field):
+    return sqliteboy_x_profile(sqliteboy_x_user(), field)
+SQLITE_UDF.append(('sqliteboy_x_my', 1, sqliteboy_x_my))
 
 
 #----------------------------------------------------------------------#
@@ -5430,7 +5536,10 @@ $elif data['command'] == 'system':
             $u[1]
         </td>
         <td>
-            <input type='text' name='$u[2]' value="$u[3]">
+            $if u[4] == 1:
+                <textarea name='$u[2]' cols='40' rows='10'>$u[3]</textarea>
+            $else:
+                <input type='text' name='$u[2]' value="$u[3]">
         </td>
         </tr>
     </table>
@@ -5877,9 +5986,13 @@ $elif data['command'] == 'profile':
         $ i2 = i[2]
         $ i3 = i[3]
         $ i5 = i[5]
+        $ i7 = i[7]
         <tr>
             <td width='30%'>
-                $_[i1]
+                $if i7 == 0:
+                    $_[i1]
+                $else:
+                    $pk_sym $i1
             </td>
             <td>
                 $if i5:
@@ -5889,6 +6002,8 @@ $elif data['command'] == 'profile':
             </td>
         </tr>
     </table>
+    <br>
+    <i>$pk_sym $_['x_user_defined_profile']</i>
     <br>
     </form>
 $else:
@@ -7120,6 +7235,7 @@ class admin_system:
                     _[s[1]],
                     s[2],
                     s_check(s[2], s[3]).get('d'),
+                    s[6],
                 ]
             content.append(c)
         #

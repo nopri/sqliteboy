@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.92
+    Version 0.93
 
 
 
@@ -46,7 +46,8 @@ What Is SQLiteBoy
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
   calculator, configurable hosts allowed, database backup, system configuration, 
-  Scripts and others are available as extended features
+  Scripts, profile (with user-defined profile support) 
+  and others are available as extended features
   
   sqliteboy script (simple JSON syntax, single file) can be used to automate 
   the creation of tables (including addition of columns, for existing table), 
@@ -234,6 +235,25 @@ Features
   - Simple syntax (JSON) in single file
 
   - Please read SCRIPT CODE REFERENCE section (below)
+
+- Profile (Extended feature, new in v0.91)
+
+  - User profile
+  
+    - style
+  
+  - User-defined profile is also supported. Using this feature, 
+    custom field(s) in user profile can be added. This is useful, 
+    for example, in multi-company environment. 
+    
+    - system configuration
+    
+    - Simple syntax (JSON)
+    
+    - Predefined values (field options) from SQL Query or Python list
+      (as in form or report, is also supported)
+    
+    - Please read USER-DEFINED PROFILE REFERENCE section (below)
 
 - Browse table
 
@@ -1047,6 +1067,25 @@ User-defined Function
   
     return value  : 
         user name (if extended feature is enabled, or '')
+        
+- sqliteboy_x_profile(u, field)
+  ::
+  
+      read custom field in user-defined profile for user u
+      Please read USER-DEFINED PROFILE REFERENCE section (below)
+      
+      argument    :
+         u (user)
+         field (custom field)
+
+      return value: 
+        field value (if extended feature is enabled and field is set,
+        or '')
+        
+- sqliteboy_x_my(field)
+  ::
+  
+      alias for sqliteboy_x_profile(sqliteboy_x_user(), field)
     
 
 Form Code Reference
@@ -2137,6 +2176,73 @@ Script Code Reference
                         ]
                     ]
     }
+
+
+User-defined Profile Reference
+========================================================================
+
+- Custom field(s) in user profile can be added. This is useful, 
+  for example, in multi-company environment. 
+    
+- System configuration
+
+- Must be valid JSON syntax (json.org)
+
+- String must be double-quoted (between " and ")
+
+- No trailling comma in list
+
+- Python list
+
+- Each member in list, must be list of 4 members:
+  
+  - field name (underscore and alphanumeric only)
+  
+  - field label
+  
+  - reference (please refer to reference in FORM CODE REFERENCE
+    or REPORT CODE REFERENCE)
+    
+  - default or initial value
+  
+- Field(s) in user-defined profile will always be saved as str. 
+  Conversion might be needed. 
+
+- In Form/Report/Query, user-defined profile can be read using 
+  sqliteboy_x_profile or sqliteboy_x_my function
+  
+- Example:
+::
+
+    [
+      [
+         "company",
+         "Company",
+         "select id as a, name as b from company",
+         0
+      ],
+      [
+         "sqliteboy",
+         "Happy SQLiteBoy user?",
+         [ [0,"no :("], [1,"yes :)"] ],
+         1
+      ],
+      [
+         "signature",
+         "Signature",
+         0,
+         ""
+      ]
+    ]
+
+- Example using sqliteboy_x_profile / sqliteboy_x_my function:
+::
+
+    select sqliteboy_x_my('company')
+    
+    select sqliteboy_x_profile('admin', 'company')
+
+    select sqliteboy_as_integer(sqliteboy_x_profile('admin', 'company'))
 
 
 Donate
