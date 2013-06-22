@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.93
+    Version 0.94
 
 
 
@@ -323,6 +323,10 @@ Features
   - Automatically view query output (as integer or table)
   
   - Export query result to CSV (if applicable)
+  
+  - User-defined variable is also supported (max per user: 3). 
+    Please use the following functions: sqliteboy_var_set, 
+    sqliteboy_var_get, sqliteboy_var_del.
 
 - Vacuum
 
@@ -1061,6 +1065,63 @@ User-defined Function
   
     return value  : 
         http user agent (for example: web browser)
+
+- sqliteboy_var_set(name, value)
+  ::
+  
+      user-defined variable: set
+      (max per user apply)
+      argument    :
+         name (variable name, underscore and alphanumeric only, not case-sensitive)
+         value (value)
+
+      return value: 
+        1 (ok) or 0 
+
+      example     : 
+        sqliteboy_var_set('a', 1000)
+        -> 1
+        
+        sqliteboy_var_set('b', 'hello')
+        -> 1
+
+      tips        :
+        to free some space, please use sqliteboy_var_del function below,
+        setting to empty string or 0 does not delete the variable        
+
+- sqliteboy_var_get(name)
+  ::
+  
+      user-defined variable: get
+      argument    :
+         name (variable name, underscore and alphanumeric only, not case-sensitive)
+
+      return value: 
+        value of variable or ''
+
+      example     : 
+        sqliteboy_var_get('a')
+        -> 1000
+        
+        sqliteboy_var_get('b')
+        -> hello 
+        
+- sqliteboy_var_del(name)
+  ::
+  
+      user-defined variable: delete
+      argument    :
+         name (variable name, underscore and alphanumeric only, not case-sensitive)
+
+      return value: 
+        1 (ok) or 0 
+
+      example     : 
+        sqliteboy_var_del('a')
+        -> 1
+        
+        sqliteboy_var_del('b')
+        -> 1
 
 - sqliteboy_x_user()
   ::

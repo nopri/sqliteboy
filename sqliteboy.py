@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.93'
+VERSION = '0.94'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -59,6 +59,7 @@ DEFAULT_FAVICON = '%s.ico' %(NAME)
 DEFAULT_SPEC = '%s.spec' %(NAME)
 DEFAULT_WEBPY_STATIC = ['static']
 DEFAULT_QUERY_EXPORT = 'query.csv'
+DEFAULT_VAR_MAX = 3
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -573,6 +574,7 @@ PROFILE_USER_DEFINED_LEN = 4
 PROFILE_USER_DEFINED_HANDLER = 'pr_user'
 PROFILE_USER_DEFINED_TYPE = str
 PROFILE_USER_DEFINED_LEVEL = 1
+ENV_VAR_MAX = DEFAULT_VAR_MAX
 
 
 #----------------------------------------------------------------------#
@@ -711,6 +713,7 @@ rowid = '_%s___%s___%s___%s_' %(
 #
 sess = None
 sess_init = {
+        'var': {},
         'table': {},
         'user': '',
         'admin': 0,
@@ -2355,6 +2358,21 @@ SQLITE_UDF.append(('sqliteboy_http_remote_addr', 0, sqliteboy_http_remote_addr))
 def sqliteboy_http_user_agent():
     return web.ctx.env.get('HTTP_USER_AGENT', '')
 SQLITE_UDF.append(('sqliteboy_http_user_agent', 0, sqliteboy_http_user_agent))
+
+def sqliteboy_var_set(name, value):
+    name = str(name)
+    return v_set(name, value)
+SQLITE_UDF.append(('sqliteboy_var_set', 2, sqliteboy_var_set))
+
+def sqliteboy_var_get(name):
+    name = str(name)
+    return v_get(name)
+SQLITE_UDF.append(('sqliteboy_var_get', 1, sqliteboy_var_get))
+
+def sqliteboy_var_del(name):
+    name = str(name)
+    return v_del(name)
+SQLITE_UDF.append(('sqliteboy_var_del', 1, sqliteboy_var_del))
 
 
 #----------------------------------------------------------------------#
@@ -4461,6 +4479,67 @@ def pr_get0(name, usr):
     
 def pr_get(name):
     return pr_get0(name, user())
+
+def v_set(name, value):
+    ret = 0
+    #
+    if not isstr(name):
+        return ret
+    name = name.strip().lower()
+    if not name:
+        return ret
+    if not validfname(name):
+        return ret
+    #
+    u = user()
+    #
+    if not sess.var.has_key(u):
+        sess.var[u] = {}
+    if not isinstance(sess.var.get(u), dict):
+        sess.var[u] = {}
+    #
+    su = sess.var.get(u)
+    ku = []
+    try:
+        ku = su.keys()
+    except:
+        pass
+    #
+    lku = len(ku)
+    if name in ku:
+        lku -= 1
+    if lku >= ENV_VAR_MAX:
+        return ret
+    #
+    su[name] = value
+    ret = 1
+    #
+    return ret
+    
+def v_get(name):
+    ret = ''
+    #
+    try:
+        u = user()
+        name = name.strip().lower()
+        ret = sess.var.get(u).get(name)
+    except:
+        pass
+    #
+    return ret
+    
+def v_del(name):
+    ret = 0
+    #
+    try:
+        u = user()
+        name = name.strip().lower()
+        del sess.var.get(u)[name]
+        ret = 1
+    except:
+        pass
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -6968,6 +7047,7 @@ class login:
 
 class logout:
     def GET(self):
+        sess.var = {}
         sess.user = ''
         sess.admin = 0
         dflt()
