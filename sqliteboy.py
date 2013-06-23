@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.94'
+VERSION = '0.95'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -553,6 +553,17 @@ PROFILE_ITEM_STYLE = [
                                 .main_menu
                                 {
                                 }                            
+                                input, select, textarea
+                                {
+                                    background-color: #ffffff;
+                                    color           : #884400;
+                                    border          : 1px solid #ecc765;
+                                    margin          : 2px;
+                                }
+                                a
+                                {
+                                    color           : #884400;                                
+                                }
                             '''
                         ],
                     ]
@@ -564,7 +575,7 @@ PROFILE_ALL = [
                         [0, 'A'],
                         [1, 'B'],
                     ],
-                    0,
+                    1,
                     'pr_style',
                     int,
                     0,
@@ -4396,6 +4407,7 @@ def pr_all(execute_sql=True, usr=None):
         pass
     #
     upr2 = []
+    upr2a = []
     spr = [x[0] for x in PROFILE_ALL]
     for i in upr1:
         if not isinstance(i, list):
@@ -4409,6 +4421,8 @@ def pr_all(execute_sql=True, usr=None):
             continue
         if name in spr:
             continue
+        if name in upr2a:
+            continue
         #
         data = [ 
                     name, 
@@ -4420,6 +4434,7 @@ def pr_all(execute_sql=True, usr=None):
                     PROFILE_USER_DEFINED_LEVEL,
                 ]
         upr2.append(data)
+        upr2a.append(name)
     #
     pall = PROFILE_ALL + upr2
     for i in pall:
