@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.95'
+VERSION = '0.96'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -313,6 +313,7 @@ SCRIPT_KEY_LICENSE = 'license'
 SCRIPT_KEY_TABLES = 'tables'
 SCRIPT_KEY_FORMS = 'forms'
 SCRIPT_KEY_REPORTS = 'reports'
+SCRIPT_KEY_PROFILES = 'profiles'
 SCRIPT_REQ = (
                 SCRIPT_KEY_NAME,
                 SCRIPT_KEY_TABLES,
@@ -443,12 +444,12 @@ PROFILE_STYLE_PRINT = '''
                                 }
                                 td
                                 {
-                                    border          : 1px solid grey;
+                                    border          : 1px solid #000000;
                                     padding         : 2px;
                                 }
                                 th
                                 {
-                                    border          : 1px solid grey;
+                                    border          : 1px solid #000000;
                                     padding         : 2px;
                                 }
                                 select
@@ -476,19 +477,19 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 td
                                 {
-                                    border          : 1px solid grey;
+                                    border          : 1px solid #808080;
                                     padding         : 2px;
                                 }
                                 th
                                 {
                                     background-color: #406080;
-                                    border          : 1px solid grey;
+                                    border          : 1px solid #808080;
                                     padding         : 2px;
-                                    color           : white;
+                                    color           : #ffffff;
                                 }
                                 th a
                                 {
-                                    color           : white;
+                                    color           : #ffffff;
                                     text-decoration : none;
                                 }
                                 tr:nth-child(odd)
@@ -497,7 +498,7 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 tr:nth-child(even)
                                 {
-                                    background-color: #eeeeee;
+                                    background-color: #ffffff;
                                 }
                                 select
                                 {
@@ -506,6 +507,10 @@ PROFILE_ITEM_STYLE = [
                                 .main_menu
                                 {
                                 }                            
+                                a
+                                {
+                                    color           : #406080;                                
+                                }
                             '''
                         ],
                         [
@@ -523,24 +528,24 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 td
                                 {
-                                    border          : 1px solid #ecc765;
+                                    border          : 1px solid #ffcc66;
                                     padding         : 2px;
                                 }
                                 th
                                 {
-                                    background-color: #e19000;
-                                    border          : 1px solid #ecc765;
+                                    background-color: #996600;
+                                    border          : 1px solid #ffcc66;
                                     padding         : 2px;
-                                    color           : white;
+                                    color           : #ffffff;
                                 }
                                 th a
                                 {
-                                    color           : white;
+                                    color           : #ffffff;
                                     text-decoration : none;
                                 }
                                 tr:nth-child(odd)
                                 {
-                                    background-color: #f3e2c1;
+                                    background-color: #f3e3c3;
                                 }
                                 tr:nth-child(even)
                                 {
@@ -556,13 +561,13 @@ PROFILE_ITEM_STYLE = [
                                 input, select, textarea
                                 {
                                     background-color: #ffffff;
-                                    color           : #884400;
-                                    border          : 1px solid #ecc765;
+                                    color           : #996600;
+                                    border          : 1px solid #ffcc66;
                                     margin          : 2px;
                                 }
                                 a
                                 {
-                                    color           : #884400;                                
+                                    color           : #996600;                                
                                 }
                             '''
                         ],
@@ -1421,6 +1426,7 @@ LANGS = {
             'x_server_command_mode': 'server command mode',
             'x_style': 'style',
             'x_user_defined_profile': 'user-defined profile', 
+            'x_profile': 'profile',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1572,6 +1578,7 @@ LANGS = {
             'o_vacuum': 'OK: vacuum database',
             'o_import_csv': 'OK: import csv',
             'o_profile': 'OK: profile updated',
+            'o_profile_set': 'OK: profile set',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -4031,6 +4038,24 @@ def xparsescript(script):
         tcode2.append(ttemp)
     ret[SCRIPT_KEY_REPORTS] = tcode2            
     #
+    tcode = e.get(SCRIPT_KEY_PROFILES, [])
+    if not isinstance(tcode, list):
+        tcode = []
+    tcode2 = []
+    for tt in tcode:
+        if not isinstance(tt, list):
+            continue
+        if len(tt) != PROFILE_USER_DEFINED_LEN:
+            continue
+        if not isstr(tt[0]):
+            continue
+        if not validfname(tt[0]):
+            continue
+        #
+        ttemp = tt
+        tcode2.append(ttemp)
+    ret[SCRIPT_KEY_PROFILES] = tcode2
+    #
     for k in e.keys():
         if not ret.has_key(k):
             ret[k] = e.get(k)
@@ -4404,7 +4429,7 @@ def pr_all(execute_sql=True, usr=None):
         if not isinstance(upr1, list):
             raise Exception
     except:
-        pass
+        upr1 = []
     #
     upr2 = []
     upr2a = []
@@ -5881,7 +5906,7 @@ $elif data['command'] == 'script':
     </tr>
     
     $ table_detail = data.get('table_detail', {})
-    $ allx = [ ['tables', _['x_table'], data['table_info']], ['forms', _['x_form'], data['form_info']],  ['reports', _['x_report'], data['report_info']] ]
+    $ allx = [ ['tables', _['x_table'], data['table_info']], ['forms', _['x_form'], data['form_info']],  ['reports', _['x_report'], data['report_info']], ['profiles', _['x_profile'], data['profile_info']] ]
     $for x in allx:
         $ k = x[0]
         $ t = x[1]
@@ -9102,6 +9127,13 @@ class admin_script:
         except:
             pass
         #
+        profile_info = []
+        try:
+            profile_info0 = content.get(SCRIPT_KEY_PROFILES)
+            profile_info = [x[0] for x in profile_info0 if validfname(x[0])]
+        except:
+            pass
+        #
         ecode = str(scode.get('e', ''))
         #
         data = {
@@ -9138,6 +9170,8 @@ class admin_script:
                                 SCRIPT_REPORT_OK: _['th_ok'],
                                 SCRIPT_REPORT_EXISTS: _['e_report_edit_exists'],
                             },                            
+                'profile_info': {
+                            },
                 'table_detail': table_detail,
                 'run': run,
                 'code': ecode,
@@ -9313,6 +9347,28 @@ class admin_script:
                                     ]
                         )
                         newreports.append(tname.lower())
+            #
+            sprofiles = content.get(SCRIPT_KEY_PROFILES)
+            juprofiles = r_system('users.profile.')
+            try:
+                try:
+                    uprofiles = json.loads(juprofiles)
+                except:
+                    uprofiles = []
+                nprofiles = uprofiles + sprofiles
+                jnprofiles = json.dumps(nprofiles, indent=JSON_INDENT)
+                r = s_save('users.profile..%s' %(jnprofiles))
+                if r:
+                    for i in sprofiles:
+                        msg.append(
+                                    [
+                                        _['o_profile_set'],
+                                        i[0],
+                                    ]
+                        )
+                
+            except:
+                pass
             #
             db.update(FORM_TBL, where='rowid=$script', 
                 f=sqliteboy_time3(sqliteboy_time()),

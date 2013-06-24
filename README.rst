@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.95
+    Version 0.96
 
 
 
@@ -227,7 +227,7 @@ Features
 
   - Simple script, to automate the creation of tables
     (including addition of columns, for existing table), 
-    forms or reports 
+    forms, reports or user-defined profiles
     
   - Solution can be deployed in form of script, that can be uploaded
     and run by admin 
@@ -2235,7 +2235,28 @@ Script Code Reference
                                            }
                             }
                         ]
-                    ]
+                    ],
+        "profiles": [
+                      [
+                         "company",
+                         "Company",
+                         "select id as a, name as b from company",
+                         0
+                      ],
+                      [
+                         "sqliteboy",
+                         "Happy SQLiteBoy user?",
+                         [ [0,"no :("], [1,"yes :)"] ],
+                         1
+                      ],
+                      [
+                         "signature",
+                         "Signature",
+                         0,
+                         ""
+                      ]
+                    ]    
+                        
     }
 
 
