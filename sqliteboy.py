@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.96'
+VERSION = '0.97'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -46,6 +46,7 @@ DEFAULT_LANG = 'default'
 DEFAULT_TABLE = 'sqlite_master'
 DEFAULT_LIMIT = 50
 DEFAULT_T_BASE = '%s.html' %(NAME)
+DEFAULT_PY_HANDLER = '%s_user' %(NAME)
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
@@ -606,6 +607,9 @@ else:
     CURDIR = os.path.dirname(__file__)
     CWDIR = CURDIR
     SCURDIR = os.getcwd()
+
+if not CWDIR in sys.path:
+    sys.path.append(CWDIR)
 
 import time
 import decimal
@@ -4578,6 +4582,24 @@ def v_del(name):
         ret = 1
     except:
         pass
+    #
+    return ret
+
+def py_handler(name):
+    ret = None
+    #
+    m = None
+    #
+    try:
+        m = __import__(DEFAULT_PY_HANDLER)
+    except:
+        return ret
+    #
+    if m:
+        if hasattr(m, name):
+            res = getattr(m, name)
+            if callable(res):
+                ret = res
     #
     return ret
     

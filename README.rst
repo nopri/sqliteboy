@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.96
+    Version 0.97
 
 
 
@@ -51,7 +51,7 @@ What Is SQLiteBoy
   
   sqliteboy script (simple JSON syntax, single file) can be used to automate 
   the creation of tables (including addition of columns, for existing table), 
-  forms or reports
+  forms, reports or user-defined profiles
   
 - If you are using Windows, standalone / portable application is 
   available (single file executable). Run from Windows Explorer 
