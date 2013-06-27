@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.97'
+VERSION = '0.98'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -47,6 +47,8 @@ DEFAULT_TABLE = 'sqlite_master'
 DEFAULT_LIMIT = 50
 DEFAULT_T_BASE = '%s.html' %(NAME)
 DEFAULT_PY_HANDLER = '%s_user' %(NAME)
+DEFAULT_PY_FORM = 'form_'
+DEFAULT_PY_REPORT = 'report_'
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
@@ -168,6 +170,7 @@ FORM_ONSAVE_SQL_RET = 'onsave'
 FORM_SUB_ROWS_DEFAULT = [5, 1]#rows, required rows
 FORM_MESSAGE_LEN = 3
 FORM_MESSAGE_VAR_RESULT = 'result'
+FORM_MESSAGE_VAR_PYTHON_HANDLER = 'python_handler'
 FORM_INSERT_DEFAULT = 1
 #
 REPORT_KEY_DATA_TYPES = ['integer']
@@ -608,8 +611,9 @@ else:
     CWDIR = CURDIR
     SCURDIR = os.getcwd()
 
-if not CWDIR in sys.path:
-    sys.path.append(CWDIR)
+for i in [CWDIR, SCURDIR]:
+    if not i in sys.path:
+        sys.path.append(i)
 
 import time
 import decimal
@@ -4585,6 +4589,27 @@ def v_del(name):
     #
     return ret
 
+def py_o(name, func, prefix):
+    ret = ''
+    #
+    if not isstr(name) or not isstr(prefix):
+        return ret
+    if not callable(func):
+        return ret
+    #
+    name = name.strip()
+    if not name in func():
+        return ret
+    #
+    ret = '%s%s' %(prefix, name)
+    return ret
+    
+def py_f(name):
+    return py_o(name, forms, DEFAULT_PY_FORM)
+
+def py_r(name):
+    return py_o(name, reports, DEFAULT_PY_REPORT)
+
 def py_handler(name):
     ret = None
     #
@@ -4634,6 +4659,13 @@ SQLITE_UDF.append(('sqliteboy_x_profile', 2, sqliteboy_x_profile))
 def sqliteboy_x_my(field):
     return sqliteboy_x_profile(sqliteboy_x_user(), field)
 SQLITE_UDF.append(('sqliteboy_x_my', 1, sqliteboy_x_my))
+
+
+#----------------------------------------------------------------------#
+# PYTHON HANDLER                                                       #
+#----------------------------------------------------------------------#
+PY_HANDLER_DATA = {
+                }
 
 
 #----------------------------------------------------------------------#
@@ -7747,6 +7779,27 @@ class form_run:
                             if fsql.strip():
                                 db.query(fsql, vars=ocols)
                 #
+                #python handler
+                try:
+                    py_func = py_handler(py_f(form))
+                    f_python_handler = py_func(
+                                            user(), 
+                                            db, 
+                                            pform, 
+                                            [
+                                                table,
+                                                ocols,
+                                                fsub_table,
+                                                fsub_all2,
+                                                fsub_ref,
+                                            ],
+                                            PY_HANDLER_DATA
+                                        )
+                    if not isinstance(f_python_handler, int):
+                        raise Exception
+                except:
+                    f_python_handler = -1
+                #
                 #custom message
                 message3 = _['o_form_run']
                 if message2 and len(message2) == FORM_MESSAGE_LEN:
@@ -7761,6 +7814,7 @@ class form_run:
                     #
                     message2b = string.Template(message2b)
                     ocols[FORM_MESSAGE_VAR_RESULT] = str(form_res)
+                    ocols[FORM_MESSAGE_VAR_PYTHON_HANDLER] = str(f_python_handler)
                     message3 = message2b.safe_substitute(ocols)
                 #
                 sess[SKF_RUN] = [ [message3] ]
