@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.98
+    Version 0.99
 
 
 
@@ -43,6 +43,10 @@ What Is SQLiteBoy
   Future version of reporting will support custom output format (PDF, 
   CSV, etc). Printer friendly version of report result is supported 
   in default output format (HTML). 
+
+  Form supports python handler, which will be automatically called, if 
+  provided. Python handler eases the integration with external system
+  (for example: ERP system).
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
   calculator, configurable hosts allowed, database backup, system configuration, 
@@ -158,6 +162,11 @@ Features
     table(s), using additional SQL query statement(s). By default, 
     form/subform save will insert new row(s) into table(s).  
   
+  - As of v0.98, form supports python handler, which will be automatically 
+    called, if provided. Python handler eases the integration with external 
+    system (for example: ERP system). Please read PYTHON HANDLER REFERENCE 
+    section.
+    
 - Report Support (Extended feature, new in v0.16)
 
   - Simple reporting (and data entry)
@@ -1190,6 +1199,8 @@ Form Code Reference
   to zero/negative value will also set last insert rowid/query result 
   to same value as insert value. 
 
+- Please also read PYTHON HANDLER REFERENCE section
+
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -1259,6 +1270,12 @@ Form Code Reference
 |               |   function call result  |               |             |                          |
 |               |   (after insert to main |               |             |                          |
 |               |   table)                |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $python_handler       |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   return value of python|               |             |                          |
+|               |   handler (if provided, |               |             |                          |
+|               |   default: -1)          |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | sql2          | additional sql query    | list          | optional    |                          |
@@ -2325,6 +2342,47 @@ User-defined Profile Reference
     select sqliteboy_x_profile('admin', 'company')
 
     select sqliteboy_as_integer(sqliteboy_x_profile('admin', 'company'))
+
+
+Python Handler Reference
+========================================================================
+
+- Availability:
+  
+  - Form 
+  
+- All handlers must be put in sqliteboy_user.py, in current working 
+  directory. 
+  
+- Form:
+
+  - Only one handler is allowed for each form. If provided, it will
+    be called, automatically. 
+  
+  - function name: form_<form_name>. Please rename this function, if you
+    need to temporarily disable python handler for that form. 
+  
+  - function arguments:
+  
+    - user: current user (str)
+    
+    - db: database connection object (web.py database object)
+    
+    - parsed: parsed form data (list)
+    
+    - form_data: list of user input (list)
+    
+    - data: additional data (helper functions, UDFs, modules, etc) (dict)
+    
+  - Function *must* return an integer. To get this value, developer can use 
+    $python_handler in custom form message. If there is exception, -1 will
+    be assigned to $python_handler. 
+    
+  - Please note that python handler is an additional action, called at 
+    the end. It will not replace the default/built-in form handler. 
+    
+  - Integration with external system, for example, can be done by reading
+    user input value from SQLiteBoy, and writing to external system
 
 
 Donate

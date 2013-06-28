@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.98'
+VERSION = '0.99'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -49,6 +49,7 @@ DEFAULT_T_BASE = '%s.html' %(NAME)
 DEFAULT_PY_HANDLER = '%s_user' %(NAME)
 DEFAULT_PY_FORM = 'form_'
 DEFAULT_PY_REPORT = 'report_'
+DEFAULT_PY_EXCLUDE = []
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
@@ -4617,6 +4618,7 @@ def py_handler(name):
     #
     try:
         m = __import__(DEFAULT_PY_HANDLER)
+        reload(m)
     except:
         return ret
     #
@@ -4664,7 +4666,18 @@ SQLITE_UDF.append(('sqliteboy_x_my', 1, sqliteboy_x_my))
 #----------------------------------------------------------------------#
 # PYTHON HANDLER                                                       #
 #----------------------------------------------------------------------#
+py_handler_udf = {}
+for i in SQLITE_UDF:
+    py_handler_udf[ i[0] ] = i[2]
+#
+py_handler_modules = {}
+for i in sys.modules.keys():
+    if not i in DEFAULT_PY_EXCLUDE:
+        py_handler_modules[i] = sys.modules.get(i)
+#
 PY_HANDLER_DATA = {
+                    'udf': py_handler_udf,
+                    'modules': py_handler_modules,
                 }
 
 
