@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '0.99'
+VERSION = '1.00'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -8337,7 +8337,20 @@ class report_run:
             raise web.seeother('/report/run/%s' %(report))
         else:
             try:
-                rreport = db.query(rquery, vars=ocols)
+                #python handler or sql query
+                py_func = py_handler(py_r(report))
+                if py_func:
+                    rreport = py_func(
+                                        user(), 
+                                        db, 
+                                        preport, 
+                                        [
+                                            ocols,
+                                        ],
+                                        PY_HANDLER_DATA
+                                    )
+                else:
+                    rreport = db.query(rquery, vars=ocols)
             except Exception, e:
                 sess[SKR_RUN] = [ [_['e_report_select_general'], str(e)] ]
                 raise web.seeother('/report/run/%s' %(report))
@@ -8362,6 +8375,7 @@ class report_run:
         message3 = ''
         message2b = ''
         if xtable == False:
+            ocols[REPORT_MESSAGE_VAR_RESULT] = content
             try:
                 if content < 0:
                     message2b = message2[0]
@@ -8371,12 +8385,14 @@ class report_run:
                     message2b = message2[2]
                 #
                 message2b = string.Template(message2b)
-                ocols[REPORT_MESSAGE_VAR_RESULT] = content
                 message3 = message2b.safe_substitute(ocols)                
             except:
                 pass
         else:
-            content = content.list()
+            try:
+                content = content.list()
+            except:
+                pass
             r_row_count = len(content)
             ocols[REPORT_MESSAGE_VAR_RESULT] = r_report_result
         #

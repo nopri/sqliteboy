@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 0.99
+    Version 1.00
 
 
 
@@ -44,7 +44,7 @@ What Is SQLiteBoy
   CSV, etc). Printer friendly version of report result is supported 
   in default output format (HTML). 
 
-  Form supports python handler, which will be automatically called, if 
+  Form and Report support python handler, which will be automatically called, if 
   provided. Python handler eases the integration with external system
   (for example: ERP system).
 
@@ -203,6 +203,11 @@ Features
     
   - As of v0.85, printer friendly version of report result is supported 
     in default output format (HTML)
+
+  - As of v1.00, report supports python handler, which will be automatically 
+    called, if provided. Python handler eases the integration with external 
+    system (for example: ERP system). Please read PYTHON HANDLER REFERENCE 
+    section.
 
 - Files (Extended feature, new in v0.47)
 
@@ -2351,6 +2356,8 @@ Python Handler Reference
   
   - Form 
   
+  - Report
+  
 - All handlers must be put in sqliteboy_user.py, in current working 
   directory. 
   
@@ -2370,7 +2377,7 @@ Python Handler Reference
     
     - parsed: parsed form data (list)
     
-    - form_data: list of user input (list)
+    - user_data: list of user input (list)
     
     - data: additional data (helper functions, UDFs, modules, etc) (dict)
     
@@ -2383,6 +2390,35 @@ Python Handler Reference
     
   - Integration with external system, for example, can be done by reading
     user input value from SQLiteBoy, and writing to external system
+
+- Report:
+
+  - Only one handler is allowed for each report. If provided, it will
+    be called, automatically. 
+  
+  - function name: report_<report_name>. Please rename this function, if you
+    need to temporarily disable python handler for that report. 
+  
+  - function arguments:
+  
+    - user: current user (str)
+    
+    - db: database connection object (web.py database object)
+    
+    - parsed: parsed report data (list)
+    
+    - user_data: list of user input (list)
+    
+    - data: additional data (helper functions, UDFs, modules, etc) (dict)
+    
+  - Function may return an integer, list of dict or web.py database query
+    result 
+    
+  - Please note that python handler is a replacement to the sql query.
+    Return value of function will be used as report result.
+    
+  - Integration with external system, for example, can be done by reading
+    from external system
 
 
 Donate
