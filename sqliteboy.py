@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.00'
+VERSION = '1.01'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -649,6 +649,8 @@ from HTMLParser import HTMLParser
 import calendar
 
 import copy
+
+import xmlrpclib
 
 try:
     import sqlite3    
@@ -8393,7 +8395,10 @@ class report_run:
                 content = content.list()
             except:
                 pass
-            r_row_count = len(content)
+            try:
+                r_row_count = len(content)
+            except:
+                pass
             ocols[REPORT_MESSAGE_VAR_RESULT] = r_report_result
         #
         data['result_message'] = message3
