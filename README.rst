@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.02
+    Version 1.03
 
 
 
@@ -46,7 +46,9 @@ What Is SQLiteBoy
 
   Form and Report support python handler, which will be automatically called, if 
   provided. Python handler eases the integration with external system
-  (for example: ERP system).
+  (for example: ERP system). Python handler also could be useful in, 
+  for example, complex database operation, reading from/writing to 
+  external devices, etc.
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
   calculator, configurable hosts allowed, database backup, system configuration, 
@@ -80,6 +82,15 @@ Links
 
 - Tutorial: install sqliteboy on ACRyan Playon!HD Mini2 ACRPV73800:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-install-sqliteboy-on-ACRyan-Playon!HD-Mini2-ACRPV73800
+
+- Tutorial: Using sqliteboy udf in python handler: 
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-using-sqliteboy-udf-in-python-handler
+
+- Tutorial: Create a new partner in OpenERP:
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-create-a-new-partner-in-openerp
+
+- Tutorial: Search partners in OpenERP: 
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-search-partners-in-openerp
 
 - SQLiteBoy Presentation (ppt format):
   http://tedut.com/sqliteboy.ppt
@@ -2351,6 +2362,11 @@ User-defined Profile Reference
 
 Python Handler Reference
 ========================================================================
+
+- Python handler eases the integration with external system
+  (for example: ERP system). Python handler also could be useful in, 
+  for example, complex database operation, reading from/writing to 
+  external devices, etc.
 
 - Availability:
   

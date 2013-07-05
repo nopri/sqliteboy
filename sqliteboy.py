@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.02'
+VERSION = '1.03'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -106,6 +106,7 @@ SK_SYSTEM = 'system'
 SK_SCRIPTS = 'scripts'
 SK_SCRIPT = 'script'
 SK_PROFILE = 'profile'
+SK_SCHEMA = 'schema'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
 SKR_CREATE = 'report.create'
@@ -686,6 +687,7 @@ URLS = (
     '/table/drop', 'table_drop',
     '/table/export/csv', 'table_export_csv',
     '/table/import/csv', 'table_import_csv',
+    '/table/schema', 'table_schema',
     '/table/copy', 'table_copy',
     '/table/create', 'table_create',
     '/query', 'query',
@@ -1435,6 +1437,7 @@ LANGS = {
             'x_style': 'style',
             'x_user_defined_profile': 'user-defined profile', 
             'x_profile': 'profile',
+            'x_create_table_schema': 'create table based on this schema',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1469,6 +1472,7 @@ LANGS = {
             'tt_copy': 'copy',
             'tt_vacuum': 'vacuum',
             'tt_profile': 'profile',
+            'tt_schema': 'schema',
             'cmd_browse': 'browse',
             'cmd_insert': 'insert',
             'cmd_column': 'column',
@@ -1516,6 +1520,7 @@ LANGS = {
             'cmd_go_print': 'go (print)',
             'cmd_shortcut': 'shortcut',
             'cmd_profile': 'profile',
+            'cmd_schema': 'schema',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
@@ -2943,6 +2948,7 @@ def menugen():
                     ['table_drop', _['cmd_table_drop']],
                     ['export_csv', _['cmd_export_csv']],
                     ['import_csv', _['cmd_import_csv']],
+                    ['schema', _['cmd_schema']],
                     ['copy', _['cmd_copy']],
                     ['table_create', _['cmd_table_create']],
                     ['query', _['cmd_query']],
@@ -4628,6 +4634,23 @@ def py_handler(name):
                 ret = res
     #
     return ret
+
+def r_schema(table):
+    ret = ''
+    #
+    try:
+        r = db.select(DEFAULT_TABLE, 
+                        what='sql', 
+                        where=" type='table' and tbl_name=$tbl_name",
+                        vars={
+                                'tbl_name': table,
+                            }
+            )
+        ret = r[0].sql
+    except:
+        pass
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -6185,6 +6208,46 @@ $elif data['command'] == 'profile':
     <i>$pk_sym $_['x_user_defined_profile']</i>
     <br>
     </form>
+$elif data['command'] == 'schema':
+    <p>
+    <i>$data['hint'].capitalize()</i>
+    </p>    
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        &nbsp;
+    <br>
+    <br>
+    <table>
+        <tr>
+            <td colspan='2'>
+                <br>
+                <br>
+                $:content
+                <br>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            $_['x_create_table_schema']
+            </td>
+            <td>
+            <input type='hidden' name='table' value='$data["table"]'>
+            <input type='text' name='target' value='$data["target"]'>
+            </td>            
+        </tr>
+    </table>
+    </form>
 $else:
     $:content
 </body>
@@ -6276,6 +6339,7 @@ class table_action:
             ('table_drop', '/table/drop?table=' + table),
             ('export_csv', '/table/export/csv?table=' + table),
             ('import_csv', '/table/import/csv?table=' + table),
+            ('schema', '/table/schema?table=' + table),
             ('copy', '/table/copy?table=' + table),
             ('table_create', '/table/create'),
             ('query', '/query'),
@@ -10038,6 +10102,93 @@ class profile:
         sess[SK_PROFILE] = msg
         #
         raise web.seeother('/profile')
+
+
+class table_schema:
+    def GET(self):
+        start()
+        #
+        table = web.input(table='').table
+        if not table in tables(): 
+            dflt()
+        #
+        target = web.input(target='').target
+        #
+        data = {
+                'title': '%s - %s' %(table, _['tt_schema']),
+                'command': 'schema',
+                'action_url': '/table/schema',
+                'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
+                'action_button': (
+                                    ('create', _['cmd_table_create'], False, '', 'submit'),
+                                ),
+                'table': table,
+                'target': target,
+                'message': smsgq(SK_SCHEMA),
+                'hint': _['h_create'],
+            }
+        #
+        content = r_schema(table)
+        #
+        stop()
+        return T(data, content)
+
+    def POST(self):
+        inp = web.input(table='', target='')
+        table = inp.table.strip().lower()
+        target = inp.target.strip().lower()
+        #
+        if not table:
+            dflt()
+        #
+        oldtables = tables()
+        oldtables = [x.lower() for x in oldtables]
+        if not table in oldtables:
+            dflt()
+        #
+        redir = '/table/schema?table=%s&target=%s' %(table, target)
+        #
+        if not target:
+            raise web.seeother(redir)
+        #
+        if target == table or target in oldtables:
+            sess[SK_SCHEMA] = [
+                                [
+                                    _['e_table_exists'],
+                                ],
+                            ]
+            raise web.seeother(redir)
+        #
+        if hasws(target):
+            sess[SK_SCHEMA] = [
+                                [
+                                    _['z_table_whitespace'],
+                                ],
+                            ]
+            raise web.seeother(redir)
+        #
+        schema = str(r_schema(table))
+        x = schema.find('(')
+        if x < 0:
+            raise web.seeother(redir)
+        #
+        cols = schema[x:]
+        q = 'create table %s %s' %(target, cols)
+        try:
+            r = db.query(q)
+        except Exception, e:
+            sess[SK_SCHEMA] = [
+                                [
+                                    _['th_error'],
+                                    str(e),
+                                ],
+                            ]
+            raise web.seeother(redir)
+        else:
+            raise web.seeother('/table/browse/%s' %(target))
+        #
+        dflt()
         
 
 #----------------------------------------------------------------------#
