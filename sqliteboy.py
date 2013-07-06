@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.03'
+VERSION = '1.04'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -277,6 +277,15 @@ SYSTEM_CONFIG = (
                         str,
                         1,
                     ),
+                    (
+                        'x_messages',
+                        'x_messages_all',
+                        'messages.all.',
+                        'messages.all..%s' %(''),
+                        '',
+                        'striphtml',
+                        1,
+                    ),                    
                 )
 NOTFOUND_CHECK = [
                     '/fs',
@@ -465,6 +474,10 @@ PROFILE_STYLE_PRINT = '''
                                 {
                                     display         : none;
                                 }                                
+                                .messages
+                                {
+                                    display         : none;
+                                }                                
                     '''
 PROFILE_ITEM_STYLE = [
                         [
@@ -516,6 +529,12 @@ PROFILE_ITEM_STYLE = [
                                 {
                                     color           : #406080;                                
                                 }
+                                .messages
+                                {
+                                    padding         : 2px;
+                                    background-color: #cccccc;
+                                    border          : 1px solid #808080;
+                                }                                
                             '''
                         ],
                         [
@@ -574,6 +593,12 @@ PROFILE_ITEM_STYLE = [
                                 {
                                     color           : #996600;                                
                                 }
+                                .messages
+                                {
+                                    padding         : 2px;
+                                    background-color: #f3e3c3;
+                                    border          : 1px solid #ffcc66;
+                                }                                
                             '''
                         ],
                     ]
@@ -1438,6 +1463,8 @@ LANGS = {
             'x_user_defined_profile': 'user-defined profile', 
             'x_profile': 'profile',
             'x_create_table_schema': 'create table based on this schema',
+            'x_messages': 'messages',
+            'x_messages_all': 'for all users',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -3784,7 +3811,7 @@ def striphtml(text):
     return ret
 
 def tr_page(code):
-    s = code
+    s = str(code)
     #
     s = striphtml(s)
     #
@@ -4651,6 +4678,27 @@ def r_schema(table):
         pass
     #
     return ret
+
+def r_messages(category):
+    ret = ''
+    #
+    if isnosb():
+        return ret
+    #
+    category = str(category).strip().lower()
+    if hasws(category) or not category:
+        return ret
+    #
+    try:
+        q = 'messages.%s.' %(category)
+        ret = r_system(q)
+    except:
+        pass
+    #
+    return ret
+
+def r_messages_all():
+    return tr_page(r_messages('all')).strip()
     
     
 #----------------------------------------------------------------------#
@@ -5203,6 +5251,14 @@ $elif data['command'] == 'home':
         <td>$i[1]</td>
         </tr>
     </table>
+    <br>
+    <br>
+    $ r_msg_all = r_messages_all()
+    $if r_msg_all:
+        <div class='messages'>
+            <pre>$r_msg_all
+            </pre>
+        </div>
 $elif data['command'] in ['readme', 'source']:
     <br>
     <br>
@@ -6275,6 +6331,7 @@ GLBL = {
     'print_data_key': PRINT_DATA_KEY,
     'print_data_value': PRINT_DATA_VALUE,
     'pr_get'    : pr_get,
+    'r_messages_all': r_messages_all,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -7503,7 +7560,10 @@ class admin_system:
                     kdf = kd[1]
                     ku = inp.get(k, kdv)
                     try:
+                        if isinstance(kdf, str):
+                            kdf = globals().get(kdf)
                         test = kdf(ku)
+                        ku = test
                     except:
                         ku = kdv
                     p = '%s%s%s' %(k, FORM_SPLIT, ku)
