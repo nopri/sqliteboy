@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.04
+    Version 1.05
 
 
 
@@ -1365,7 +1365,9 @@ Form Code Reference
 |               |   two members;          |               |             |                          |
 |               |   HTML select           |               |             |                          |
 |               |                         |               |             |                          |
-|               | - int: ignored          |               |             | - 0                      |
+|               | - int: flag             |               |             | - 2                      |
+|               |   (2: HTML input        |               |             |                          |
+|               |   password)             |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | default       | default value           | str, list or  | optional    |                          |
@@ -1777,7 +1779,9 @@ Report Code Reference
 |               |   two members;          |               |             |                          |
 |               |   HTML select           |               |             |                          |
 |               |                         |               |             |                          |
-|               | - int: ignored          |               |             | - 0                      |
+|               | - int: flag             |               |             | - 2                      |
+|               |   (2: HTML input        |               |             |                          |
+|               |   password)             |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | default       | default value           | str, list or  | optional    |                          |

@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.04'
+VERSION = '1.05'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -225,6 +225,7 @@ REPORT_FORMAT_ALL = [
                         REPORT_FORMAT_CSV,
                         REPORT_FORMAT_PDF,
                     ]
+REFERENCE_FLAG_PASSWORD = 2
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -3166,7 +3167,7 @@ def reqform(form):
     #
     return True
 
-def fref(reference, execute_sql=True):
+def fref(reference, execute_sql=True, input_name='input_name'):
     reference2 = 0
     if (type(reference) in [type(''), type(u'')]) and reference:#query
         reference2 = []
@@ -3191,10 +3192,23 @@ def fref(reference, execute_sql=True):
                 reference2.append([r[0], r[1]])
         except:
             pass
+    elif isinstance(reference, int): #int
+        if reference == REFERENCE_FLAG_PASSWORD:
+            reference2 = web.form.Password(input_name)
     else:
         reference2 = 0
     #
     return reference2
+    
+def fref2(reference, name):
+    ret = None
+    #
+    if isinstance(reference, list):
+        ret = web.form.Dropdown(name, args=reference)
+    elif hasattr(reference, 'render'):
+        ret = reference
+    #
+    return ret
     
 def fdef(default, execute_sql=True):
     default2 = default
@@ -3281,12 +3295,11 @@ def parseform2(code, table, execute_sql=True):
                 if not dl: 
                     dl = dc
                 #
-                reference2 = fref(reference, execute_sql)
+                dcname = '%s.%s' %(fsub_table, dc)
                 #
-                reference3 = None
-                if type(reference2) == type([]):
-                    dcname = '%s.%s' %(fsub_table, dc)
-                    reference3 = web.form.Dropdown(dcname, args=reference2)
+                reference2 = fref(reference, execute_sql, dcname)
+                #
+                reference3 = fref2(reference2, dcname)
                 #
                 default2 = fdef(default, execute_sql)
                 #
@@ -3363,11 +3376,9 @@ def parseform(form, virtual={}, execute_sql=True):
                             if c.get('pk', 0) == 1:
                                 label = '%s%s' %(label, PK_SYM)
                     #
-                    reference2 = fref(reference, execute_sql)
+                    reference2 = fref(reference, execute_sql, col)
                     #
-                    reference3 = None
-                    if type(reference2) == type([]):
-                        reference3 = web.form.Dropdown(col, args=reference2)
+                    reference3 = fref2(reference2, col)
                     #
                     default2 = fdef(default, execute_sql)
                     #
@@ -3559,11 +3570,9 @@ def parsereport(report, execute_sql=True):
             constraint = fd.get(REPORT_KEY_DATA_CONSTRAINT, [])
             type1 = fd.get(REPORT_KEY_DATA_TYPE, '').lower().strip()
             #
-            reference2 = fref(reference, execute_sql)
+            reference2 = fref(reference, execute_sql, key)
             #
-            reference3 = None
-            if type(reference2) == type([]):
-                reference3 = web.form.Dropdown(key, args=reference2)
+            reference3 = fref2(reference2, key)
             #
             default2 = fdef(default, execute_sql)
             #
@@ -4506,7 +4515,7 @@ def pr_all(execute_sql=True, usr=None):
     for i in pall:
         name = i[0]
         label = i[1]
-        value = fref(i[2], execute_sql)
+        value = fref(i[2], execute_sql, name)
         func = i[5]
         #
         dflt = i[3]
@@ -4533,9 +4542,7 @@ def pr_all(execute_sql=True, usr=None):
                         uvalue.append(uv)
                 value = uvalue
         #
-        value2 = None
-        if isinstance(value, list):
-            value2 = web.form.Dropdown(name, args=value)
+        value2 = fref2(value, name)
         if value2:
             try:
                 value2.set_value(dflt)
