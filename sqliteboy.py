@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.05'
+VERSION = '1.06'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -197,7 +197,7 @@ REPORT_KEY_FOOTERS = 'footers'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
-REPORT_REQ_X = (2, 3,) #parsed index
+REPORT_REQ_X = (3,) #parsed index
 REPORT_REQ_DATA = (REPORT_KEY_DATA_KEY,)
 REPORT_REFERENCE_SQL_0 = 'a'
 REPORT_REFERENCE_SQL_1 = 'b'
@@ -8367,7 +8367,9 @@ class report_run:
         except:
             preport = None
         #
-        if not preport or not finput:
+        #if not preport or not finput: 
+        #as of 9-July-2013/v1.06, data might be empty
+        if not preport:
             dflt()
         #
         start()

@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.05
+    Version 1.06
 
 
 
@@ -327,6 +327,8 @@ Features
 - Drop table 
 
 - CSV export/import 
+
+- Schema (view schema, create new table)
 
 - Copy table
 
@@ -1639,6 +1641,8 @@ Report Code Reference
 | Key           | Description             | Type          | Status      | Example                  |
 +===============+=========================+===============+=============+==========================+
 | data          | wizard/search data      | list of dict  | required    | see: Keys (data)         |
+|               |                         |               | (might be   |                          |
+|               |                         |               | empty list) |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | security      | reporting security      | dict          | required    | see: Keys (security)     |
 +---------------+-------------------------+---------------+-------------+--------------------------+
