@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.06'
+VERSION = '1.07'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -60,6 +60,7 @@ DEFAULT_WIN_EXE = '%s.exe' %(NAME)
 DEFAULT_WIN_MD5 = '%s.md5' %(DEFAULT_WIN_EXE)
 DEFAULT_FAVICON = '%s.ico' %(NAME)
 DEFAULT_SPEC = '%s.spec' %(NAME)
+DEFAULT_VERSION = '%s.version' %(NAME)
 DEFAULT_WEBPY_STATIC = ['static']
 DEFAULT_QUERY_EXPORT = 'query.csv'
 DEFAULT_VAR_MAX = 3
@@ -373,6 +374,7 @@ SERVER_COMMAND_ALL = {
                         'generate_favicon': 'scmd_favicon',
                         'generate_pyinstaller': 'scmd_pyinstaller',
                         'generate_build': 'scmd_build',    
+                        'generate_version': 'scmd_version',    
                     }
 SHORTCUT_TYPE_FORM = 'form'
 SHORTCUT_TYPE_REPORT = 'report'
@@ -444,6 +446,11 @@ except:
     pass
     
 
+'''
+
+VERSION_SPEC = '''
+$title $command
+$datetime
 '''
 
 PROFILE_STYLE_PRINT = '''
@@ -4318,8 +4325,40 @@ def scmd_build(data):
         d2 = ['generate_pyinstaller', DEFAULT_SPEC, r1]
         r2 = scmd_pyinstaller(d2)
         #
-        ret = '%s %s' %(r1, r2)
+        d3 = ['generate_version', DEFAULT_VERSION]
+        r3 = scmd_version(d3)
+        #
+        ret = '%s %s %s' %(r1, r2, r3)
         ret = ret.strip()
+    except:
+        return ret
+    #
+    return ret
+    
+def scmd_version(data):
+    ret = ''
+    #
+    try:
+        cmd = data[0]
+        #
+        out = data[1]
+        out = scmdx_path(out)
+        #
+        tpl = string.Template(VERSION_SPEC)
+        tplo = tpl.substitute(tpl, 
+                title=TITLE,
+                command=cmd,                
+                datetime=sqliteboy_time3(sqliteboy_time())
+            )        
+        #
+        if os.path.exists(out):
+            raise Exception
+        #
+        f = open(out, 'wb')
+        f.write(tplo)
+        f.close()
+        #
+        ret = out
     except:
         return ret
     #
