@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.07'
+VERSION = '1.08'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2204,10 +2204,40 @@ def sqliteboy_number_to_words(s, language):
     return ret
 SQLITE_UDF.append(('sqliteboy_number_to_words', 2, sqliteboy_number_to_words))
 
+def sqliteboy_lookup1(table, field, value):
+    ret = -1
+    #
+    table = str(table).lower()
+    field = str(field).lower()
+    #
+    if not table in tables():
+        return ret
+    cols = columns(table, True)
+    if not field in cols:
+        return ret
+    #
+    where = [
+            '%s=$%s' %(field, field), 
+            ]
+    var = {field: value}
+    #
+    try:
+        r = db.select(
+            table,
+            what=field,
+            where=' and '.join(where),
+            vars=var).list()
+        ret = len(r)
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_lookup1', 3, sqliteboy_lookup1))
+
 def sqliteboy_lookup2(table, field, field1, value1, order, default):
-    table = str(table)
-    field = str(field)
-    field1 = str(field1)
+    table = str(table).lower()
+    field = str(field).lower()
+    field1 = str(field1).lower()
     if not sqliteboy_is_number(order) or order < 0:
         order = 0
     #
@@ -2243,10 +2273,10 @@ def sqliteboy_lookup2(table, field, field1, value1, order, default):
 SQLITE_UDF.append(('sqliteboy_lookup2', 6, sqliteboy_lookup2))
     
 def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default):
-    table = str(table)
-    field = str(field)
-    field1 = str(field1)
-    field2 = str(field2)
+    table = str(table).lower()
+    field = str(field).lower()
+    field1 = str(field1).lower()
+    field2 = str(field2).lower()
     if not sqliteboy_is_number(order) or order < 0:
         order = 0
     #
@@ -4319,16 +4349,16 @@ def scmd_build(data):
     try:
         cmd = data[0]
         #
+        d3 = ['generate_version', DEFAULT_VERSION]
+        r3 = scmd_version(d3)
+        #
         d1 = ['generate_favicon', DEFAULT_FAVICON]
         r1 = scmd_favicon(d1)
         #
         d2 = ['generate_pyinstaller', DEFAULT_SPEC, r1]
         r2 = scmd_pyinstaller(d2)
         #
-        d3 = ['generate_version', DEFAULT_VERSION]
-        r3 = scmd_version(d3)
-        #
-        ret = '%s %s %s' %(r1, r2, r3)
+        ret = '%s %s %s' %(r3, r1, r2)
         ret = ret.strip()
     except:
         return ret

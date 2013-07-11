@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.07
+    Version 1.08
 
 
 
@@ -928,6 +928,39 @@ User-defined Function
         
         sqliteboy_number_to_words('-123456789123456789123456789.123456789', 'en1')
         -> 'minus one hundred twenty-three trillion four hundred fifty-six billion seven hundred eighty-nine million one hundred twenty-three thousand four hundred fifty-six trillion seven hundred eighty-nine billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine point one two three four five six seven eight nine'        
+
+- sqliteboy_lookup1(table, field, value)
+  ::
+  
+      lookup into table
+      SELECT <field> FROM <table> WHERE <field>=<value>
+      and
+      return row count
+      argument    : 
+         table (table name)
+         field (field name)
+         value (where field value)
+         
+      return value: 
+        row count or -1 (error)         
+         
+      example     : 
+        data in 'lookup' table:
+        | a |
+        -----
+        |a  |
+        |a  |
+        |a1 |
+        |a1 |
+        
+        sqliteboy_lookup1('lookup', 'a', 'a1')
+        -> 2 
+        
+        sqliteboy_lookup1('lookup', 'a', 'a2')
+        -> 0 
+        
+        sqliteboy_lookup1('lookup', 'a_notfound', 'a')
+        -> -1 
 
 - sqliteboy_lookup2(table, field, field1, value1, order, default)
   ::
