@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.08'
+VERSION = '1.09'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2204,35 +2204,60 @@ def sqliteboy_number_to_words(s, language):
     return ret
 SQLITE_UDF.append(('sqliteboy_number_to_words', 2, sqliteboy_number_to_words))
 
-def sqliteboy_lookup1(table, field, value):
-    ret = -1
+def sqliteboy_lookup1(table, field, field1, value1, function, distinct):
+    ret = ''
+    #
+    function_all = [
+                    'avg',
+                    'count',
+                    'group_concat',
+                    'max',
+                    'min',
+                    'sum',
+                    'total'
+            ]
     #
     table = str(table).lower()
     field = str(field).lower()
+    field1 = str(field1).lower()
+    function = str(function).lower()
     #
     if not table in tables():
         return ret
     cols = columns(table, True)
-    if not field in cols:
+    if not field1 in cols or not field in cols:
         return ret
+    if not function in function_all:
+        return ret
+    if not sqliteboy_is_number(distinct) or distinct < 0:
+        distinct = 0        
     #
     where = [
-            '%s=$%s' %(field, field), 
+            '%s=$%s' %(field1, field1), 
             ]
-    var = {field: value}
+    var = {field1: value1}
+    #
+    sdistinct = ''
+    if distinct:
+        sdistinct = ' distinct '
+    #
+    what_field = '%s(%s %s)' %(function, sdistinct, field)
     #
     try:
         r = db.select(
             table,
-            what=field,
+            what=what_field,
             where=' and '.join(where),
             vars=var).list()
-        ret = len(r)
+        ret = r[0][what_field]
     except:
         pass
     #
+    if ret: 
+        ret = str(ret)
+    #
     return ret
-SQLITE_UDF.append(('sqliteboy_lookup1', 3, sqliteboy_lookup1))
+SQLITE_UDF.append(('sqliteboy_lookup1', 6, sqliteboy_lookup1))
 
 def sqliteboy_lookup2(table, field, field1, value1, order, default):
     table = str(table).lower()

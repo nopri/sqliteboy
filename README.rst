@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.08
+    Version 1.09
 
 
 
@@ -929,38 +929,55 @@ User-defined Function
         sqliteboy_number_to_words('-123456789123456789123456789.123456789', 'en1')
         -> 'minus one hundred twenty-three trillion four hundred fifty-six billion seven hundred eighty-nine million one hundred twenty-three thousand four hundred fifty-six trillion seven hundred eighty-nine billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine point one two three four five six seven eight nine'        
 
-- sqliteboy_lookup1(table, field, value)
+- sqliteboy_lookup1(table, field, field1, value1, function, distinct)
   ::
   
-      lookup into table
-      SELECT <field> FROM <table> WHERE <field>=<value>
+      SELECT <function>(<field>) FROM <table> WHERE <field1>=<value1>
       and
-      return row count
+      return function result
       argument    : 
          table (table name)
          field (field name)
-         value (where field value)
+         field1 (where field)
+         value1 (where field value)
+         function (avg, count, group_concat, max, min, sum, total)
+         distinct (0=non distinct, 1=distinct)
          
       return value: 
-        row count or -1 (error)         
+        function result (as str) or '' (error)         
          
       example     : 
         data in 'lookup' table:
-        | a |
-        -----
-        |a  |
-        |a  |
-        |a1 |
-        |a1 |
+        | a | b |
+        ---------
+        |a  | 0 |
+        |a  | 1 |
+        |a1 | 2 |
+        |a2 | 3 |
         
-        sqliteboy_lookup1('lookup', 'a', 'a1')
-        -> 2 
+        sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'avg', 0)
+        -> '0.5' 
         
-        sqliteboy_lookup1('lookup', 'a', 'a2')
-        -> 0 
+        sqliteboy_lookup1('lookup', 'a', 'a', 'a', 'count', 0)
+        -> '2' 
         
-        sqliteboy_lookup1('lookup', 'a_notfound', 'a')
-        -> -1 
+        sqliteboy_lookup1('lookup', 'a', 'a', 'a', 'count', 1)
+        -> '1' 
+        
+        sqliteboy_lookup1('lookup', 'a', 'a', 'a', 'group_concat', 0)
+        -> 'a,a' 
+        
+        sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'max', 0)
+        -> '1' 
+        
+        sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'min', 0)
+        -> '0' 
+        
+        sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'sum', 0)
+        -> '1' 
+        
+        sqliteboy_lookup1('lookup', 'b', 'a', 'a2', 'total', 0)
+        -> '3.0' 
 
 - sqliteboy_lookup2(table, field, field1, value1, order, default)
   ::
