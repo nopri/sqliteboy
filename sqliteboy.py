@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.09'
+VERSION = '1.10'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2103,6 +2103,31 @@ def sqliteboy_normalize_separator(s, separator, remove_space, unique):
     return ret
 SQLITE_UDF.append(('sqliteboy_normalize_separator', 4, sqliteboy_normalize_separator))
 
+def sqliteboy_split0(s, separator, index):
+    ret = ''
+    #
+    s = str(s)
+    separator = str(separator)
+    #
+    if not sqliteboy_is_integer(index):
+        return ret
+    #
+    if not s.strip():
+        return ret
+    #
+    if separator:
+        data = s.split(separator)
+    else:
+        data = s.split()
+    #
+    try:
+        ret = data[index]
+    except:
+        pass
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_split0', 3, sqliteboy_split0))
+
 def sqliteboy_chunk(s, n, separator, justify, padding):
     s = str(s)
     separator = str(separator)
@@ -2356,7 +2381,7 @@ def sqliteboy_split1(s, separator, table, column, convert):
     if not column in columns(table, True):
         return ret
     #
-    if separator.strip():
+    if separator:
         data = s.split(separator)
     else:
         data = s.split()
@@ -2479,6 +2504,10 @@ SQLITE_UDF.append(('sqliteboy_http_remote_addr', 0, sqliteboy_http_remote_addr))
 def sqliteboy_http_user_agent():
     return web.ctx.env.get('HTTP_USER_AGENT', '')
 SQLITE_UDF.append(('sqliteboy_http_user_agent', 0, sqliteboy_http_user_agent))
+
+def sqliteboy_app_title():
+    return TITLE
+SQLITE_UDF.append(('sqliteboy_app_title', 0, sqliteboy_app_title))
 
 def sqliteboy_var_set(name, value):
     name = str(name)

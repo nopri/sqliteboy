@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.09
+    Version 1.10
 
 
 
@@ -824,6 +824,35 @@ User-defined Function
           (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
         -> '1,2,3,4' 
 
+- sqliteboy_split0(s, separator, index)
+  ::
+  
+      split string s using separator as the delimiter string and 
+      return index (in list)
+      argument    :
+         s (input string)
+         separator (separator string)
+         index (index)
+
+      return value: 
+        index (in list) or ''
+
+      example     : 
+        sqliteboy_split0('s.q.l.i.t.e.b.o.y', '.', 1)
+        -> 'q'
+        
+        sqliteboy_split0('s.q.l.i.t.e.b.o.y', '', 1)
+        -> ''
+        
+        sqliteboy_split0('s.q.l.i.t.e.b.o.y', '.', -3)
+        -> 'b'
+        
+        sqliteboy_split0('h e l l o', '', 1)
+        -> 'e'
+        
+      tips        :
+         empty separator: use whitespace
+
 - sqliteboy_chunk(s, n, separator, justify, padding)
   ::
   
@@ -1072,6 +1101,9 @@ User-defined Function
         sqliteboy_split1('hello', '', 'test_split', 'c', 0)
         -> 1  
 
+      tips        :
+         empty separator: use whitespace
+
 - sqliteboy_list_datetime1(s, n, interval, table, column, local)
   ::
   
@@ -1142,6 +1174,16 @@ User-defined Function
   
     return value  : 
         http user agent (for example: web browser)
+        
+- sqliteboy_app_title()
+  ::
+  
+      return value: 
+        application title
+        
+      example     : 
+        sqliteboy_app_title()
+        -> 'sqliteboy 1.10'
 
 - sqliteboy_var_set(name, value)
   ::
