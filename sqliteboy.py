@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.10'
+VERSION = '1.11'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -4829,6 +4829,24 @@ def r_messages(category):
 
 def r_messages_all():
     return tr_page(r_messages('all')).strip()
+
+def uquery(content):
+    ret = ''
+    #
+    try:
+        lret = []
+        for k in content.keys():
+            v = content.get(k)
+            if isstr(v):
+                kv = '%s=%s' %(k, web.urlquote(v))
+                lret.append(kv)
+        #
+        if lret:
+            ret = '&'.join(lret)
+    except:
+        pass
+    #
+    return ret
     
     
 #----------------------------------------------------------------------#
@@ -5599,6 +5617,7 @@ $elif data['command'] == 'form.run':
         <input type='hidden' name='$h[0]' value='$h[1]'>
     <table>
     $for i in data['input']:
+        $ ucontent = content.get(i[1], None)
         <tr>
         $ lbl = i[0]
         $if i[4]:
@@ -5611,10 +5630,14 @@ $elif data['command'] == 'form.run':
         
         $ defv = ''
         $if i[5]:
+            $if ucontent is not None:
+                $i[5].set_value(ucontent)
             $i[5].render()
         $else:
             $if i[6]:
                 $ defv = i[6]
+            $if ucontent is not None:
+                $ defv = ucontent
             $if i[2] in data['blob_type']:
                 <input type='file' name="$i[1]"$ro>
             $elif i[2] in data['text_type']:
@@ -7814,7 +7837,7 @@ class form_run:
                 'text_type': TEXT_TYPE,
                 'sub': sub,
                 }
-        content = ''
+        content = web.input()
         stop()
         return T(data, content)
         
@@ -7995,8 +8018,10 @@ class form_run:
         except Exception, e:
             errors.append( [ _['e_form_run_subform'], str(e)] )
         #        
+        ucontent = ''
         if errors:
             sess[SKF_RUN] = errors
+            ucontent = uquery(ocols)
         else:
             form_trans = db.transaction()
             #
@@ -8085,7 +8110,7 @@ class form_run:
             else:
                 form_trans.commit()
         #
-        raise web.seeother('/form/run/%s' %(form))
+        raise web.seeother('/form/run/%s?%s' %(form, ucontent))
         
 
 class form_edit:
