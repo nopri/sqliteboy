@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.11'
+VERSION = '1.12'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -629,6 +629,7 @@ PROFILE_USER_DEFINED_HANDLER = 'pr_user'
 PROFILE_USER_DEFINED_TYPE = str
 PROFILE_USER_DEFINED_LEVEL = 1
 ENV_VAR_MAX = DEFAULT_VAR_MAX
+QUERY_STRING_MAX = 1 * SIZE_KB
 
 
 #----------------------------------------------------------------------#
@@ -4841,8 +4842,14 @@ def uquery(content):
                 kv = '%s=%s' %(k, web.urlquote(v))
                 lret.append(kv)
         #
+        ret_test = ''
         if lret:
-            ret = '&'.join(lret)
+            ret_test = '&'.join(lret)
+        #
+        if len(ret_test) > QUERY_STRING_MAX:
+            raise Exception
+        #
+        ret = ret_test
     except:
         pass
     #
@@ -5745,6 +5752,7 @@ $elif data['command'] == 'report.run':
         <input type='hidden' name='$h[0]' value='$h[1]'>
     <table>
     $for i in data['input']:
+        $ ucontent = content.get(i[1], None)
         <tr>
         $ lbl = i[0]
         $if i[3]:
@@ -5757,10 +5765,14 @@ $elif data['command'] == 'report.run':
         
         $ defv = ''
         $if i[4]:
+            $if ucontent is not None:
+                $i[4].set_value(ucontent)        
             $i[4].render()
         $else:
             $if i[5]:
                 $ defv = i[5]
+            $if ucontent is not None:
+                $ defv = ucontent                
             <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
         </td>
         </tr>
@@ -8474,7 +8486,7 @@ class report_run:
                 'blob_type': BLOB_TYPE,
                 'text_type': TEXT_TYPE,
                 }
-        content = ''
+        content = web.input()
         stop()
         return T(data, content)
         
@@ -8606,9 +8618,11 @@ class report_run:
             rsearch.append( [label, cvv] )
             #
         #
+        ucontent = ''
         if errors:
             sess[SKR_RUN] = errors
-            raise web.seeother('/report/run/%s' %(report))
+            ucontent = uquery(ocols)
+            raise web.seeother('/report/run/%s?%s' %(report, ucontent))
         else:
             try:
                 #python handler or sql query
