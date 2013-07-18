@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.12'
+VERSION = '1.13'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -609,6 +609,70 @@ PROFILE_ITEM_STYLE = [
                                 }                                
                             '''
                         ],
+                        [
+                            PROFILE_STYLE_PRINT,
+                            '''
+                                *
+                                {
+                                    font-family     : Courier;
+                                    font-size       : 12pt;
+                                }
+                                table
+                                {
+                                    border-collapse : collapse;
+                                    width           : 100%;
+                                }
+                                td
+                                {
+                                    border          : 1px solid #4169e1;
+                                    padding         : 2px;
+                                }
+                                th
+                                {
+                                    background-color: #00008b;
+                                    border          : 1px solid #4169e1;
+                                    padding         : 2px;
+                                    color           : #ffffff;
+                                }
+                                th a
+                                {
+                                    color           : #ffffff;
+                                    text-decoration : none;
+                                }
+                                tr:nth-child(odd)
+                                {
+                                    background-color: #b0e0e6;
+                                }
+                                tr:nth-child(even)
+                                {
+                                    background-color: #ffffff;
+                                }
+                                select
+                                {
+                                    width           : 95%;
+                                }
+                                .main_menu
+                                {
+                                }                            
+                                input, select, textarea
+                                {
+                                    background-color: #ffffff;
+                                    color           : #00008b;
+                                    border          : 1px solid #4169e1;
+                                    margin          : 2px;
+                                }
+                                a
+                                {
+                                    color           : #00008b;                                
+                                }
+                                .messages
+                                {
+                                    padding         : 2px;
+                                    background-color: #b0e0e6;
+                                    border          : 1px solid #4169e1;
+                                }                                
+                            '''
+                        ],
                     ]
 PROFILE_ALL = [
                 [
@@ -617,6 +681,7 @@ PROFILE_ALL = [
                     [
                         [0, 'A'],
                         [1, 'B'],
+                        [2, 'C'],
                     ],
                     1,
                     'pr_style',
@@ -4578,7 +4643,7 @@ def pr_style(default, x):
 def pr_all(execute_sql=True, usr=None):
     ret = []
     #
-    if isnosb():
+    if isnosb() or usr == '':
         res = []
         upr = ''
     else:
