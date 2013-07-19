@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.13'
+VERSION = '1.14'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -658,7 +658,7 @@ PROFILE_ITEM_STYLE = [
                                 {
                                     background-color: #ffffff;
                                     color           : #00008b;
-                                    border          : 1px solid #4169e1;
+                                    border          : 1px outset #4169e1;
                                     margin          : 2px;
                                 }
                                 a
@@ -683,7 +683,7 @@ PROFILE_ALL = [
                         [1, 'B'],
                         [2, 'C'],
                     ],
-                    1,
+                    2,
                     'pr_style',
                     int,
                     0,
@@ -1589,6 +1589,7 @@ LANGS = {
             'cmd_query_src': 'query',
             'cmd_delete_selected': 'delete selected',
             'cmd_edit_selected': 'edit selected',
+            'cmd_clear_selected': 'clear selected',
             'cmd_download': 'download',
             'cmd_edit': 'edit',
             'cmd_add': 'add',
@@ -5124,6 +5125,14 @@ $if data['command'] == 'browse':
             </td>
         </tr>
     </table>
+    
+    <br>
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
+
     </form>
     <br>
     $if data['limit']: 
@@ -6666,6 +6675,10 @@ class table_action:
             sess.table[table][SKT_ROWID] = select
             raise web.seeother('/table/row/%s' %(table))
         #
+        elif input.has_key('clear'):
+            sess.table[table][SKT_ROWID] = []
+            raise web.seeother('/table/browse/%s' %(table))
+        #
         dflt()
         
 class table_row:
@@ -6900,6 +6913,7 @@ class table_browse:
             'action_button': (
                                 ('delete', _['cmd_delete_selected'], True, _['cf_delete_selected'], 'submit'), 
                                 ('edit', _['cmd_edit_selected'], False, '', 'submit'),
+                                ('clear', _['cmd_clear_selected'], False, '', 'submit'),
                             ),
             'hidden_key': 'table',
             'rowid' : rowid,
