@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.14'
+VERSION = '1.15'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -654,13 +654,6 @@ PROFILE_ITEM_STYLE = [
                                 .main_menu
                                 {
                                 }                            
-                                input, select, textarea
-                                {
-                                    background-color: #ffffff;
-                                    color           : #00008b;
-                                    border          : 1px outset #4169e1;
-                                    margin          : 2px;
-                                }
                                 a
                                 {
                                     color           : #00008b;                                
@@ -1459,6 +1452,9 @@ LANGS = {
             'x_second': 'second(s)',
             'x_row' : 'row(s)',
             'x_limit': 'limit',
+            'x_page': 'page',
+            'x_next': 'next',
+            'x_previous': 'previous',
             'x_default': 'default',
             'x_name': 'name',
             'x_type': 'type',
@@ -3126,7 +3122,7 @@ def menugen():
                 f, 
                 (
                     ['browse', _['cmd_browse']],
-                    ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse'] + ' (%s)' %(DEFAULT_LIMIT)],
+                    ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse'] + ' (%s)' %(_['x_page'])],
                     ['insert', _['cmd_insert']],
                     ['column', _['cmd_column']],
                     ['rename', _['cmd_rename']],
@@ -5074,6 +5070,8 @@ $for i in menugen():
 
 <br>
 $if data['command'] == 'browse':
+    $ rows = data['rows']
+
     <form action="$data['action_url']" method="$data['action_method']">
     $ hkey = data['hidden_key']
     <input type='hidden' name="$hkey" value="$data[hkey]">
@@ -5082,6 +5080,14 @@ $if data['command'] == 'browse':
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
             <input type='$b[4]' name='$b[0]' value='$b[1]'>
+    <br><br>
+    $if data['limit']: 
+        $_['x_page'] $data['page'], $_['x_limit'] $data['limit'], $rows $_['x_row']
+        <br>
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_previous']">$_['x_previous']</a>&nbsp;
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_next']">$_['x_next']</a>&nbsp;
+    $else:
+        $rows $_['x_row']
     <br><br>
     <table>
     <th width='50px'><input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'></th>
@@ -5101,12 +5107,10 @@ $if data['command'] == 'browse':
                 $pk_sym
             &nbsp;
             $for s in range(len(data['sort'])):
-                <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['korder']=$c['name']">$data['vsort'][s]</a>
+                <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']">$data['vsort'][s]</a>
             </th>
     
-    $ rows = 0
     $for x in content:
-        $ rows = rows + 1
         <tr>
         $ rowid = data['rowid']
         <td width='50px' align='center'>
@@ -5136,7 +5140,10 @@ $if data['command'] == 'browse':
     </form>
     <br>
     $if data['limit']: 
-        $_['x_limit'] $data['limit'], $rows $_['x_row']
+        $_['x_page'] $data['page'], $_['x_limit'] $data['limit'], $rows $_['x_row']
+        <br>
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_previous']">$_['x_previous']</a>&nbsp;
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_next']">$_['x_next']</a>&nbsp;        
     $else:
         $rows $_['x_row']
 $elif data['command'] == 'insert':
@@ -6857,12 +6864,18 @@ class table_browse:
         #
         prepsess()
         #
-        input = web.input(limit=0, order='', sort='')
+        input = web.input(limit=0, order='', sort='', page=1)
         #
         try:
-            limit = int(input.limit)
+            limit = abs(int(input.limit))
+            page = abs(int(input.page))
+            if page == 0:
+                page = 1
+            offset = (page-1) * limit
         except:
             limit = 0
+            page = 1
+            offset = 0
         #
         order = input.order
         qorder = None
@@ -6871,6 +6884,8 @@ class table_browse:
         column_sort = ''
         if not limit:
             limit = None
+        if not offset:
+            offset = None
         if not order:
             order = None
         else:
@@ -6882,15 +6897,24 @@ class table_browse:
                 if not limit:
                     column_query = 'order=%s&sort=%s' %(order, ssort(sort))
                 else:
-                    column_query = 'order=%s&sort=%s&limit=%s' %(order, ssort(sort), limit)
+                    column_query = 'order=%s&sort=%s&limit=%s&page=%s' %(order, ssort(sort), limit, page)
                 #
                 column_sort = vsort(sort) #current, not next
                 qorder = '%s %s' %(order, sort)
         #
         glimit = ''
         if limit: glimit = str(limit)
+        gpage = ''
+        if page: gpage = str(page)
+        iorder = ''
+        if order: iorder = order
+        if page > 1:
+            page_previous = page - 1
+        else:
+            page_previous = 1
+        page_next = page + 1
         #
-        r = db.select(table, what='%s as %s, *' %(ROWID, rowid), order=qorder, limit=limit)
+        r = db.select(table, what='%s as %s, *' %(ROWID, rowid), order=qorder, limit=limit, offset=offset).list()
         #
         data = {
             'title': table, 
@@ -6906,6 +6930,7 @@ class table_browse:
             'ksort': 'sort',
             'korder': 'order',
             'klimit': 'limit',
+            'kpage': 'page',
             'limit': glimit, 
             'select': NAME_SELECT,
             'action_url': '/table/action',
@@ -6923,6 +6948,12 @@ class table_browse:
             'blob_column': BLOB_COLUMN,
             'blob_command': _['cmd_download'],
             'selected': sess.table[table][SKT_ROWID],
+            'rows': len(r),
+            'page': gpage,
+            'page_previous': page_previous,
+            'page_next': page_next,
+            'input_order': iorder,
+            'input_sort': sort,
             }
         #
         stop()

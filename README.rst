@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.14
+    Version 1.15
 
 
 
@@ -295,6 +295,8 @@ Features
   - Maintain last selected row(s)
 
   - Limit rows
+  
+  - Pagination
 
 - Insert into table
 
