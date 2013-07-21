@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.15'
+VERSION = '1.16'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -64,6 +64,7 @@ DEFAULT_VERSION = '%s.version' %(NAME)
 DEFAULT_WEBPY_STATIC = ['static']
 DEFAULT_QUERY_EXPORT = 'query.csv'
 DEFAULT_VAR_MAX = 3
+BROWSE_LIMIT_ALL = [10, 25, DEFAULT_LIMIT, 100, 250, 500, 1000]
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
 HOST_ALL = '1'
@@ -1455,6 +1456,8 @@ LANGS = {
             'x_page': 'page',
             'x_next': 'next',
             'x_previous': 'previous',
+            'x_unlimited': 'unlimited',
+            'x_selected': 'selected',
             'x_default': 'default',
             'x_name': 'name',
             'x_type': 'type',
@@ -1619,6 +1622,8 @@ LANGS = {
             'cmd_shortcut': 'shortcut',
             'cmd_profile': 'profile',
             'cmd_schema': 'schema',
+            'cmd_hide': 'hide',
+            'cmd_show': 'show',
             'cf_delete_selected': 'are you sure you want to delete selected row(s)?',
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
@@ -3121,8 +3126,7 @@ def menugen():
                 _['x_table'],
                 f, 
                 (
-                    ['browse', _['cmd_browse']],
-                    ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse'] + ' (%s)' %(_['x_page'])],
+                    ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse']],
                     ['insert', _['cmd_insert']],
                     ['column', _['cmd_column']],
                     ['rename', _['cmd_rename']],
@@ -5082,12 +5086,37 @@ $if data['command'] == 'browse':
             <input type='$b[4]' name='$b[0]' value='$b[1]'>
     <br><br>
     $if data['limit']: 
-        $_['x_page'] $data['page'], $_['x_limit'] $data['limit'], $rows $_['x_row']
+        $_['x_page'] $data['page'], $_['x_limit'] $data['limit'], $rows $_['x_row'], $len(data['selected']) $_['x_selected']
         <br>
-        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_previous']">$_['x_previous']</a>&nbsp;
-        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_next']">$_['x_next']</a>&nbsp;
+        $_['x_limit']: 
+        $for l in data['browse_limit']:
+            $if l == data['limit']:
+                $l
+            $else:
+                <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$l&$data['kpage']=$data['page']&pages=$data['input_pages']">$l</a>
+            &nbsp;
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=0&pages=$data['input_pages']">$_['x_unlimited']</a>
+        <br>
+        $_['x_page']:
+        $if data['input_pages'] == '1':
+            <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&pages=0">$_['cmd_hide']</a>
+        $else:
+            <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&pages=1">$_['cmd_show']</a>
+        |
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_previous']&pages=$data['input_pages']">$_['x_previous']</a>&nbsp;
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_next']&pages=$data['input_pages']">$_['x_next']</a>&nbsp;
+        $if data['input_pages'] == '1' and data['pages']:
+            |
+            $for p in data['pages']:
+                $if p == data['page']:
+                    $p
+                $else:
+                    <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$p&pages=$data['input_pages']">$p</a>
+                &nbsp;
     $else:
-        $rows $_['x_row']
+        $rows $_['x_row'], $len(data['selected']) $_['x_selected']
+        <br>
+        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['default_limit']&pages=$data['input_pages']">$_['x_page']</a>
     <br><br>
     <table>
     <th width='50px'><input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'></th>
@@ -5098,7 +5127,7 @@ $if data['command'] == 'browse':
             $if c['pk']:
                 $pk_sym
             &nbsp;
-            <a href="$data['url']?$data['column_query']">$data['column_vsort']</a>
+            <a href="$data['url']?$data['column_query']&pages=$data['input_pages']">$data['column_vsort']</a>
             </th>
         $else:
             <th>
@@ -5107,7 +5136,7 @@ $if data['command'] == 'browse':
                 $pk_sym
             &nbsp;
             $for s in range(len(data['sort'])):
-                <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']">$data['vsort'][s]</a>
+                <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']&pages=$data['input_pages']">$data['vsort'][s]</a>
             </th>
     
     $for x in content:
@@ -5139,13 +5168,6 @@ $if data['command'] == 'browse':
 
     </form>
     <br>
-    $if data['limit']: 
-        $_['x_page'] $data['page'], $_['x_limit'] $data['limit'], $rows $_['x_row']
-        <br>
-        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_previous']">$_['x_previous']</a>&nbsp;
-        <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['limit']&$data['kpage']=$data['page_next']">$_['x_next']</a>&nbsp;        
-    $else:
-        $rows $_['x_row']
 $elif data['command'] == 'insert':
     <p>
     <i>$data['hint'].capitalize()</i>
@@ -6666,7 +6688,7 @@ class table_action:
         #
         select = input.select
         if not len(select):
-            raise web.seeother('/table/browse/%s' %(table))
+            raise web.seeother('/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT))
         #
         try:
             select = [int(x) for x in select]
@@ -6676,7 +6698,7 @@ class table_action:
         if input.has_key('delete'):
             for i in select:
                 db.delete(table, where='%s=%s' %(ROWID, i))
-            raise web.seeother('/table/browse/%s' %(table))
+            raise web.seeother('/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT))
         #
         elif input.has_key('edit'):
             sess.table[table][SKT_ROWID] = select
@@ -6684,7 +6706,7 @@ class table_action:
         #
         elif input.has_key('clear'):
             sess.table[table][SKT_ROWID] = []
-            raise web.seeother('/table/browse/%s' %(table))
+            raise web.seeother('/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT))
         #
         dflt()
         
@@ -6864,7 +6886,7 @@ class table_browse:
         #
         prepsess()
         #
-        input = web.input(limit=0, order='', sort='', page=1)
+        input = web.input(limit=0, order='', sort='', page=1, pages=0)
         #
         try:
             limit = abs(int(input.limit))
@@ -6914,6 +6936,21 @@ class table_browse:
             page_previous = 1
         page_next = page + 1
         #
+        ipages = '0'
+        apages = []
+        if input.pages == '1':
+            ipages = '1'
+        if ipages == '1' and limit:
+            try:
+                r = db.select(table, what='count(*) as count')
+                ncount = r[0].count
+                npages = (ncount / limit) + 1
+                if (npages-1) * limit != ncount:
+                    npages = npages + 1
+                apages = range(1, npages)
+            except:
+                ipages = '0'
+        #
         r = db.select(table, what='%s as %s, *' %(ROWID, rowid), order=qorder, limit=limit, offset=offset).list()
         #
         data = {
@@ -6954,6 +6991,10 @@ class table_browse:
             'page_next': page_next,
             'input_order': iorder,
             'input_sort': sort,
+            'browse_limit': [str(x) for x in BROWSE_LIMIT_ALL],
+            'input_pages': ipages,
+            'pages': [str(x) for x in apages],
+            'default_limit': DEFAULT_LIMIT,
             }
         #
         stop()
