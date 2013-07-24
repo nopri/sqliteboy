@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.16'
+VERSION = '1.17'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1619,6 +1619,7 @@ LANGS = {
             'cmd_vacuum': 'vacuum',
             'cmd_go': 'go',
             'cmd_go_print': 'go (print)',
+            'cmd_csv': 'csv',
             'cmd_shortcut': 'shortcut',
             'cmd_profile': 'profile',
             'cmd_schema': 'schema',
@@ -1722,7 +1723,7 @@ LANGS = {
             'h_import_csv': 'hint: import CSV file (Excel dialect) into table (insert). First row will be read as column(s).',
             'h_profile': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
-            'z_view_blob': '[blob, please use browse menu if applicable]',
+            'z_view_blob': '[blob data]',
         },
     }
 
@@ -4918,6 +4919,65 @@ def uquery(content):
         ret = ret_test
     except:
         pass
+    #
+    return ret
+
+def rpt_csv(data, content):
+    export = []
+    #
+    headers = data.get(REPORT_KEY_HEADERS)
+    for row in headers:
+        temp = []
+        for col in row:
+            ccont = col.get('content', '')
+            temp.append(ccont)
+        export.append(temp)
+    #
+    export.append([])
+    #
+    if data['table']:
+        ctr = 0
+        keys = []
+        for row in content:
+            temp = []
+            if ctr == 0:
+                if not data[REPORT_KEY_HEADER]:
+                    keys = row.keys()
+                else:
+                    keys = data[REPORT_KEY_HEADER]
+                for k in keys:
+                    temp.append(k)
+                export.append(temp)
+            #
+            temp = []
+            for k in keys:
+                rk = row.get(k, '')
+                if isblob(rk):
+                    rk = _['z_view_blob']
+                else:
+                    if rk:
+                        rk = str(rk)
+                    else:
+                        rk = ''
+                temp.append(rk)
+            export.append(temp)
+            #
+            ctr = ctr + 1
+    #
+    export.append([])
+    #
+    footers = data.get(REPORT_KEY_FOOTERS)
+    for row in footers:
+        temp = []
+        for col in row:
+            ccont = col.get('content', '')
+            temp.append(ccont)
+        export.append(temp)
+    #    
+    fout = cStringIO.StringIO()
+    writer = csv.writer(fout)
+    writer.writerows(export)
+    ret = fout.getvalue()
     #
     return ret
     
@@ -8599,6 +8659,7 @@ class report_run:
         action_button = (
                             ('report', _['cmd_go'], False, '', 'submit'),
                             (PRINT_DATA_KEY, _['cmd_go_print'], False, '', 'submit'),
+                            (REPORT_FORMAT_CSV, _['cmd_csv'], False, '', 'submit'),
                         )
         ftitle = ''
         finfo = ''
@@ -8642,9 +8703,12 @@ class report_run:
         return T(data, content)
         
     def POST(self, unused):
-        input = web.input(hreport='', format='')
+        input = web.input(hreport='')
         report = input.hreport.strip()
-        rformat = input.format
+        #
+        rformat = REPORT_FORMAT_DEFAULT
+        if input.has_key(REPORT_FORMAT_CSV):
+            rformat = REPORT_FORMAT_CSV
         #
         if not report:
             dflt()
@@ -8928,7 +8992,7 @@ class report_run:
                                         'data': pc2,
                                     }
                     elif pc[0] == REPORT_CELL_TYPE_FILES_IMAGE:
-                        if rformat == REPORT_FORMAT_DEFAULT:
+                        if rformat in REPORT_FORMAT_ALL:
                             phfc = {
                                         'content': str(pc[1]),
                                         'data': pc2,
@@ -9013,6 +9077,15 @@ class report_run:
         data = u_print(input, data)
         #
         stop()
+        #
+        if rformat == REPORT_FORMAT_CSV:
+            try:
+                disposition = 'attachment; filename=' + '%s%s' %(report, CSV_SUFFIX)
+                web.header('Content-Type', CSV_CTYPE)
+                web.header('Content-Disposition', disposition)
+                return rpt_csv(data, content)
+            except:
+                pass
         #
         return T(data, content)
 
