@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.17'
+VERSION = '1.18'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -8464,6 +8464,16 @@ class form_edit:
                 xform = form
                 if form != name:
                     xform = name
+                    #
+                    db.update(FORM_TBL, where='a=$a and b=$b and d=$d and e=$e',
+                        vars={
+                                'a': 'my',
+                                'b': 'shortcuts',
+                                'd': form,
+                                'e': SHORTCUT_TYPE_FORM,
+                            },
+                        d=name
+                    )
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
@@ -8627,6 +8637,16 @@ class report_edit:
                 xreport = report
                 if report != name:
                     xreport = name
+                    #
+                    db.update(FORM_TBL, where='a=$a and b=$b and d=$d and e=$e',
+                        vars={
+                                'a': 'my',
+                                'b': 'shortcuts',
+                                'd': report,
+                                'e': SHORTCUT_TYPE_REPORT,
+                            },
+                        d=name
+                    )                    
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
