@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.18'
+VERSION = '1.19'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -742,6 +742,11 @@ from HTMLParser import HTMLParser
 import calendar
 
 import copy
+
+try:
+    import reportlab
+except ImportError:
+    reportlab = None
 
 try:
     import sqlite3    
