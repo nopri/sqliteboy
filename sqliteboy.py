@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.19'
+VERSION = '1.20'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -57,6 +57,7 @@ DEFAULT_TEXTAREA_ROWS = 15
 DEFAULT_ERROR_INT = -1
 DEFAULT_ERROR_STR = ''
 DEFAULT_WIN_EXE = '%s.exe' %(NAME)
+DEFAULT_WIN_EXE_VERSION = '%s.version' %(DEFAULT_WIN_EXE)
 DEFAULT_WIN_MD5 = '%s.md5' %(DEFAULT_WIN_EXE)
 DEFAULT_FAVICON = '%s.ico' %(NAME)
 DEFAULT_SPEC = '%s.spec' %(NAME)
@@ -420,18 +421,23 @@ except ImportError:
    from md5 import md5
 
 #
+content_version = """
+$title $command
+$datetime
+"""
+file_version = open(r'$output_version', 'w')
+file_version.write(content_version)
+file_version.close()
+
+#
 content = open(r'$output', 'rb').read()
 content_md5 = md5(content).hexdigest()
 content_lines = [
-            '# $title $command',
-            '# $datetime',
-            '',
-            '%s %s' %(content_md5, r'$output'),
-            '',
+            '%s  %s' %(content_md5, r'$output'),
         ]
 file_md5 = open(r'$output_md5', 'w')
 for i in content_lines:
-    line = '%s%s' %(i, os.linesep)
+    line = '%s' %(i)
     file_md5.write(line)
 file_md5.close()
 
@@ -4451,6 +4457,7 @@ def scmd_pyinstaller(data):
                 output=DEFAULT_WIN_EXE,
                 icon=ico,
                 output_md5=DEFAULT_WIN_MD5,
+                output_version=DEFAULT_WIN_EXE_VERSION,
                 datetime=sqliteboy_time3(sqliteboy_time())
             )
         #
