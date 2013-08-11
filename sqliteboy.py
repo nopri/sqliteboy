@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.20'
+VERSION = '1.21'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -65,6 +65,7 @@ DEFAULT_VERSION = '%s.version' %(NAME)
 DEFAULT_WEBPY_STATIC = ['static']
 DEFAULT_QUERY_EXPORT = 'query.csv'
 DEFAULT_VAR_MAX = 3
+APPLICATION_TITLE_MAX = 32
 BROWSE_LIMIT_ALL = [10, 25, DEFAULT_LIMIT, 100, 250, 500, 1000]
 SEQUENCE_TABLE = 'sqlite_sequence'
 HOST_LOCAL = '0'
@@ -244,7 +245,17 @@ BACKUP_BUFFER = 10 * SIZE_KB
 FILES_MAX_NUMBER = 10
 FILES_MAX_SIZE = 1 * SIZE_MB
 SCRIPTS_MAX_SIZE = 32 * SIZE_KB
+SYSTEM_CONFIG_MAXSPLIT = 3
 SYSTEM_CONFIG = (
+                    (
+                        'x_application',
+                        'x_application_title',
+                        'application.title.',
+                        'application.title..%s' %(''),
+                        '',
+                        'striphtml',
+                        0,
+                    ),                    
                     (
                         'x_files',
                         'x_max_files_number',
@@ -1549,6 +1560,8 @@ LANGS = {
             'x_create_table_schema': 'create table based on this schema',
             'x_messages': 'messages',
             'x_messages_all': 'for all users',
+            'x_application': 'application',
+            'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -2673,8 +2686,11 @@ def s_select(p, string=True, what='*, rowid', order='rowid asc'):
     #
     return ret
 
-def s_save(p, last=False):
-    pr = p.split(FORM_SPLIT)[:len(FORM_FIELDS)]
+def s_save(p, last=False, maxsplit=0):
+    if maxsplit:
+        pr = p.split(FORM_SPLIT, maxsplit)[:len(FORM_FIELDS)]
+    else:
+        pr = p.split(FORM_SPLIT)[:len(FORM_FIELDS)]
     sf = []
     sv = []
     sd = {}
@@ -4910,6 +4926,18 @@ def r_messages(category):
 def r_messages_all():
     return tr_page(r_messages('all')).strip()
 
+def r_application_title():
+    ret = ''
+    #
+    if not isnosb():
+        try:
+            q = 'application.title.'
+            ret = r_system(q).strip()[:APPLICATION_TITLE_MAX]
+        except:
+            pass
+    #
+    return ret
+
 def uquery(content):
     ret = ''
     #
@@ -5070,10 +5098,18 @@ function toggle(src, dst)
 </head>
 <body>
 
+$ r_app_title = r_application_title()
+
 <div class='main_menu'>
 <table>
 <tr>
-<td>$title(data['title'])</td>
+<td>
+$if r_app_title:
+    $r_app_title
+    <br>
+    <br>
+$title(data['title'])
+</td>
 <td align='right' width='25%'>
 $if user():
     $user() <a href='/password'>$_['cmd_password']</a>
@@ -6672,6 +6708,7 @@ GLBL = {
     'print_data_value': PRINT_DATA_VALUE,
     'pr_get'    : pr_get,
     'r_messages_all': r_messages_all,
+    'r_application_title': r_application_title,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -7955,7 +7992,7 @@ class admin_system:
                     except:
                         ku = kdv
                     p = '%s%s%s' %(k, FORM_SPLIT, ku)
-                    s_save(p)
+                    s_save(p, maxsplit=SYSTEM_CONFIG_MAXSPLIT)
             sess[SK_SYSTEM] = _['o_system']
         except:
             sess[SK_SYSTEM] = _['e_system']
