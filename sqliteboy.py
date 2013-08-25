@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.21'
+VERSION = '1.22'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -706,6 +706,8 @@ PROFILE_USER_DEFINED_TYPE = str
 PROFILE_USER_DEFINED_LEVEL = 1
 ENV_VAR_MAX = DEFAULT_VAR_MAX
 QUERY_STRING_MAX = 1 * SIZE_KB
+PDF_CTYPE = 'application/pdf'
+PDF_SUFFIX = '.pdf'
 
 
 #----------------------------------------------------------------------#
@@ -752,7 +754,11 @@ import struct
 import re
 
 import csv
-import cStringIO
+
+try:
+    import cStringIO
+except ImportError:
+    import StringIO as cStringIO
 
 from HTMLParser import HTMLParser
 
@@ -762,6 +768,23 @@ import copy
 
 try:
     import reportlab
+    from reportlab.lib.colors import black as PDF_DEFAULT_BORDER_COLOR
+    from reportlab.platypus import SimpleDocTemplate as PDF_TEMPLATE
+    from reportlab.platypus import Table as PDF_TABLE
+    from reportlab.platypus import Image as PDF_IMAGE
+    from reportlab.platypus import Spacer as PDF_SPACER
+    #
+    PDF_DEFAULT_BORDER_STYLE = [
+                                    (
+                                        'GRID', 
+                                        (0, 0), 
+                                        (-1, -1), 
+                                        1, 
+                                        PDF_DEFAULT_BORDER_COLOR,
+                                    ),
+                                ]
+    PDF_DEFAULT_SPACER_WIDTH = 1
+    PDF_DEFAULT_SPACER_HEIGHT = 36
 except ImportError:
     reportlab = None
 
@@ -1499,6 +1522,7 @@ LANGS = {
             'x_sqlite_version': 'SQLite version',
             'x_web_version': 'web.py version',
             'x_python_version': 'Python version',
+            'x_reportlab_version': 'Reportlab version',
             'x_extended_features': 'extended features',
             'x_user': 'user',
             'x_users': 'users',
@@ -1562,6 +1586,7 @@ LANGS = {
             'x_messages_all': 'for all users',
             'x_application': 'application',
             'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
+            'x_not_avail_pdf': 'not available, pdf output will be disabled',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1644,6 +1669,7 @@ LANGS = {
             'cmd_go': 'go',
             'cmd_go_print': 'go (print)',
             'cmd_csv': 'csv',
+            'cmd_pdf': 'pdf',
             'cmd_shortcut': 'shortcut',
             'cmd_profile': 'profile',
             'cmd_schema': 'schema',
@@ -3323,11 +3349,17 @@ def sysinfo():
             )
     if isnosb(): s_adm = _['x_not_applicable']
     #
+    try:
+        s_reportlab = reportlab.Version
+    except:
+        s_reportlab = _['x_not_avail_pdf']
+    #
     ret = [
             (_['x_version'], s_a),
             (_['x_sqlite_version'], db.db_module.sqlite_version),
             (_['x_python_version'], platform.python_version()),
             (_['x_web_version'], web.__version__),
+            (_['x_reportlab_version'], s_reportlab),
             s_sb,
             (_['x_admin'], s_adm),
             (_['x_allow'], allows()),
@@ -4963,15 +4995,24 @@ def uquery(content):
     return ret
 
 def rpt_csv(data, content):
+    
+    def header_footer(hf):
+        ret = []
+        #
+        for row in hf:
+            temp = []
+            for col in row:
+                ccont = col.get('content', '')
+                temp.append(ccont)
+            ret.append(temp)   
+        #
+        return ret
+    #
     export = []
     #
     headers = data.get(REPORT_KEY_HEADERS)
-    for row in headers:
-        temp = []
-        for col in row:
-            ccont = col.get('content', '')
-            temp.append(ccont)
-        export.append(temp)
+    headers_export = header_footer(headers)
+    export.extend(headers_export)
     #
     export.append([])
     #
@@ -5007,12 +5048,8 @@ def rpt_csv(data, content):
     export.append([])
     #
     footers = data.get(REPORT_KEY_FOOTERS)
-    for row in footers:
-        temp = []
-        for col in row:
-            ccont = col.get('content', '')
-            temp.append(ccont)
-        export.append(temp)
+    footers_export = header_footer(footers)
+    export.extend(footers_export)
     #    
     fout = cStringIO.StringIO()
     writer = csv.writer(fout)
@@ -5020,6 +5057,95 @@ def rpt_csv(data, content):
     ret = fout.getvalue()
     #
     return ret
+
+def rpt_pdf(data, content):
+    
+    def header_footer(hf):
+        ret = []
+        #
+        for row in hf:
+            temp = []
+            for col in row:
+                ccont = col.get('content', '')
+                temp.append(ccont)
+            ret.append(temp)   
+        #
+        return ret
+    #
+    spacer = PDF_SPACER(
+                            PDF_DEFAULT_SPACER_WIDTH,
+                            PDF_DEFAULT_SPACER_HEIGHT
+                        )
+    #
+    export = []
+    #
+    headers = data.get(REPORT_KEY_HEADERS)
+    headers_export = header_footer(headers)
+    headers_export_table = PDF_TABLE(
+                                        headers_export,
+                                        style=PDF_DEFAULT_BORDER_STYLE
+                                    )
+    export.append(headers_export_table)
+    #
+    export.append(spacer)
+    #
+    if data['table']:
+        content_export = []
+        #
+        ctr = 0
+        keys = []
+        for row in content:
+            temp = []
+            if ctr == 0:
+                if not data[REPORT_KEY_HEADER]:
+                    keys = row.keys()
+                else:
+                    keys = data[REPORT_KEY_HEADER]
+                for k in keys:
+                    temp.append(k)
+                content_export.append(temp)
+            #
+            temp = []
+            for k in keys:
+                rk = row.get(k, '')
+                if isblob(rk):
+                    rk = _['z_view_blob']
+                else:
+                    if rk:
+                        rk = str(rk)
+                    else:
+                        rk = ''
+                temp.append(rk)
+            content_export.append(temp)
+            #
+            ctr = ctr + 1
+        #
+        if content_export:
+            content_export_table = PDF_TABLE(
+                                                content_export,
+                                                style=PDF_DEFAULT_BORDER_STYLE
+                                            )
+            export.append(content_export_table)
+    #
+    export.append(spacer)
+    #
+    footers = data.get(REPORT_KEY_FOOTERS)
+    footers_export = header_footer(footers)
+    footers_export_table = PDF_TABLE(
+                                        footers_export,
+                                        style=PDF_DEFAULT_BORDER_STYLE
+                                    )    
+    export.append(footers_export_table)
+    #    
+    fout = cStringIO.StringIO()
+    writer = PDF_TEMPLATE(
+                            fout
+                        )
+    writer.title = data.get('report', '')
+    writer.build(export)
+    ret = fout.getvalue()
+    #
+    return ret    
     
     
 #----------------------------------------------------------------------#
@@ -8725,11 +8851,22 @@ class report_run:
             dflt()
         #
         input = ()
-        action_button = (
+        action_button = [
                             ('report', _['cmd_go'], False, '', 'submit'),
                             (PRINT_DATA_KEY, _['cmd_go_print'], False, '', 'submit'),
                             (REPORT_FORMAT_CSV, _['cmd_csv'], False, '', 'submit'),
-                        )
+                        ]
+        if reportlab:
+            action_button.append(
+                                    (
+                                        REPORT_FORMAT_PDF, 
+                                        _['cmd_pdf'], 
+                                        False, 
+                                        '', 
+                                        'submit'
+                                    ),
+                                )
+        #
         ftitle = ''
         finfo = ''
         if not reqreport(report):
@@ -8778,6 +8915,8 @@ class report_run:
         rformat = REPORT_FORMAT_DEFAULT
         if input.has_key(REPORT_FORMAT_CSV):
             rformat = REPORT_FORMAT_CSV
+        elif input.has_key(REPORT_FORMAT_PDF):
+            rformat = REPORT_FORMAT_PDF
         #
         if not report:
             dflt()
@@ -9153,6 +9292,15 @@ class report_run:
                 web.header('Content-Type', CSV_CTYPE)
                 web.header('Content-Disposition', disposition)
                 return rpt_csv(data, content)
+            except:
+                pass
+        #
+        if rformat == REPORT_FORMAT_PDF:
+            try:
+                disposition = 'attachment; filename=' + '%s%s' %(report, PDF_SUFFIX)
+                web.header('Content-Type', PDF_CTYPE)
+                web.header('Content-Disposition', disposition)
+                return rpt_pdf(data, content)
             except:
                 pass
         #
