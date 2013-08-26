@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.23'
+VERSION = '1.24'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1478,6 +1478,30 @@ class NumberToWordsEn1(NumberToWords):
 
 NUMBER_TO_WORDS['id'] = NumberToWordsId
 NUMBER_TO_WORDS['en1'] = NumberToWordsEn1
+    
+
+#----------------------------------------------------------------------#
+# SIMPLEDROPDOWN                                                       #
+#----------------------------------------------------------------------#
+class SimpleDropdown(web.form.Dropdown):
+    def __init__(self, name, args, *validators, **attrs):
+        self.args = args
+        super(SimpleDropdown, self).__init__(name, args, *validators, **attrs)
+    
+    def _render_option(self, arg, indent='  '):
+        if isinstance(arg, (tuple, list)):
+            value, desc= arg
+        else:
+            value, desc = arg, arg 
+
+        #lines below are modified by sqliteboy author: 
+        #- convert to str
+        #- web.net 
+        if str(self.value) == str(value) or (isinstance(self.value, list) and value in self.value):
+            select_p = ' selected="selected"'
+        else:
+            select_p = ''
+        return indent + '<option%s value="%s">%s</option>\n' % (select_p, web.net.websafe(value), web.net.websafe(desc))
     
 
 #----------------------------------------------------------------------#
@@ -3425,7 +3449,7 @@ def fref2(reference, name):
     ret = None
     #
     if isinstance(reference, list):
-        ret = web.form.Dropdown(name, args=reference)
+        ret = SimpleDropdown(name, args=reference)
     elif hasattr(reference, 'render'):
         ret = reference
     #
