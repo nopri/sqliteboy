@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.22'
+VERSION = '1.23'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -769,10 +769,12 @@ import copy
 try:
     import reportlab
     from reportlab.lib.colors import black as PDF_DEFAULT_BORDER_COLOR
+    from reportlab.lib.styles import getSampleStyleSheet as PDF_STYLE_SHEET
     from reportlab.platypus import SimpleDocTemplate as PDF_TEMPLATE
     from reportlab.platypus import Table as PDF_TABLE
     from reportlab.platypus import Image as PDF_IMAGE
     from reportlab.platypus import Spacer as PDF_SPACER
+    from reportlab.platypus import Paragraph as PDF_PARAGRAPH
     #
     PDF_DEFAULT_BORDER_STYLE = [
                                     (
@@ -785,6 +787,7 @@ try:
                                 ]
     PDF_DEFAULT_SPACER_WIDTH = 1
     PDF_DEFAULT_SPACER_HEIGHT = 36
+    PDF_DEFAULT_PARAGRAPH_STYLE = PDF_STYLE_SHEET()['BodyText']
 except ImportError:
     reportlab = None
 
@@ -4069,6 +4072,16 @@ def fsize(f, working_dir=CURDIR, human_readable=True):
     #
     return ret
 
+def tr_newline(s, br='<br/>'):
+    ret = str(s)
+    #
+    ret = ret.replace('\r\n', br)
+    ret = ret.replace('\n\r', br)
+    ret = ret.replace('\r', br)
+    ret = ret.replace('\n', br)
+    #
+    return ret
+
 def tr_report_text(s, data):
     ret = s
     #
@@ -5067,6 +5080,7 @@ def rpt_pdf(data, content):
             temp = []
             for col in row:
                 ccont = col.get('content', '')
+                ccont = PDF_PARAGRAPH(tr_newline(ccont), PDF_DEFAULT_PARAGRAPH_STYLE)
                 temp.append(ccont)
             ret.append(temp)   
         #
@@ -5102,6 +5116,7 @@ def rpt_pdf(data, content):
                 else:
                     keys = data[REPORT_KEY_HEADER]
                 for k in keys:
+                    k = PDF_PARAGRAPH(tr_newline(k), PDF_DEFAULT_PARAGRAPH_STYLE)
                     temp.append(k)
                 content_export.append(temp)
             #
@@ -5115,6 +5130,7 @@ def rpt_pdf(data, content):
                         rk = str(rk)
                     else:
                         rk = ''
+                rk = PDF_PARAGRAPH(tr_newline(rk), PDF_DEFAULT_PARAGRAPH_STYLE)
                 temp.append(rk)
             content_export.append(temp)
             #
@@ -6144,7 +6160,7 @@ $elif data['command'] == 'report.run.result':
                         $else:
                             $ccont
                     $else:    
-                        $ccont
+                        $tr_newline(ccont)
                 </td>
             </tr>
         </table>
@@ -6161,7 +6177,7 @@ $elif data['command'] == 'report.run.result':
                 $else:
                     $ keys = data['header']
                 $for k in keys:
-                    <th>$k
+                    <th>$tr_newline(k)
                     </th>
             <tr>
             $for k in keys:
@@ -6169,7 +6185,7 @@ $elif data['command'] == 'report.run.result':
                 $if isblob(rek):
                     <td>$_['z_view_blob']</td>
                 $else:
-                    <td>$rek
+                    <td>$tr_newline(rek)
                     </td>
             </tr>
             $ ctr = ctr + 1
@@ -6194,7 +6210,7 @@ $elif data['command'] == 'report.run.result':
                         $else:
                             $ccont
                     $else:    
-                        $ccont
+                        $tr_newline(ccont)
                 </td>
             </tr>
         </table>
@@ -6835,6 +6851,7 @@ GLBL = {
     'pr_get'    : pr_get,
     'r_messages_all': r_messages_all,
     'r_application_title': r_application_title,
+    'tr_newline': tr_newline,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -9288,21 +9305,33 @@ class report_run:
         #
         if rformat == REPORT_FORMAT_CSV:
             try:
+                rpt_csv_content = rpt_csv(data, content)
+            except Exception, e:
+                sess[SKR_RUN] = [
+                                    [_['th_error'], str(e)]
+                                ]
+                ucontent = uquery(ocols)
+                raise web.seeother('/report/run/%s?%s' %(report, ucontent))
+            else:
                 disposition = 'attachment; filename=' + '%s%s' %(report, CSV_SUFFIX)
                 web.header('Content-Type', CSV_CTYPE)
                 web.header('Content-Disposition', disposition)
-                return rpt_csv(data, content)
-            except:
-                pass
+                return rpt_csv_content
         #
         if rformat == REPORT_FORMAT_PDF:
             try:
+                rpt_pdf_content = rpt_pdf(data, content)
+            except Exception, e:
+                sess[SKR_RUN] = [
+                                    [_['th_error'], str(e)]
+                                ]
+                ucontent = uquery(ocols)
+                raise web.seeother('/report/run/%s?%s' %(report, ucontent))
+            else:
                 disposition = 'attachment; filename=' + '%s%s' %(report, PDF_SUFFIX)
                 web.header('Content-Type', PDF_CTYPE)
                 web.header('Content-Disposition', disposition)
-                return rpt_pdf(data, content)
-            except:
-                pass
+                return rpt_pdf_content
         #
         return T(data, content)
 
