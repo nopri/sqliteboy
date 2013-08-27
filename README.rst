@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.24
+    Version 1.25
 
 
 
@@ -1849,6 +1849,25 @@ Report Code Reference
 | footers       | custom footers          | list of list  | optional    |                          |
 |               |                         | of list       |             |                          |
 |               | (please see headers)    |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| paper         | paper size in point     | list          | optional    |                          |
+|               | (1/72 inch)             |               |             |                          |
+|               | (PDF)                   |               |             |                          |
+|               |                         |               |             |                          |
+|               | - must be list of two   |               |             |                          |
+|               |   int/float members     |               |             |                          |
+|               |   (width, height)       |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| margins       | margins in point        | list          | optional    |                          |
+|               | (1/72 inch)             |               |             |                          |
+|               | (PDF)                   |               |             |                          |
+|               |                         |               |             |                          |
+|               | - must be list of four  |               |             |                          |
+|               |   int/float members     |               |             |                          |
+|               |   (left, right, top,    |               |             |                          |
+|               |   bottom)               |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 

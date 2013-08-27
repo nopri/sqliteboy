@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.24'
+VERSION = '1.25'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -198,6 +198,8 @@ REPORT_KEY_SQL = 'sql'
 REPORT_KEY_HEADER = 'header'
 REPORT_KEY_HEADERS = 'headers'
 REPORT_KEY_FOOTERS = 'footers'
+REPORT_KEY_PAPER = 'paper'
+REPORT_KEY_MARGINS = 'margins'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
@@ -775,6 +777,8 @@ try:
     from reportlab.platypus import Image as PDF_IMAGE
     from reportlab.platypus import Spacer as PDF_SPACER
     from reportlab.platypus import Paragraph as PDF_PARAGRAPH
+    from reportlab.lib.pagesizes import A4 as PDF_DEFAULT_PAGE_SIZE
+    from reportlab.lib.units import inch as PDF_UNIT_INCH
     #
     PDF_DEFAULT_BORDER_STYLE = [
                                     (
@@ -1549,7 +1553,7 @@ LANGS = {
             'x_sqlite_version': 'SQLite version',
             'x_web_version': 'web.py version',
             'x_python_version': 'Python version',
-            'x_reportlab_version': 'Reportlab version',
+            'x_reportlab_version': 'ReportLab version',
             'x_extended_features': 'extended features',
             'x_user': 'user',
             'x_users': 'users',
@@ -1613,7 +1617,7 @@ LANGS = {
             'x_messages_all': 'for all users',
             'x_application': 'application',
             'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
-            'x_not_avail_pdf': 'not available, pdf output will be disabled',
+            'x_not_avail_pdf': 'not available, PDF output will be disabled',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -3873,7 +3877,40 @@ def parsereport(report, execute_sql=True):
                         REPORT_FOOTERS_CELL_TYPES,
                     )
     #
-    return [ftitle, finfo, input, rquery, rheader, message2, oheaders, ofooters]
+    xpaper = fo.get(REPORT_KEY_PAPER, [])
+    try:
+        if not isinstance(xpaper, list): 
+            raise Exception
+        #
+        xpaper2 = [ 
+                        float(xpaper[0]), #width
+                        float(xpaper[1]), #height
+                ]
+        #
+        xpaper2 = [abs(x) for x in xpaper2]
+    except:
+        xpaper2 = []
+    #
+    xmargins = fo.get(REPORT_KEY_MARGINS, [])
+    try:
+        if not isinstance(xmargins, list): 
+            raise Exception
+        #
+        xmargins2 = [ 
+                        float(xmargins[0]), #left
+                        float(xmargins[1]), #right
+                        float(xmargins[2]), #top
+                        float(xmargins[3]), #bottom
+                ]
+        #
+        xmargins2 = [abs(x) for x in xmargins2]
+    except:
+        xmargins2 = []
+    #
+    return [ftitle, finfo, input, rquery, rheader, message2, oheaders, ofooters,
+            xpaper2,
+            xmargins2,
+        ]
 
 def nqtype(ftype):
     ret = False
@@ -5095,7 +5132,7 @@ def rpt_csv(data, content):
     #
     return ret
 
-def rpt_pdf(data, content):
+def rpt_pdf(data, content, parsed):
     
     def header_footer(hf):
         ret = []
@@ -5177,11 +5214,28 @@ def rpt_pdf(data, content):
                                     )    
     export.append(footers_export_table)
     #    
+    upaper = parsed[8]
+    umargins = parsed[9]
+    upaper2 = PDF_DEFAULT_PAGE_SIZE
+    if upaper:
+        upaper2 = upaper
+    umargins_l = umargins_r = umargins_t = umargins_b = PDF_UNIT_INCH
+    if umargins:
+        umargins_l, umargins_r, umargins_t, umargins_b = umargins
+    #
     fout = cStringIO.StringIO()
     writer = PDF_TEMPLATE(
-                            fout
+                            fout,
+                            pagesize=upaper2,
+                            leftMargin=umargins_l,
+                            rightMargin=umargins_r,
+                            topMargin=umargins_t,
+                            bottomMargin=umargins_b
                         )
     writer.title = data.get('report', '')
+    writer.subject = writer.title
+    writer.creator = TITLE
+    writer.author = user()
     writer.build(export)
     ret = fout.getvalue()
     #
@@ -9344,7 +9398,7 @@ class report_run:
         #
         if rformat == REPORT_FORMAT_PDF:
             try:
-                rpt_pdf_content = rpt_pdf(data, content)
+                rpt_pdf_content = rpt_pdf(data, content, preport)
             except Exception, e:
                 sess[SKR_RUN] = [
                                     [_['th_error'], str(e)]
