@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.26'
+VERSION = '1.27'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -710,8 +710,6 @@ ENV_VAR_MAX = DEFAULT_VAR_MAX
 QUERY_STRING_MAX = 1 * SIZE_KB
 PDF_CTYPE = 'application/pdf'
 PDF_SUFFIX = '.pdf'
-STRUCTURE_UPDATE_FILES = 'structure.update.files'
-STRUCTURE_UPDATE_FILES_SPLIT = 4
 
 
 #----------------------------------------------------------------------#
@@ -4462,18 +4460,6 @@ def s_isold():
             break
     #
     return ret
-
-def s_isold_files():
-    ret = False
-    #
-    if isnosb():
-        return ret
-    #
-    res = s_select(STRUCTURE_UPDATE_FILES)
-    if not res:
-        ret = True
-    #
-    return ret
     
 def s_xupdate():
     allt = tables()
@@ -4519,59 +4505,6 @@ def s_xupdate():
         return ret
     #
     ret = rows
-    return ret
-
-def s_xupdate_files():
-    ret = 0
-    #
-    ids = []
-    rows = []
-    #
-    try:
-        rows = db.select(
-                        FORM_TBL, 
-                        what='rowid, e', 
-                        where='a=$a and b=$b', 
-                        vars={
-                            'a': 'my',
-                            'b': 'files',
-                        }
-                    ).list()
-        #
-        for r in rows:
-            try:
-                e2 = base64.b64decode(r.e)
-                if isblob(e2):
-                    e3 = db.db_module.Binary(e2)
-                else:
-                    e3 = e2
-                #
-                db.update(
-                            FORM_TBL, 
-                            e=e3, 
-                            where='rowid=$rowid',
-                            vars={
-                                'rowid': r.rowid,
-                            }
-                        )
-                ids.append(r.rowid)
-            except:
-                continue        
-        #
-        ids = [str(x) for x in ids]
-        flag = '%s%s%s%s%s' %(
-                                STRUCTURE_UPDATE_FILES,
-                                FORM_SPLIT,
-                                ' '.join(ids),
-                                FORM_SPLIT,
-                                TITLE,
-                            )  
-        s_save(flag, maxsplit=STRUCTURE_UPDATE_FILES_SPLIT)
-        #
-        ret = len(ids)    
-    except:
-        return ret
-    #
     return ret
 
 def p_pragma(pragma, default=''):
@@ -9765,6 +9698,7 @@ class files:
                 g['type_options'] = n.type_options
                 g['disposition'] = n.disposition
                 g['disposition_options'] = n.disposition_options
+                g['raw'] = 1
                 #
                 gj = json.dumps(g)
             except:
@@ -9820,7 +9754,11 @@ class fs:
             r = r[0]
             ft = json.loads(r.g).get('type')
             fn = r.d
-            fc = r.e
+            fraw = json.loads(r.g).get('raw')
+            if fraw == 1 or isblob(r.e):
+                fc = r.e
+            else:
+                fc = base64.b64decode(r.e)
         except:
             dflt()
         #
@@ -11143,11 +11081,6 @@ if __name__ == '__main__':
                             s_isold,
                             _['x_sqliteboy_x_update'],
                             s_xupdate,
-                        ],
-                        [
-                            s_isold_files,
-                            _['x_sqliteboy_x_update_files'],
-                            s_xupdate_files,
                         ],
                     ]
     for x in xupdate_all:
