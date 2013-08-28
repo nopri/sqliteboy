@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.27
+    Version 1.28
 
 
 
@@ -40,9 +40,7 @@ What Is SQLiteBoy
   
   Reporting wizard also supports form field predefined values, default 
   value and constraint (checking before reporting query is executed). 
-  Future version of reporting will support PDF output (currently, HTML
-  (default) and CSV are supported). Printer friendly version of report 
-  result is supported in HTML output. 
+  Supported report format: PDF, HTML, HTML (printer friendly) and CSV. 
 
   Form and Report support python handler, which will be automatically called, if 
   provided. Python handler eases the integration with external system
@@ -221,6 +219,8 @@ Features
     section.
     
   - As of v1.17, CSV output is supported
+  
+  - As of v1.28, PDF output (paper size, margins, image) is supported
 
 - Files (Extended feature, new in v0.47)
 
@@ -429,6 +429,8 @@ Requirements
 - SQLite module (included as sqlite3, in python 2.5+)
 
 - JSON module (included as json, in python 2.6+)
+
+- Optional: ReportLab / PIL (PDF output)
 
 (or see below if you prefer standalone application on Windows)
 

@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.27'
+VERSION = '1.28'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -4096,6 +4096,29 @@ def r_fs_ok(sid):
     #
     return False
 
+def r_fs_content(sid):
+    fc = None
+    try:
+        r = db.select(FORM_TBL, 
+                        what='d, e, g', 
+                        where='rowid=$sid',
+                        vars={
+                                'sid': long(sid),
+                            }
+                    )
+        r = r[0]
+        ft = json.loads(r.g).get('type')
+        fn = r.d
+        fraw = json.loads(r.g).get('raw')
+        if fraw == 1 or isblob(r.e):
+            fc = r.e
+        else:
+            fc = base64.b64decode(r.e)    
+    except:
+        pass
+    #
+    return fc
+
 def striphtml(text):
     data = StripHTMLParser()
     data.feed(text)
@@ -5142,8 +5165,16 @@ def rpt_pdf(data, content, parsed):
             temp = []
             for col in row:
                 ccont = col.get('content', '')
-                ccont = PDF_PARAGRAPH(tr_newline(ccont), PDF_DEFAULT_PARAGRAPH_STYLE)
-                temp.append(ccont)
+                cattr = col.get('data', '')
+                ccont2 = PDF_PARAGRAPH(tr_newline(ccont), PDF_DEFAULT_PARAGRAPH_STYLE)
+                #
+                if cattr.get('type') == REPORT_CELL_TYPE_FILES_IMAGE:
+                    if r_fs_ok(ccont):
+                        ccont_img = r_fs_content(ccont)
+                        ccont_fimg = cStringIO.StringIO(ccont_img)
+                        ccont2 = PDF_IMAGE(ccont_fimg)
+                #
+                temp.append(ccont2)
             ret.append(temp)   
         #
         return ret
@@ -9744,21 +9775,7 @@ class fs:
         fn = ''
         fc = ''
         try:
-            r = db.select(FORM_TBL, 
-                            what='d, e, g', 
-                            where='rowid=$sid',
-                            vars={
-                                    'sid': long(sid),
-                                }
-                        )
-            r = r[0]
-            ft = json.loads(r.g).get('type')
-            fn = r.d
-            fraw = json.loads(r.g).get('raw')
-            if fraw == 1 or isblob(r.e):
-                fc = r.e
-            else:
-                fc = base64.b64decode(r.e)
+            fc = r_fs_content(sid)
         except:
             dflt()
         #
