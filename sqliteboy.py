@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.28'
+VERSION = '1.29'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -4097,7 +4097,8 @@ def r_fs_ok(sid):
     return False
 
 def r_fs_content(sid):
-    fc = None
+    ret = []
+    #
     try:
         r = db.select(FORM_TBL, 
                         what='d, e, g', 
@@ -4114,10 +4115,12 @@ def r_fs_content(sid):
             fc = r.e
         else:
             fc = base64.b64decode(r.e)    
+        #
+        ret = [fn, ft, fc]
     except:
         pass
     #
-    return fc
+    return ret
 
 def striphtml(text):
     data = StripHTMLParser()
@@ -9775,7 +9778,7 @@ class fs:
         fn = ''
         fc = ''
         try:
-            fc = r_fs_content(sid)
+            fn, ft, fc = r_fs_content(sid)
         except:
             dflt()
         #

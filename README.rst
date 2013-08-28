@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.28
+    Version 1.29
 
 
 
@@ -440,7 +440,7 @@ Standalone Windows Application
 - Standalone / portable / run from USB Flash Disk 
 - Can be run by standard user
 - There is no need to install Python / requirements above
-- Single file executable (+/- 4 MB)
+- Single file executable (+/- 5 MB)
 - Run from Windows Explorer (double-click), no command line needed
 - To quit properly, press CTRL-C in terminal (cmd) window
 - Documentation and source code are included
