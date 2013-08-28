@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.25'
+VERSION = '1.26'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -710,6 +710,8 @@ ENV_VAR_MAX = DEFAULT_VAR_MAX
 QUERY_STRING_MAX = 1 * SIZE_KB
 PDF_CTYPE = 'application/pdf'
 PDF_SUFFIX = '.pdf'
+STRUCTURE_UPDATE_FILES = 'structure.update.files'
+STRUCTURE_UPDATE_FILES_SPLIT = 4
 
 
 #----------------------------------------------------------------------#
@@ -1607,6 +1609,7 @@ LANGS = {
             'x_copy_from': 'from',
             'x_copy_columns_none': 'no identical column found',
             'x_sqliteboy_x_update': 'updating %s table, please wait...' %(FORM_TBL),
+            'x_sqliteboy_x_update_files': 'updating %s table (files), please wait...' %(FORM_TBL),
             'x_please_wait': 'please wait...',
             'x_server_command_mode': 'server command mode',
             'x_style': 'style',
@@ -4459,6 +4462,18 @@ def s_isold():
             break
     #
     return ret
+
+def s_isold_files():
+    ret = False
+    #
+    if isnosb():
+        return ret
+    #
+    res = s_select(STRUCTURE_UPDATE_FILES)
+    if not res:
+        ret = True
+    #
+    return ret
     
 def s_xupdate():
     allt = tables()
@@ -4504,6 +4519,59 @@ def s_xupdate():
         return ret
     #
     ret = rows
+    return ret
+
+def s_xupdate_files():
+    ret = 0
+    #
+    ids = []
+    rows = []
+    #
+    try:
+        rows = db.select(
+                        FORM_TBL, 
+                        what='rowid, e', 
+                        where='a=$a and b=$b', 
+                        vars={
+                            'a': 'my',
+                            'b': 'files',
+                        }
+                    ).list()
+        #
+        for r in rows:
+            try:
+                e2 = base64.b64decode(r.e)
+                if isblob(e2):
+                    e3 = db.db_module.Binary(e2)
+                else:
+                    e3 = e2
+                #
+                db.update(
+                            FORM_TBL, 
+                            e=e3, 
+                            where='rowid=$rowid',
+                            vars={
+                                'rowid': r.rowid,
+                            }
+                        )
+                ids.append(r.rowid)
+            except:
+                continue        
+        #
+        ids = [str(x) for x in ids]
+        flag = '%s%s%s%s%s' %(
+                                STRUCTURE_UPDATE_FILES,
+                                FORM_SPLIT,
+                                ' '.join(ids),
+                                FORM_SPLIT,
+                                TITLE,
+                            )  
+        s_save(flag, maxsplit=STRUCTURE_UPDATE_FILES_SPLIT)
+        #
+        ret = len(ids)    
+    except:
+        return ret
+    #
     return ret
 
 def p_pragma(pragma, default=''):
@@ -5478,7 +5546,7 @@ $if data['command'] == 'browse':
         </td>
             $for c in data['columns']:
             <td>
-                $if c['type'] in data['blob_type']:
+                $if c['type'] in data['blob_type'] or isblob(x[c['name']]):
                     $if x[c['name']]:
                         <a href="$data['blob_url']?$data['blob_var']=$x[rowid]&$data['blob_column']=$c['name']">$data['blob_command']</a>
                 $else:
@@ -9703,9 +9771,15 @@ class files:
                 pass
             #
             try:
+                n_value = n.value
+                if isblob(n_value):
+                    n_value2 = db.db_module.Binary(n_value)
+                else:
+                    n_value2 = n_value
+                #
                 db.insert(FORM_TBL, a='my', b='files', c=user(),  
                     d=n.filename, 
-                    e=base64.b64encode(n.value), 
+                    e=n_value2, 
                     f='0',
                     g=gj,
                 )
@@ -9746,7 +9820,7 @@ class fs:
             r = r[0]
             ft = json.loads(r.g).get('type')
             fn = r.d
-            fc = base64.b64decode(r.e)
+            fc = r.e
         except:
             dflt()
         #
@@ -11064,20 +11138,33 @@ if __name__ == '__main__':
     app.add_processor(proc_account_check)
     app.add_processor(proc_misc)
     #
-    if s_isold():
-        log('')
-        log(_['x_sqliteboy_x_update'])
-        xupdate = s_xupdate()
-        if xupdate:
-            log('%s: %s %s' %(
-                _['th_ok'],
-                str(xupdate),
-                _['x_row'],
+    xupdate_all = [
+                        [
+                            s_isold,
+                            _['x_sqliteboy_x_update'],
+                            s_xupdate,
+                        ],
+                        [
+                            s_isold_files,
+                            _['x_sqliteboy_x_update_files'],
+                            s_xupdate_files,
+                        ],
+                    ]
+    for x in xupdate_all:
+        if x[0]():
+            log('')
+            log(x[1])
+            xupdate = x[2]()
+            if xupdate:
+                log('%s: %s %s' %(
+                    _['th_ok'],
+                    str(xupdate),
+                    _['x_row'],
+                    )
                 )
-            )
-        else:
-            log(_['th_error'])
-        log('')
+            else:
+                log(_['th_error'])
+            log('')
     #
     web.httpserver.runsimple(app.wsgifunc(), (DEFAULT_ADDR, port))
     
