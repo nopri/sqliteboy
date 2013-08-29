@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.29'
+VERSION = '1.30'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -779,6 +779,27 @@ try:
     from reportlab.platypus import Paragraph as PDF_PARAGRAPH
     from reportlab.lib.pagesizes import A4 as PDF_DEFAULT_PAGE_SIZE
     from reportlab.lib.units import inch as PDF_UNIT_INCH
+    from reportlab.pdfbase import _fontdata_enc_winansi
+    from reportlab.pdfbase import _fontdata_enc_macroman
+    from reportlab.pdfbase import _fontdata_enc_standard
+    from reportlab.pdfbase import _fontdata_enc_symbol
+    from reportlab.pdfbase import _fontdata_enc_zapfdingbats
+    from reportlab.pdfbase import _fontdata_enc_pdfdoc
+    from reportlab.pdfbase import _fontdata_enc_macexpert
+    from reportlab.pdfbase import _fontdata_widths_courier
+    from reportlab.pdfbase import _fontdata_widths_courierbold
+    from reportlab.pdfbase import _fontdata_widths_courieroblique
+    from reportlab.pdfbase import _fontdata_widths_courierboldoblique
+    from reportlab.pdfbase import _fontdata_widths_helvetica
+    from reportlab.pdfbase import _fontdata_widths_helveticabold
+    from reportlab.pdfbase import _fontdata_widths_helveticaoblique
+    from reportlab.pdfbase import _fontdata_widths_helveticaboldoblique
+    from reportlab.pdfbase import _fontdata_widths_timesroman
+    from reportlab.pdfbase import _fontdata_widths_timesbold
+    from reportlab.pdfbase import _fontdata_widths_timesitalic
+    from reportlab.pdfbase import _fontdata_widths_timesbolditalic
+    from reportlab.pdfbase import _fontdata_widths_symbol
+    from reportlab.pdfbase import _fontdata_widths_zapfdingbats
     #
     PDF_DEFAULT_BORDER_STYLE = [
                                     (
@@ -4170,6 +4191,9 @@ def tr_newline(s, br='<br/>'):
     #
     return ret
 
+def tr_newline_html(s):
+    return tr_newline(s, '<br>')
+
 def tr_report_text(s, data):
     ret = s
     #
@@ -5173,7 +5197,7 @@ def rpt_pdf(data, content, parsed):
                 #
                 if cattr.get('type') == REPORT_CELL_TYPE_FILES_IMAGE:
                     if r_fs_ok(ccont):
-                        ccont_img = r_fs_content(ccont)
+                        ccont_img = r_fs_content(ccont)[2]
                         ccont_fimg = cStringIO.StringIO(ccont_img)
                         ccont2 = PDF_IMAGE(ccont_fimg)
                 #
@@ -5269,7 +5293,7 @@ def rpt_pdf(data, content, parsed):
                         )
     writer.title = data.get('report', '')
     writer.subject = writer.title
-    writer.creator = TITLE
+    writer.creator = '%s - %s'%(TITLE, sqliteboy_time3a())
     writer.author = user()
     writer.build(export)
     ret = fout.getvalue()
@@ -6964,7 +6988,7 @@ GLBL = {
     'pr_get'    : pr_get,
     'r_messages_all': r_messages_all,
     'r_application_title': r_application_title,
-    'tr_newline': tr_newline,
+    'tr_newline': tr_newline_html,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
