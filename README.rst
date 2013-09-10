@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.30
+    Version 1.31
 
 
 
@@ -34,7 +34,7 @@ What Is SQLiteBoy
   Form field supports predefined values (options) from SQL Query or 
   Python list. Also, default value can be result of function call or 
   static value. Constraint is also supported, to do checking before 
-  save, to prevent saving invalid value (and, it's possible to call 
+  save, to prevent saving invalid value (it's possible to call 
   function before comparison). Onsave event is also supported, to 
   execute SQL Query (and use the result) just before the data is saved.
   
@@ -413,7 +413,7 @@ Features
 - Custom Template
 
 - Minimum use of Javascript in default/builtin template
-  (only for delete selected confirmation and toggle select all)
+  (only for confirmation dialog and toggle select all)
 
 - Table name limitation: 
   could not handle table with whitespace in name 
@@ -479,9 +479,9 @@ Command::
     
     python sqliteboy.py <database_file> [port] > LOGFILE 2>&1 &
     
-    (if you are using source code, under Linux/Bash shell, and want to run
-    in the background. You could use /dev/null as LOGFILE if you don't care
-    about the logs.)
+    (if you are using source code, sh compatible shell (with job control), 
+    and want to run in the background. If applicable, You could use 
+    /dev/null as LOGFILE if you don't care about the logs.)
 
 then, using web browser, visit localhost:11738, or localhost:PORT, if 
 PORT is specified
@@ -1428,6 +1428,8 @@ Form Code Reference
 |               | (noted above)           |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| confirm       | confirmation message    | str           | optional    |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
 
@@ -1871,6 +1873,8 @@ Report Code Reference
 |               |   (left, right, top,    |               |             |                          |
 |               |   bottom)               |               |             |                          |
 |               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| confirm       | confirmation message    | str           | optional    |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):

@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.30'
+VERSION = '1.31'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -163,6 +163,7 @@ FORM_KEY_SUB = 'sub'
 FORM_KEY_MESSAGE = 'message'
 FORM_KEY_SQL2 = 'sql2'
 FORM_KEY_INSERT = 'insert'
+FORM_KEY_CONFIRM = 'confirm'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_X = (2,) #parsed index
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
@@ -200,6 +201,7 @@ REPORT_KEY_HEADERS = 'headers'
 REPORT_KEY_FOOTERS = 'footers'
 REPORT_KEY_PAPER = 'paper'
 REPORT_KEY_MARGINS = 'margins'
+REPORT_KEY_CONFIRM = 'confirm'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
@@ -730,6 +732,9 @@ for i in [CWDIR, SCURDIR]:
     if not i in sys.path:
         sys.path.append(i)
 
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
 import time
 import decimal
 import random
@@ -739,7 +744,10 @@ FORM_VALID.append('_')
 CALCULATOR_ALLOWED = string.digits + '.-+*/()'
 
 import socket
-DEFAULT_HOSTS_ALLOWED.append(socket.gethostbyname(socket.gethostname()))
+try:
+    DEFAULT_HOSTS_ALLOWED.append(socket.gethostbyname(socket.gethostname()))
+except:
+    pass
 
 try: 
    from hashlib import md5
@@ -779,27 +787,6 @@ try:
     from reportlab.platypus import Paragraph as PDF_PARAGRAPH
     from reportlab.lib.pagesizes import A4 as PDF_DEFAULT_PAGE_SIZE
     from reportlab.lib.units import inch as PDF_UNIT_INCH
-    from reportlab.pdfbase import _fontdata_enc_winansi
-    from reportlab.pdfbase import _fontdata_enc_macroman
-    from reportlab.pdfbase import _fontdata_enc_standard
-    from reportlab.pdfbase import _fontdata_enc_symbol
-    from reportlab.pdfbase import _fontdata_enc_zapfdingbats
-    from reportlab.pdfbase import _fontdata_enc_pdfdoc
-    from reportlab.pdfbase import _fontdata_enc_macexpert
-    from reportlab.pdfbase import _fontdata_widths_courier
-    from reportlab.pdfbase import _fontdata_widths_courierbold
-    from reportlab.pdfbase import _fontdata_widths_courieroblique
-    from reportlab.pdfbase import _fontdata_widths_courierboldoblique
-    from reportlab.pdfbase import _fontdata_widths_helvetica
-    from reportlab.pdfbase import _fontdata_widths_helveticabold
-    from reportlab.pdfbase import _fontdata_widths_helveticaoblique
-    from reportlab.pdfbase import _fontdata_widths_helveticaboldoblique
-    from reportlab.pdfbase import _fontdata_widths_timesroman
-    from reportlab.pdfbase import _fontdata_widths_timesbold
-    from reportlab.pdfbase import _fontdata_widths_timesitalic
-    from reportlab.pdfbase import _fontdata_widths_timesbolditalic
-    from reportlab.pdfbase import _fontdata_widths_symbol
-    from reportlab.pdfbase import _fontdata_widths_zapfdingbats
     #
     PDF_DEFAULT_BORDER_STYLE = [
                                     (
@@ -815,6 +802,32 @@ try:
     PDF_DEFAULT_PARAGRAPH_STYLE = PDF_STYLE_SHEET()['BodyText']
 except ImportError:
     reportlab = None
+
+if reportlab:
+    try:
+        from reportlab.pdfbase import _fontdata_enc_winansi
+        from reportlab.pdfbase import _fontdata_enc_macroman
+        from reportlab.pdfbase import _fontdata_enc_standard
+        from reportlab.pdfbase import _fontdata_enc_symbol
+        from reportlab.pdfbase import _fontdata_enc_zapfdingbats
+        from reportlab.pdfbase import _fontdata_enc_pdfdoc
+        from reportlab.pdfbase import _fontdata_enc_macexpert
+        from reportlab.pdfbase import _fontdata_widths_courier
+        from reportlab.pdfbase import _fontdata_widths_courierbold
+        from reportlab.pdfbase import _fontdata_widths_courieroblique
+        from reportlab.pdfbase import _fontdata_widths_courierboldoblique
+        from reportlab.pdfbase import _fontdata_widths_helvetica
+        from reportlab.pdfbase import _fontdata_widths_helveticabold
+        from reportlab.pdfbase import _fontdata_widths_helveticaoblique
+        from reportlab.pdfbase import _fontdata_widths_helveticaboldoblique
+        from reportlab.pdfbase import _fontdata_widths_timesroman
+        from reportlab.pdfbase import _fontdata_widths_timesbold
+        from reportlab.pdfbase import _fontdata_widths_timesitalic
+        from reportlab.pdfbase import _fontdata_widths_timesbolditalic
+        from reportlab.pdfbase import _fontdata_widths_symbol
+        from reportlab.pdfbase import _fontdata_widths_zapfdingbats        
+    except:
+        pass
 
 try:
     import sqlite3    
@@ -2927,6 +2940,10 @@ def proc_login(handle):
 def proc_nosb(handle):
     path = web.ctx.fullpath.lower()
     if isnosb():
+        #
+        if sess.user:
+            sess.user = ''
+        #
         if path.startswith('/login') or  \
             path.startswith('/logout') or \
             path.startswith('/password') or \
@@ -3338,6 +3355,9 @@ def menugen():
 def hasws(s):
     ret = False
     #
+    if not isstr(s, True):
+        return ret
+    #
     for w in string.whitespace:
         if w in s:
             ret = True
@@ -3713,7 +3733,15 @@ def parseform(form, virtual={}, execute_sql=True):
     except:
         finsert = FORM_INSERT_DEFAULT
     #
-    return [ftitle, finfo, input, fsub2, message2, sql2, finsert]
+    fconfirm = fo.get(FORM_KEY_CONFIRM, '')
+    try:
+        if not isstr(fconfirm):
+            fconfirm = str(fconfirm)
+        fconfirm = fconfirm.strip()
+    except:
+        fconfirm = ''
+    #
+    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm]
 
 def reqreport(report):
     try:
@@ -3929,9 +3957,18 @@ def parsereport(report, execute_sql=True):
     except:
         xmargins2 = []
     #
+    fconfirm = fo.get(REPORT_KEY_CONFIRM, '')
+    try:
+        if not isstr(fconfirm):
+            fconfirm = str(fconfirm)
+        fconfirm = fconfirm.strip()
+    except:
+        fconfirm = ''    
+    #
     return [ftitle, finfo, input, rquery, rheader, message2, oheaders, ofooters,
             xpaper2,
             xmargins2,
+            fconfirm,
         ]
 
 def nqtype(ftype):
@@ -8346,21 +8383,26 @@ class form_run:
         #
         input = ()
         sub = ()
-        action_button = (
-                            ('save', _['cmd_go'], False, '', 'submit'),
-                        )
+        action_button = ()
         ftitle = ''
         finfo = ''
+        fconfirm = ''
+        yconfirm = False
         if not reqform(form):
             input = ()
             sub = ()
-            action_button = ()
             sess[SKF_RUN] = [
                                 [_['e_form_run_syntax_or_required']],
                             ]
         else:
             try:
                 pform = parseform(form)
+                fconfirm = pform[7]
+                if fconfirm:
+                    yconfirm = True
+                action_button = (
+                                    ('save', _['cmd_go'], yconfirm, fconfirm, 'submit'),
+                                )
             except:
                 pform = [ftitle, finfo, input, sub]
             #
@@ -9005,33 +9047,39 @@ class report_run:
             dflt()
         #
         input = ()
-        action_button = [
-                            ('report', _['cmd_go'], False, '', 'submit'),
-                            (PRINT_DATA_KEY, _['cmd_go_print'], False, '', 'submit'),
-                            (REPORT_FORMAT_CSV, _['cmd_csv'], False, '', 'submit'),
-                        ]
-        if reportlab:
-            action_button.append(
-                                    (
-                                        REPORT_FORMAT_PDF, 
-                                        _['cmd_pdf'], 
-                                        False, 
-                                        '', 
-                                        'submit'
-                                    ),
-                                )
+        action_button = ()
         #
         ftitle = ''
         finfo = ''
+        fconfirm = ''
+        yconfirm = False
         if not reqreport(report):
             input = ()
-            action_button = ()
             sess[SKR_RUN] = [
                                 [_['e_report_run_syntax_or_required']],
                             ]
         else:
             try:
                 preport = parsereport(report)
+                fconfirm = preport[10]
+                if fconfirm:
+                    yconfirm = True
+                #
+                action_button = [
+                                    ('report', _['cmd_go'], yconfirm, fconfirm, 'submit'),
+                                    (PRINT_DATA_KEY, _['cmd_go_print'], yconfirm, fconfirm, 'submit'),
+                                    (REPORT_FORMAT_CSV, _['cmd_csv'], yconfirm, fconfirm, 'submit'),
+                                ]
+                if reportlab:
+                    action_button.append(
+                                            (
+                                                REPORT_FORMAT_PDF, 
+                                                _['cmd_pdf'], 
+                                                yconfirm, 
+                                                fconfirm, 
+                                                'submit'
+                                            ),
+                                        )                        
             except:
                 preport = [ftitle, finfo, input]
             #
