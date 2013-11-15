@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.31'
+VERSION = '1.32'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -565,6 +565,10 @@ PROFILE_ITEM_STYLE = [
                                     background-color: #cccccc;
                                     border          : 1px solid #808080;
                                 }                                
+                                .browse tr:hover
+                                {
+                                    background-color: #ffffe0;
+                                }
                             '''
                         ],
                         [
@@ -629,6 +633,10 @@ PROFILE_ITEM_STYLE = [
                                     background-color: #f3e3c3;
                                     border          : 1px solid #ffcc66;
                                 }                                
+                                .browse tr:hover
+                                {
+                                    background-color: #ffffe0;
+                                }
                             '''
                         ],
                         [
@@ -686,6 +694,10 @@ PROFILE_ITEM_STYLE = [
                                     background-color: #b0e0e6;
                                     border          : 1px solid #4169e1;
                                 }                                
+                                .browse tr:hover
+                                {
+                                    background-color: #ffffe0;
+                                }
                             '''
                         ],
                     ]
@@ -2708,6 +2720,11 @@ def sqliteboy_var_del(name):
     name = str(name)
     return v_del(name)
 SQLITE_UDF.append(('sqliteboy_var_del', 1, sqliteboy_var_del))
+
+def sqliteboy_strip_html(s):
+    s = str(s)
+    return striphtml(s)
+SQLITE_UDF.append(('sqliteboy_strip_html', 1, sqliteboy_strip_html))
 
 
 #----------------------------------------------------------------------#
@@ -5542,7 +5559,8 @@ $if data['command'] == 'browse':
         <br>
         <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['default_limit']&pages=$data['input_pages']">$_['x_page']</a>
     <br><br>
-    <table>
+    <table class='browse'>
+    <tr>
     <th width='50px'><input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'></th>
     $for c in data['columns']:
         $if c['name'] == data['column']:
@@ -5562,6 +5580,7 @@ $if data['command'] == 'browse':
             $for s in range(len(data['sort'])):
                 <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']&pages=$data['input_pages']">$data['vsort'][s]</a>
             </th>
+    </tr>
     
     $for x in content:
         <tr>
@@ -5708,12 +5727,14 @@ $elif data['command'] == 'column':
     $for h in data['hidden']:
         <input type='hidden' name='$h[0]' value='$h[1]'>
     <table>
+    <tr>
     $for h in data['column_header']:
         <th>
             $h[0]
             $if h[1] == 1:
                 ($_['x_optional'])
         </th>
+    </tr>
     $for c in data['columns']:
         <tr>
         <td>
@@ -5837,9 +5858,11 @@ $elif data['command'] == 'query':
                 $for re in res[3]:
                     $if ctr == 0:
                         $ keys = re.keys()
+                        <tr>
                         $for k in keys:
                             <th>$k
                             </th>
+                        </tr>
                     <tr>
                     $for k in keys:
                         $ rek = re[k]
@@ -5897,12 +5920,14 @@ $elif data['command'] == 'create2':
         <input type='hidden' name='$h[0]' value='$h[1]'>
     $data['table']<br>
     <table>
+    <tr>
     $for h in data['column_header']:
         <th>
             $h[0]
             $if h[1] == 1:
                 ($_['x_optional'])
         </th>
+    </tr>
     $for m in range(data['count']):
         <tr>
         $for a in data['column_add']:
@@ -6018,10 +6043,12 @@ $elif data['command'] == 'users':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $i
         </th>
+    </tr>
     $for u in content:
         <tr>
         <td width='12%' align='center'>
@@ -6189,9 +6216,11 @@ $elif data['command'] == 'form.run':
         <td colspan='2'>
         $data['sub'][4]
         <table>
+        <tr>
         <th>&nbsp;</th>
         $for sh in subd:
             <th>$sh[1]</th>
+        </tr>
         $for sr in range(subr[0]):
             <tr>
             <td align='right'>
@@ -6350,9 +6379,11 @@ $elif data['command'] == 'report.run.result':
                     $ keys = re.keys()
                 $else:
                     $ keys = data['header']
+                <tr>
                 $for k in keys:
                     <th>$tr_newline(k)
                     </th>
+                </tr>
             <tr>
             $for k in keys:
                 $ rek = re.get(k, '')
@@ -6410,6 +6441,7 @@ $elif data['command'] == 'notes':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $if i == data['select_all']:
@@ -6417,6 +6449,7 @@ $elif data['command'] == 'notes':
             $else:
                 $i
         </th>
+    </tr>
     $for u in content:
         <tr>
         <td width='12%' align='center'>
@@ -6473,10 +6506,12 @@ $elif data['command'] == 'system':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $i
         </th>
+    </tr>
     $for u in content:
         <tr>
         <td width='20%'>
@@ -6514,6 +6549,7 @@ $elif data['command'] == 'files':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $if i == data['select_all']:
@@ -6521,6 +6557,7 @@ $elif data['command'] == 'files':
             $else:
                 $i
         </th>
+    </tr>
     $for u in content:
         <tr>
         <td width='12%' align='center'>
@@ -6587,10 +6624,12 @@ $elif data['command'] == 'pages':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $i
         </th>
+    </tr>
     <tr>
     <td width='50%' style='vertical-align: top'>
         <textarea name='content' rows='40' cols='40'>$content[0]</textarea>
@@ -6669,10 +6708,12 @@ $elif data['command'] == 'scripts':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $i
         </th>
+    </tr>
     $for u in content:
         <tr>
         <td>
@@ -6718,10 +6759,12 @@ $elif data['command'] == 'script':
     <br>
     <br>
     <table>
+    <tr>
     $for i in data['columns']:
         <th>
             $i
         </th>
+    </tr>
         
     $for i in data['info']:
         <tr>

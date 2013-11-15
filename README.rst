@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.31
+    Version 1.32
 
 
 
@@ -1247,6 +1247,17 @@ User-defined Function
         
         sqliteboy_var_del('b')
         -> 1
+
+- sqliteboy_strip_html(s)
+  ::
+  
+      strip html
+      argument    :
+         s (input string)
+
+      example     : 
+        sqliteboy_strip_html('<b>hello</b>')
+        -> 'hello'
 
 - sqliteboy_x_user()
   ::
