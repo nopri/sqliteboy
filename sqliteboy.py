@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.33'
+VERSION = '1.34'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -179,6 +179,7 @@ FORM_MESSAGE_LEN = 3
 FORM_MESSAGE_VAR_RESULT = 'result'
 FORM_MESSAGE_VAR_PYTHON_HANDLER = 'python_handler'
 FORM_INSERT_DEFAULT = 1
+FORM_DEFAULT_SQL_RET = 'a' 
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -3530,24 +3531,28 @@ def fdef(default, execute_sql=True):
         deff = default[0]
         default.pop(0)
         defs = []
+        defq = ''
         try:
-            for dd in default:
-                dq = web.sqlquote(dd)
-                defs.append(dq)
-            #
-            if defs:
-                defsq = web.sqlquote('').join(defs, ',')
+            if default and not str(deff).strip():
+                defq = str(default[0])
             else:
-                defsq = ''
-            #
-            defq = 'select %s(%s) as f' %(deff, defsq)
+                for dd in default:
+                    dq = web.sqlquote(dd)
+                    defs.append(dq)
+                #
+                if defs:
+                    defsq = web.sqlquote('').join(defs, ',')
+                else:
+                    defsq = ''
+                #
+                defq = 'select %s(%s) as %s' %(deff, defsq, FORM_DEFAULT_SQL_RET)
             #
             if not execute_sql:
                 defq = ''
             #
             defr = db.query(defq).list()
             if defr:
-                default2 = defr[0]['f']
+                default2 = defr[0][FORM_DEFAULT_SQL_RET]
         except:
             pass
     #

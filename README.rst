@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.33
+    Version 1.34
 
 
 
@@ -140,7 +140,7 @@ Features
   - Predefined values (field options) from SQL Query 
     or Python list
 
-  - Default value: function call or static value
+  - Default value: function call or static value or SQL Query
 
   - Constraint: check before save, 
     prevent saving invalid value
@@ -192,7 +192,7 @@ Features
   - Predefined values (field options) from SQL Query 
     or Python list
 
-  - Default value: function call or static value
+  - Default value: function call or static value or SQL Query
 
   - Constraint: check before query, 
     (possible to call function before comparison)
@@ -1515,6 +1515,14 @@ Form Code Reference
 |               |   do not put () in      |               |             |                          |
 |               |   function_name         |               |             |                          |
 |               |                         |               |             |                          |
+|               | - list (SQL query):     |               |             |                          |
+|               |   must be list of two   |               |             |                          |
+|               |   str members; first    |               |             |                          |
+|               |   member: empty string; |               |             |                          |
+|               |   second member: SQL    |               |             |                          |
+|               |   query (must return    |               |             |                          |
+|               |   one column: a)        |               |             |                          |
+|               |                         |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | constraint    | check before save       | list          | optional    |                          |
@@ -1951,6 +1959,14 @@ Report Code Reference
 |               |                         |               |             |                          |
 |               |   do not put () in      |               |             |                          |
 |               |   function_name         |               |             |                          |
+|               |                         |               |             |                          |
+|               | - list (SQL query):     |               |             |                          |
+|               |   must be list of two   |               |             |                          |
+|               |   str members; first    |               |             |                          |
+|               |   member: empty string; |               |             |                          |
+|               |   second member: SQL    |               |             |                          |
+|               |   query (must return    |               |             |                          |
+|               |   one column: a)        |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
