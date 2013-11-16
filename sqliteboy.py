@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.32'
+VERSION = '1.33'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -162,6 +162,7 @@ FORM_KEY_DATA_ONSAVE = 'onsave'
 FORM_KEY_SUB = 'sub'
 FORM_KEY_MESSAGE = 'message'
 FORM_KEY_SQL2 = 'sql2'
+FORM_KEY_SQL0 = 'sql0'
 FORM_KEY_INSERT = 'insert'
 FORM_KEY_CONFIRM = 'confirm'
 FORM_REQ = (FORM_KEY_DATA,)
@@ -3551,6 +3552,16 @@ def fdef(default, execute_sql=True):
             pass
     #
     return default2
+
+def fsqlx(db, sql, data):
+    fsql2 = sql
+    ocols = data
+    #
+    if fsql2 and type(fsql2) == type([]):
+        for fsql in fsql2:
+            if fsql and hasattr(fsql, 'strip'):
+                if fsql.strip():
+                    db.query(fsql, vars=ocols)    
     
 def parseform2(code, table, execute_sql=True):
     fsub = code
@@ -3758,7 +3769,12 @@ def parseform(form, virtual={}, execute_sql=True):
     except:
         fconfirm = ''
     #
-    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm]
+    sql0 = fo.get(FORM_KEY_SQL0, [])  
+    if not type(sql0) == type([]):
+        sql0 = []
+    sql0 = [str(x) for x in sql0 if isstr(x)]
+    #
+    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0]
 
 def reqreport(report):
     try:
@@ -8495,6 +8511,7 @@ class form_run:
         fsub = None
         message2 = None
         fsql2 = None
+        fsql0 = None
         finsert = FORM_INSERT_DEFAULT
         try:
             pform = parseform(form)
@@ -8502,6 +8519,7 @@ class form_run:
             fsub = pform[3]
             message2 = pform[4]
             fsql2 = pform[5]
+            fsql0 = pform[8]
             finsert = pform[6]
         except:
             pform = None
@@ -8675,6 +8693,9 @@ class form_run:
                 form_res = finsert
                 form_last = finsert
                 #
+                #custom SQL (sql0)
+                fsqlx(db, fsql0, ocols)                
+                #
                 if finsert > 0:
                     form_res = db.query(q, vars=ocols)
                     #
@@ -8695,11 +8716,7 @@ class form_run:
                 #
                 #custom SQL (sql2)
                 ocols['last_insert_rowid'] = form_last
-                if fsql2 and type(fsql2) == type([]):
-                    for fsql in fsql2:
-                        if fsql and hasattr(fsql, 'strip'):
-                            if fsql.strip():
-                                db.query(fsql, vars=ocols)
+                fsqlx(db, fsql2, ocols)
                 #
                 #python handler
                 try:

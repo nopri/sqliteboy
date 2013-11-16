@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.32
+    Version 1.33
 
 
 
@@ -175,6 +175,9 @@ Features
     called, if provided. Python handler eases the integration with external 
     system (for example: ERP system). Please read PYTHON HANDLER REFERENCE 
     section.
+
+  - As of v1.33, optional, (run before) additional SQL query statement(s) 
+    can be provided.
     
 - Report Support (Extended feature, new in v0.16)
 
@@ -1405,8 +1408,18 @@ Form Code Reference
 |               |   default: -1)          |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| sql0          | additional sql query    | list          | optional    |                          |
+|               | statement(s)            |               |             |                          |
+|               |                         |               |             |                          |
+|               | (run before)            |               |             |                          |
+|               |                         |               |             |                          |
+|               | (please see sql2)       |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 | sql2          | additional sql query    | list          | optional    |                          |
 |               | statement(s)            |               |             |                          |
+|               |                         |               |             |                          |
+|               | (run after)             |               |             |                          |
 |               |                         |               |             | - ["insert into table3(  |
 |               | - must be list of str   |               |             |   a, b, c, d, e) values( |
 |               |                         |               |             |   $a, $b, $c, $d, $e)",  |
@@ -1420,14 +1433,14 @@ Form Code Reference
 |               |   function call result  |               |             |                          |
 |               |   (after insert to main |               |             |                          |
 |               |   table)                |               |             |                          |
+|               |   (sql2 only)           |               |             |                          |
 |               |                         |               |             |                          |
 |               | - quoting is            |               |             |                          |
 |               |   automatically done    |               |             |                          |
 |               |                         |               |             |                          |
 |               | - each statement is     |               |             |                          |
 |               |   executed in           |               |             |                          |
-|               |   transaction (after    |               |             |                          |
-|               |   form data is saved)   |               |             |                          |
+|               |   transaction           |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | insert        | prevent insert new      | int           | optional    |                          |
