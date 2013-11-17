@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.35'
+VERSION = '1.36'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -194,6 +194,7 @@ REPORT_KEY_DATA_REQUIRED = FORM_KEY_DATA_REQUIRED
 REPORT_KEY_DATA_READONLY = FORM_KEY_DATA_READONLY
 REPORT_KEY_DATA_CONSTRAINT = FORM_KEY_DATA_CONSTRAINT
 REPORT_KEY_DATA_TYPE = 'type'
+REPORT_KEY_ALIGN = 'align'
 REPORT_KEY_MESSAGE = 'message'
 REPORT_KEY_SECURITY = FORM_KEY_SECURITY
 REPORT_KEY_SECURITY_RUN = FORM_KEY_SECURITY_RUN
@@ -235,6 +236,13 @@ REPORT_FORMAT_ALL = [
                         REPORT_FORMAT_CSV,
                         REPORT_FORMAT_PDF,
                     ]
+REPORT_ALIGN_ALL = [
+                        0, #left
+                        1, #center
+                        2, #right
+                        3, #justify
+                    ]
+REPORT_ALIGN_DEFAULT = 0
 REFERENCE_FLAG_PASSWORD = 2
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
@@ -477,6 +485,24 @@ $title $command
 $datetime
 '''
 
+PROFILE_STYLE_ADD_ALIGN = '''
+                                .left
+                                {
+                                    text-align      : left;
+                                }                                
+                                .center
+                                {
+                                    text-align      : center;
+                                }                           
+                                .right
+                                {
+                                    text-align      : right;
+                                }                          
+                                .justify
+                                {
+                                    text-align      : justify;
+                                }                                                                                                           
+                    '''
 PROFILE_STYLE_PRINT = '''
                                 *
                                 {
@@ -509,8 +535,8 @@ PROFILE_STYLE_PRINT = '''
                                 .messages
                                 {
                                     display         : none;
-                                }                                
-                    '''
+                                }
+                    ''' + PROFILE_STYLE_ADD_ALIGN
 PROFILE_ITEM_STYLE = [
                         [
                             PROFILE_STYLE_PRINT,
@@ -567,11 +593,11 @@ PROFILE_ITEM_STYLE = [
                                     background-color: #cccccc;
                                     border          : 1px solid #808080;
                                 }                                
-                                .browse tr:hover
+                                table:not(.nohover) tr:hover
                                 {
                                     background-color: #ffffe0;
                                 }
-                            '''
+                            ''' + PROFILE_STYLE_ADD_ALIGN
                         ],
                         [
                             PROFILE_STYLE_PRINT,
@@ -635,11 +661,11 @@ PROFILE_ITEM_STYLE = [
                                     background-color: #f3e3c3;
                                     border          : 1px solid #ffcc66;
                                 }                                
-                                .browse tr:hover
+                                table:not(.nohover) tr:hover
                                 {
                                     background-color: #ffffe0;
                                 }
-                            '''
+                            ''' + PROFILE_STYLE_ADD_ALIGN
                         ],
                         [
                             PROFILE_STYLE_PRINT,
@@ -696,11 +722,11 @@ PROFILE_ITEM_STYLE = [
                                     background-color: #b0e0e6;
                                     border          : 1px solid #4169e1;
                                 }                                
-                                .browse tr:hover
+                                table:not(.nohover) tr:hover
                                 {
                                     background-color: #ffffe0;
                                 }
-                            '''
+                            ''' + PROFILE_STYLE_ADD_ALIGN
                         ],
                     ]
 PROFILE_ALL = [
@@ -792,6 +818,10 @@ import copy
 
 try:
     import reportlab
+    from reportlab.lib.enums import TA_LEFT as PDF_TA_LEFT
+    from reportlab.lib.enums import TA_CENTER as PDF_TA_CENTER
+    from reportlab.lib.enums import TA_RIGHT as PDF_TA_RIGHT
+    from reportlab.lib.enums import TA_JUSTIFY as PDF_TA_JUSTIFY
     from reportlab.lib.colors import black as PDF_DEFAULT_BORDER_COLOR
     from reportlab.lib.styles import getSampleStyleSheet as PDF_STYLE_SHEET
     from reportlab.platypus import SimpleDocTemplate as PDF_TEMPLATE
@@ -937,6 +967,19 @@ sess_init = {
         'user': '',
         'admin': 0,
     }
+#
+style_align_default = {
+                        0: ' class="left"',
+                        1: ' class="center"',
+                        2: ' class="right"',
+                        3: ' class="justify"',
+                    }
+style_align_pdf = {
+                        0: PDF_TA_LEFT,
+                        1: PDF_TA_CENTER,
+                        2: PDF_TA_RIGHT,
+                        3: PDF_TA_JUSTIFY,
+                    }
 
 
 #----------------------------------------------------------------------#
@@ -4004,10 +4047,24 @@ def parsereport(report, execute_sql=True):
     except:
         fconfirm = ''    
     #
+    aligns = fo.get(REPORT_KEY_ALIGN, [])
+    if not isinstance(aligns, list): 
+        aligns = []
+    aligns2 = {}
+    for i in range(0, len(rheader)):
+        try:
+            ialign = aligns[i]
+            if not ialign in REPORT_ALIGN_ALL:
+                raise Exception
+        except:
+            ialign = REPORT_ALIGN_DEFAULT
+        aligns2[rheader[i]] = ialign
+    #    
     return [ftitle, finfo, input, rquery, rheader, message2, oheaders, ofooters,
             xpaper2,
             xmargins2,
             fconfirm,
+            aligns2,
         ]
 
 def nqtype(ftype):
@@ -5300,6 +5357,9 @@ def rpt_pdf(data, content, parsed):
     export.append(spacer)
     #
     if data['table']:
+        dalign = data['align']
+        keys_header = False
+        #
         content_export = []
         #
         ctr = 0
@@ -5311,6 +5371,7 @@ def rpt_pdf(data, content, parsed):
                     keys = row.keys()
                 else:
                     keys = data[REPORT_KEY_HEADER]
+                    keys_header = True
                 for k in keys:
                     k = PDF_PARAGRAPH(tr_newline(k), PDF_DEFAULT_PARAGRAPH_STYLE)
                     temp.append(k)
@@ -5326,7 +5387,14 @@ def rpt_pdf(data, content, parsed):
                         rk = str(rk)
                     else:
                         rk = ''
-                rk = PDF_PARAGRAPH(tr_newline(rk), PDF_DEFAULT_PARAGRAPH_STYLE)
+                #
+                xprstyle = copy.deepcopy(PDF_DEFAULT_PARAGRAPH_STYLE)
+                xprstyle.alignment = PDF_TA_LEFT
+                if keys_header:
+                    dalignk = dalign.get(k)
+                    ralign = style_align_pdf.get(dalignk)
+                    xprstyle.alignment = ralign
+                rk = PDF_PARAGRAPH(tr_newline(rk), xprstyle)
                 temp.append(rk)
             content_export.append(temp)
             #
@@ -5456,7 +5524,7 @@ function toggle(src, dst)
 $ r_app_title = r_application_title()
 
 <div class='main_menu'>
-<table>
+<table class='nohover'>
 <tr>
 <td>
 $if r_app_title:
@@ -5498,7 +5566,7 @@ $else:
 <td colspan='4'>
 $for i in menugen():
     <form action='$i[0]' method='$i[1]'>
-    <table>
+    <table class='nohover'>
     <tr>
     <td width='12%'>
     $i[2].capitalize()
@@ -5581,7 +5649,7 @@ $if data['command'] == 'browse':
         <br>
         <a href="$data['url']?$data['ksort']=$data['input_sort']&$data['korder']=$data['input_order']&$data['klimit']=$data['default_limit']&pages=$data['input_pages']">$_['x_page']</a>
     <br><br>
-    <table class='browse'>
+    <table>
     <tr>
     <th width='50px'><input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'></th>
     $for c in data['columns']:
@@ -6402,6 +6470,8 @@ $elif data['command'] == 'report.run.result':
     $ ctr = 0
     $if data['table']:
         $ keys = []
+        $ keys_header = 0
+        $ dalign = data['align']
         <table>
         $for re in content:
             $if ctr == 0:
@@ -6409,6 +6479,7 @@ $elif data['command'] == 'report.run.result':
                     $ keys = re.keys()
                 $else:
                     $ keys = data['header']
+                    $ keys_header = 1
                 <tr>
                 $for k in keys:
                     <th>$tr_newline(k)
@@ -6416,11 +6487,15 @@ $elif data['command'] == 'report.run.result':
                 </tr>
             <tr>
             $for k in keys:
+                $ ralign = ''
+                $if keys_header:
+                    $ dalignk = dalign.get(k)
+                    $ ralign = style_align_default.get(dalignk)
                 $ rek = re.get(k, '')
                 $if isblob(rek):
-                    <td>$_['z_view_blob']</td>
+                    <td$ralign>$_['z_view_blob']</td>
                 $else:
-                    <td>$tr_newline(rek)
+                    <td$ralign>$tr_newline(rek)
                     </td>
             </tr>
             $ ctr = ctr + 1
@@ -7099,6 +7174,7 @@ GLBL = {
     'r_messages_all': r_messages_all,
     'r_application_title': r_application_title,
     'tr_newline': tr_newline_html,
+    'style_align_default': style_align_default,
     }
 T = web.template.Template(T_BASE, globals=GLBL)
 
@@ -9219,7 +9295,8 @@ class report_run:
         pheaders = []
         pfooters = []
         pheaders2 = []
-        pfooters2 = []        
+        pfooters2 = []
+        palign = {}        
         try:
             preport = parsereport(report)
             freport = preport[0]
@@ -9230,6 +9307,7 @@ class report_run:
             message2 = preport[5]
             pheaders = preport[6]
             pfooters = preport[7]
+            palign = preport[11]
         except:
             preport = None
         #
@@ -9360,6 +9438,7 @@ class report_run:
                 'search': rsearch,
                 'report2': freport,
                 'headers': pheaders2,
+                'align': palign,
                 }
         content = rreport
         #

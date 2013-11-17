@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     GPL
-    Version 1.35
+    Version 1.36
 
 
 
@@ -224,6 +224,8 @@ Features
   - As of v1.17, CSV output is supported
   
   - As of v1.28, PDF output (paper size, margins, image) is supported
+  
+  - As of v1.36, text align is supported (HTML and PDF only)
 
 - Files (Extended feature, new in v0.47)
 
@@ -1811,6 +1813,26 @@ Report Code Reference
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| align         | text align              | list          | optional    |                          |
+|               |                         |               |             |                          |
+|               | (please see header;     |               |             | - [1, 2]                 |
+|               | only applicable if      |               |             |                          |
+|               | header is set)          |               |             |                          |
+|               |                         |               |             |                          |
+|               | - HTML and PDF only     |               |             |                          |
+|               |                         |               |             |                          |
+|               | - must be list of int   |               |             |                          |
+|               |                         |               |             |                          |
+|               | - 0: left               |               |             |                          |
+|               |                         |               |             |                          |
+|               | - 1: center             |               |             |                          |
+|               |                         |               |             |                          |
+|               | - 2: right              |               |             |                          |
+|               |                         |               |             |                          |
+|               | - 3: justify            |               |             |                          |
 |               |                         |               |             |                          |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
