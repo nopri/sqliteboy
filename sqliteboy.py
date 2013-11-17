@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.34'
+VERSION = '1.35'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1854,6 +1854,7 @@ LANGS = {
             'h_profile': '',
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob data]',
+            'z_edit_blob_column': 'could not edit this row: blob data in non-blob column',
         },
     }
 
@@ -5685,6 +5686,7 @@ $elif data['command'] == 'edit':
     $ rowid = data['rowid']
     $ msgp = smsgp(data['table'])
     $for x in content:
+        $ blob_on_nonblob = 0
         <a name='$x[rowid]'></a>
         <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
         $for h in data['hidden']:
@@ -5715,6 +5717,10 @@ $elif data['command'] == 'edit':
                         <a href="$data['blob_url']?$data['blob_var']=$x[rowid]&$data['blob_column']=$c['name']">$data['blob_command']</a>
                         &nbsp;
                     <input type='file' name="$c['name']">
+                $elif  isblob(x[c['name']]):
+                    $ blob_on_nonblob = 1
+                    $if x[c['name']]:
+                        <a href="$data['blob_url']?$data['blob_var']=$x[rowid]&$data['blob_column']=$c['name']">$data['blob_command']</a>
                 $elif c['type'] in data['text_type']:
                     <textarea name="$c['name']" rows=5 style='width:100%;'>$x[c['name']]</textarea>
                 $else:
@@ -5725,11 +5731,14 @@ $elif data['command'] == 'edit':
         <td>&nbsp;</td>
         <td>&nbsp;</td>
         <td>
-        $for b in data['action_button']:
-            $if b[2]:
-                <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
-            $else:
-                <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+        $if blob_on_nonblob == 1:
+            <i>$_['z_edit_blob_column']</i>
+        $else:
+            $for b in data['action_button']:
+                $if b[2]:
+                    <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+                $else:
+                    <input type='$b[4]' name='$b[0]' value='$b[1]'>    
         </td>
         </tr>
         </table>
@@ -7176,9 +7185,16 @@ class table_action:
         #
         table = input.table.strip()
         #
+        default_redir = '/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT)
+        real_redir = default_redir
+        http_referer = web.ctx.env.get('HTTP_REFERER', '')
+        http_home = web.ctx.home
+        if http_referer and http_home and http_referer.startswith(http_home):
+            real_redir = http_referer        
+        #
         select = input.select
         if not len(select):
-            raise web.seeother('/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT))
+            raise web.seeother(real_redir)
         #
         try:
             select = [int(x) for x in select]
@@ -7188,7 +7204,7 @@ class table_action:
         if input.has_key('delete'):
             for i in select:
                 db.delete(table, where='%s=%s' %(ROWID, i))
-            raise web.seeother('/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT))
+            raise web.seeother(real_redir)
         #
         elif input.has_key('edit'):
             sess.table[table][SKT_ROWID] = select
@@ -7196,7 +7212,7 @@ class table_action:
         #
         elif input.has_key('clear'):
             sess.table[table][SKT_ROWID] = []
-            raise web.seeother('/table/browse/%s?limit=%s' %(table, DEFAULT_LIMIT))
+            raise web.seeother(real_redir)
         #
         dflt()
         
