@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.36'
+VERSION = '1.37'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -5531,7 +5531,7 @@ $if r_app_title:
     $r_app_title
     <br>
     <br>
-$title(data['title'])
+$:title(data['title'])
 </td>
 <td align='right' width='25%'>
 $if user():
@@ -5589,7 +5589,7 @@ $for i in menugen():
             $if data.has_key('report'):
                 $i[3].set_value(data['report'])
         $if i[3]:
-            $i[3].render()
+            $:i[3].render()
         </td>
         <td>
         $for j in i[4]:
@@ -5659,7 +5659,7 @@ $if data['command'] == 'browse':
             $if c['pk']:
                 $pk_sym
             &nbsp;
-            <a href="$data['url']?$data['column_query']&pages=$data['input_pages']">$data['column_vsort']</a>
+            <a href="$data['url']?$data['column_query']&pages=$data['input_pages']">$:data['column_vsort']</a>
             </th>
         $else:
             <th>
@@ -5668,7 +5668,7 @@ $if data['command'] == 'browse':
                 $pk_sym
             &nbsp;
             $for s in range(len(data['sort'])):
-                <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']&pages=$data['input_pages']">$data['vsort'][s]</a>
+                <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']&pages=$data['input_pages']">$:data['vsort'][s]</a>
             </th>
     </tr>
     
@@ -5703,7 +5703,7 @@ $if data['command'] == 'browse':
     <br>
 $elif data['command'] == 'insert':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -5748,7 +5748,7 @@ $elif data['command'] == 'insert':
     </form>
 $elif data['command'] == 'edit':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
 
     $ rowid = data['rowid']
@@ -5815,7 +5815,7 @@ $elif data['command'] == 'edit':
 $elif data['command'] == 'column':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>
     $if data['message']:
         <div>
@@ -5850,7 +5850,7 @@ $elif data['command'] == 'column':
         $for a in data['column_add']:
             <td>
                 $ a.attrs['style'] = 'width: 100%'
-                $a.render()
+                $:a.render()
             </td>
         </tr>
     <tr>
@@ -5866,7 +5866,7 @@ $elif data['command'] == 'column':
     </form>
 $elif data['command'] == 'rename':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -5894,7 +5894,7 @@ $elif data['command'] == 'rename':
     </form>
 $elif data['command'] == 'drop':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -5923,7 +5923,7 @@ $elif data['command'] == 'query':
     $else:
         $ query = data['query']
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     <form action="$data['action_url']" method="$data['action_method']">
     <table>
@@ -5977,7 +5977,7 @@ $elif data['command'] == 'query':
                 $_['x_empty']
 $elif data['command'] == 'create1':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -5988,7 +5988,7 @@ $elif data['command'] == 'create1':
     $for i in data['input']:
         <tr>
         <td>$i[1]</td>
-        <td>$i[0].render()
+        <td>$:i[0].render()
         </tr>
     <tr>
     <td>&nbsp;</td>
@@ -6007,7 +6007,7 @@ $elif data['command'] == 'create2':
     $ hint = ''
     $if data['hint']:
         $ hint = data['hint'][0].upper() + data['hint'][1:]
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>
     $if data['message']:
         <div>
@@ -6031,7 +6031,7 @@ $elif data['command'] == 'create2':
         $for a in data['column_add']:
             <td>
                 $ a.attrs['style'] = 'width: 100%'
-                $a.render()
+                $:a.render()
             </td>
         </tr>
     <tr>
@@ -6053,7 +6053,7 @@ $elif data['command'] == 'home':
     $for i in content[1]:
         <tr>
         <td width='20%'>$i[0]</td>
-        <td>$i[1]</td>
+        <td>$:i[1]</td>
         </tr>
     </table>
     <br>
@@ -6061,7 +6061,7 @@ $elif data['command'] == 'home':
     $ r_msg_all = r_messages_all()
     $if r_msg_all:
         <div class='messages'>
-            <pre>$r_msg_all
+            <pre>$:r_msg_all
             </pre>
         </div>
 $elif data['command'] in ['readme', 'source']:
@@ -6086,7 +6086,7 @@ $elif data['command'] == 'login':
     $for i in data['input']:
         <tr>
         <td width='25%'>$i[1]</td>
-        <td>$i[0].render()
+        <td>$:i[0].render()
         </tr>
     <tr>
     <td colspan='2'>
@@ -6109,7 +6109,7 @@ $elif data['command'] == 'password':
     $for i in data['input']:
         <tr>
         <td width='25%'>$i[1]</td>
-        <td>$i[0].render()
+        <td>$:i[0].render()
         </tr>
     <tr>
     <td colspan='2'>
@@ -6124,7 +6124,7 @@ $elif data['command'] == 'password':
     </form>
 $elif data['command'] == 'users':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -6193,7 +6193,7 @@ $elif data['command'] == 'users':
     </form>
 $elif data['command'] == 'hosts':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>    
     $if data['message']:
         <div>
@@ -6202,14 +6202,14 @@ $elif data['command'] == 'hosts':
     <form action="$data['action_url']" method="$data['action_method']">
     <table>
     <tr>
-    <td>$data['input_host'].render()
+    <td>$:data['input_host'].render()
     </td>
     </tr>
     <tr>
     <td>
     $ custom = '\\n'.join(data['custom'])
     $data['input_custom'].set_value(custom)
-    $data['input_custom'].render()
+    $:data['input_custom'].render()
     </td>
     </tr>
     <tr>
@@ -6226,7 +6226,7 @@ $elif data['command'] == 'hosts':
 $elif data['command'] == 'form.edit':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>    
     $if data['message']:
         <div>
@@ -6240,7 +6240,7 @@ $elif data['command'] == 'form.edit':
     $for i in data['input']:
         <tr>
         <td width='15%'>$i[1]</td>
-        <td>$i[0].render()</td>
+        <td>$:i[0].render()</td>
         </tr>
     <tr>
     <td colspan='2'>
@@ -6256,7 +6256,7 @@ $elif data['command'] == 'form.edit':
 $elif data['command'] == 'form.run':
     <p>
     $ hint = data['hint']
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>    
     $if data['message']:
         <div>
@@ -6281,7 +6281,7 @@ $elif data['command'] == 'form.run':
         $ lbl = i[0]
         $if i[4]:
             $ lbl = '<b>' + i[0] + '</b>'
-        <td width='15%'>$lbl</td>
+        <td width='15%'>$:lbl</td>
         <td>
         $ ro = ''
         $if i[3]:
@@ -6291,7 +6291,7 @@ $elif data['command'] == 'form.run':
         $if i[5]:
             $if ucontent is not None:
                 $i[5].set_value(ucontent)
-            $i[5].render()
+            $:i[5].render()
         $else:
             $if i[6]:
                 $ defv = i[6]
@@ -6330,7 +6330,7 @@ $elif data['command'] == 'form.run':
             $for sh in subd:
                 <td>
                 $if sh[2]:
-                    $sh[2].render()
+                    $:sh[2].render()
                 $else:
                     $ shv = ''
                     $if sh[3]:
@@ -6356,7 +6356,7 @@ $elif data['command'] == 'form.run':
 $elif data['command'] == 'report.edit':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>    
     $if data['message']:
         <div>
@@ -6370,7 +6370,7 @@ $elif data['command'] == 'report.edit':
     $for i in data['input']:
         <tr>
         <td width='15%'>$i[1]</td>
-        <td>$i[0].render()</td>
+        <td>$:i[0].render()</td>
         </tr>
     <tr>
     <td colspan='2'>
@@ -6386,7 +6386,7 @@ $elif data['command'] == 'report.edit':
 $elif data['command'] == 'report.run':
     <p>
     $ hint = data['hint']
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>    
     $if data['message']:
         <div>
@@ -6411,7 +6411,7 @@ $elif data['command'] == 'report.run':
         $ lbl = i[0]
         $if i[3]:
             $ lbl = '<b>' + i[0] + '</b>'
-        <td width='15%'>$lbl</td>
+        <td width='15%'>$:lbl</td>
         <td>
         $ ro = ''
         $if i[2]:
@@ -6421,7 +6421,7 @@ $elif data['command'] == 'report.run':
         $if i[4]:
             $if ucontent is not None:
                 $i[4].set_value(ucontent)        
-            $i[4].render()
+            $:i[4].render()
         $else:
             $if i[5]:
                 $ defv = i[5]
@@ -6493,9 +6493,9 @@ $elif data['command'] == 'report.run.result':
                     $ ralign = style_align_default.get(dalignk)
                 $ rek = re.get(k, '')
                 $if isblob(rek):
-                    <td$ralign>$_['z_view_blob']</td>
+                    <td$:ralign>$_['z_view_blob']</td>
                 $else:
-                    <td$ralign>$tr_newline(rek)
+                    <td$:ralign>$tr_newline(rek)
                     </td>
             </tr>
             $ ctr = ctr + 1
@@ -6528,7 +6528,7 @@ $elif data['command'] == 'report.run.result':
     <br>
 $elif data['command'] == 'notes':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -6595,7 +6595,7 @@ $elif data['command'] == 'notes':
     </form>
 $elif data['command'] == 'system':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -6636,7 +6636,7 @@ $elif data['command'] == 'system':
     </form>
 $elif data['command'] == 'files':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -6710,7 +6710,7 @@ $elif data['command'] == 'files':
 $elif data['command'] == 'pages':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>
     $if data['message']:
         <div>
@@ -6762,7 +6762,7 @@ $elif data['command'] == 'calculator':
     $else:
         $ query = data['calculator']
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     <form action="$data['action_url']" method="$data['action_method']">
     <table>
@@ -6795,7 +6795,7 @@ $elif data['command'] == 'calculator':
 $elif data['command'] == 'scripts':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
-    <i>$hint</i>
+    <i>$:hint</i>
     </p>    
     $if data['message']:
         <div>
@@ -6846,7 +6846,7 @@ $elif data['command'] == 'scripts':
     </form>
 $elif data['command'] == 'script':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>    
     $if data['message']:
         <div>
@@ -6927,7 +6927,7 @@ $elif data['command'] == 'script':
     
 $elif data['command'] == 'copy':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>    
     $if data['message']:
         <div>
@@ -6959,14 +6959,14 @@ $elif data['command'] == 'copy':
             $_['x_copy_to']
             </td>
             <td>
-            $data['target'].render()
+            $:data['target'].render()
             </td>            
         </tr>
     </table>
     </form>
 $elif data['command'] == 'empty':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -6991,7 +6991,7 @@ $elif data['command'] == 'empty':
     </form>
 $elif data['command'] == 'vacuum':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -7029,7 +7029,7 @@ $elif data['command'] == 'vacuum':
     </form>
 $elif data['command'] == 'import':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -7059,7 +7059,7 @@ $elif data['command'] == 'import':
     </form>
 $elif data['command'] == 'profile':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>
     $if data['message']:
         <div>
@@ -7094,7 +7094,7 @@ $elif data['command'] == 'profile':
             </td>
             <td>
                 $if i5:
-                    $i5.render()
+                    $:i5.render()
                 $else:
                     <input type='text' name='$i0' value='$i3'>
             </td>
@@ -7106,7 +7106,7 @@ $elif data['command'] == 'profile':
     </form>
 $elif data['command'] == 'schema':
     <p>
-    <i>$data['hint'].capitalize()</i>
+    <i>$:data['hint'].capitalize()</i>
     </p>    
     $if data['message']:
         <div>
@@ -7128,7 +7128,7 @@ $elif data['command'] == 'schema':
             <td colspan='2'>
                 <br>
                 <br>
-                $:content
+                $content
                 <br>
                 <br>
             </td>
@@ -7176,7 +7176,7 @@ GLBL = {
     'tr_newline': tr_newline_html,
     'style_align_default': style_align_default,
     }
-T = web.template.Template(T_BASE, globals=GLBL)
+T = web.template.Template(T_BASE, globals=GLBL, filename=DEFAULT_T_BASE)
 
 
 #----------------------------------------------------------------------#
