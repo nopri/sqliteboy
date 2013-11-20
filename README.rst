@@ -5,8 +5,8 @@
     Simple Web SQLite Manager/Form/Report Application
     (c) Noprianto <nop@tedut.com>
     2012-2013 
-    GPL
-    Version 1.37
+    License: GPL
+    Version: 1.38
 
 
 
@@ -107,6 +107,8 @@ Features
 - Single python file
 
 - Configurable port (default 11738 because it looks like sqliteboy)
+
+- SSL Support
 
 - Basic/Extended Feature
 
@@ -437,6 +439,8 @@ Requirements
 
 - Optional: ReportLab / PIL (PDF output)
 
+- Optional: pyOpenSSL (SSL support)
+
 (or see below if you prefer standalone application on Windows)
 
 
@@ -445,16 +449,31 @@ Standalone Windows Application
 - Standalone / portable / run from USB Flash Disk 
 - Can be run by standard user
 - There is no need to install Python / requirements above
-- Single file executable (+/- 5 MB)
+- Single file executable (+/- 6 MB)
 - Run from Windows Explorer (double-click), no command line needed
 - To quit properly, press CTRL-C in terminal (cmd) window
 - Documentation and source code are included
+- SSL support 
 - Download: http://tedut.com/sqliteboy.exe
 
 
 Default Admin User And Password
 ========================================================================
 admin
+
+
+SSL Support
+========================================================================
+To enable SSL support, please put the following files into current 
+working directory:
+
+- sqliteboy.cert (SSL certificate)
+- sqliteboy.key  (SSL private key)
+
+If you need to create a self-signed test certificate, 
+OpenSSL can be used::
+    
+    openssl req -new -x509 -newkey rsa:1024 -keyout sqliteboy.key -out sqliteboy.cert -days 365 -nodes
 
 
 How To Run
@@ -490,6 +509,8 @@ Command::
 
 then, using web browser, visit localhost:11738, or localhost:PORT, if 
 PORT is specified
+
+Please use https if SSL support is enabled
 
 
 Custom Template

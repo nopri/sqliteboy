@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.37'
+VERSION = '1.38'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -47,6 +47,8 @@ DEFAULT_TABLE = 'sqlite_master'
 DEFAULT_LIMIT = 50
 DEFAULT_T_BASE = '%s.html' %(NAME)
 DEFAULT_PY_HANDLER = '%s_user' %(NAME)
+DEFAULT_SSL_CERTIFICATE = '%s.cert' %(NAME)
+DEFAULT_SSL_PRIVATE_KEY = '%s.key' %(NAME)
 DEFAULT_PY_FORM = 'form_'
 DEFAULT_PY_REPORT = 'report_'
 DEFAULT_ADMIN_USER = 'admin'
@@ -816,6 +818,8 @@ import calendar
 
 import copy
 
+import xmlrpclib
+
 try:
     import reportlab
     from reportlab.lib.enums import TA_LEFT as PDF_TA_LEFT
@@ -880,6 +884,14 @@ try:
 
     import web
     web.config.debug = False
+
+    ssl_cert = os.path.join(CWDIR, DEFAULT_SSL_CERTIFICATE)
+    ssl_pkey = os.path.join(CWDIR, DEFAULT_SSL_PRIVATE_KEY)
+    if os.path.exists(ssl_cert) and os.path.exists(ssl_pkey):
+        import OpenSSL
+        from web.wsgiserver import CherryPyWSGIServer
+        CherryPyWSGIServer.ssl_certificate = ssl_cert
+        CherryPyWSGIServer.ssl_private_key = ssl_pkey    
     
 except Exception, e:
     lsep = os.linesep
