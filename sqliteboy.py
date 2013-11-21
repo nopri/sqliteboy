@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.38'
+VERSION = '1.39'
 WSITE = 'https://github.com/nopri/%s' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -46,6 +46,7 @@ DEFAULT_LANG = 'default'
 DEFAULT_TABLE = 'sqlite_master'
 DEFAULT_LIMIT = 50
 DEFAULT_T_BASE = '%s.html' %(NAME)
+DEFAULT_T_BASE_HEADER = '$def with (data, content)'
 DEFAULT_PY_HANDLER = '%s_user' %(NAME)
 DEFAULT_SSL_CERTIFICATE = '%s.cert' %(NAME)
 DEFAULT_SSL_PRIVATE_KEY = '%s.key' %(NAME)
@@ -414,6 +415,7 @@ SHORTCUT_ALL = [
 PRINT_DATA_KEY = 'output_printer'
 PRINT_DATA_VALUE = 1
 IMPORT_ERROR_CODE = 255
+GENERAL_ERROR_CODE = 254
 
 PYINSTALLER_SPEC = '''
 # $title $command
@@ -885,8 +887,10 @@ try:
     import web
     web.config.debug = False
 
-    ssl_cert = os.path.join(CWDIR, DEFAULT_SSL_CERTIFICATE)
-    ssl_pkey = os.path.join(CWDIR, DEFAULT_SSL_PRIVATE_KEY)
+    ssl_cert = os.path.join(SCURDIR, DEFAULT_SSL_CERTIFICATE)
+    ssl_pkey = os.path.join(SCURDIR, DEFAULT_SSL_PRIVATE_KEY)
+    ssl_cert = os.path.abspath(ssl_cert)
+    ssl_pkey = os.path.abspath(ssl_pkey)
     if os.path.exists(ssl_cert) and os.path.exists(ssl_pkey):
         import OpenSSL
         from web.wsgiserver import CherryPyWSGIServer
@@ -5504,7 +5508,7 @@ PY_HANDLER_DATA = {
 #----------------------------------------------------------------------#
 # TEMPLATE                                                             #
 #----------------------------------------------------------------------#
-T_BASE = '''$def with (data, content)
+T_BASE = DEFAULT_T_BASE_HEADER + '''
 $ pr_get_style = pr_get('style')
 <!DOCTYPE html>
 <html>
@@ -7161,10 +7165,10 @@ $else:
 </body>
 </html>
 '''
-test_t_base = os.path.join(CWDIR, DEFAULT_T_BASE)
+test_t_base = os.path.join(SCURDIR, DEFAULT_T_BASE)
 test_t_base = os.path.abspath(test_t_base)
 if os.access(test_t_base, os.R_OK):
-    T_BASE = open(test_t_base).read()
+    T_BASE = DEFAULT_T_BASE_HEADER + os.linesep + open(test_t_base).read()
 
 #
 GLBL = {
@@ -11363,5 +11367,11 @@ if __name__ == '__main__':
                 log(_['th_error'])
             log('')
     #
-    web.httpserver.runsimple(app.wsgifunc(), (DEFAULT_ADDR, port))
+    try:
+        web.httpserver.runsimple(app.wsgifunc(), (DEFAULT_ADDR, port))
+    except Exception, e:
+        emsg = '%s: %s' %(_['th_error'], e)
+        log('', stream=sys.stderr)
+        log(emsg, stream=sys.stderr)
+        sys.exit(GENERAL_ERROR_CODE)
     

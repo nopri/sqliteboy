@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     License: GPL
-    Version: 1.38
+    Version: 1.39
 
 
 
@@ -516,9 +516,11 @@ Please use https if SSL support is enabled
 Custom Template
 ========================================================================
 
-- sqliteboy.html, if found in current directory
+- sqliteboy.html, if found in current working directory
 
 - For template example: T_BASE variable
+
+- Please do not put '$def with (data, content)' line in template
 
 
 User-defined Function
