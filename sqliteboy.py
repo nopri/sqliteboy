@@ -24,8 +24,8 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.39'
-WSITE = 'https://github.com/nopri/%s' %(NAME)
+VERSION = '1.40'
+WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
 CHECK_SAME_THREAD=False
@@ -490,6 +490,10 @@ $datetime
 '''
 
 PROFILE_STYLE_ADD_ALIGN = '''
+                                .pre
+                                {
+                                    white-space     : pre;
+                                }                                
                                 .left
                                 {
                                     text-align      : left;
@@ -1784,6 +1788,7 @@ LANGS = {
             'cmd_enable_sqliteboy': 'create %s table and enable extended features' %(FORM_TBL),
             'cmd_readme': 'readme',
             'cmd_source': 'source',
+            'cmd_website': 'website',
             'cmd_login': 'login',
             'cmd_logout': 'logout',
             'cmd_password': 'password',
@@ -3477,8 +3482,12 @@ def isnosb():
     return not FORM_TBL in tables()
     
 def sysinfo():
-    s_a = '%s %s %s' %(VERSION, link(URL_README[0], _['cmd_readme']), 
-        link(URL_SOURCE[0], _['cmd_source']))
+    s_a = '%s %s %s %s' %(
+                VERSION, 
+                link(URL_README[0], _['cmd_readme']), 
+                link(URL_SOURCE[0], _['cmd_source']),
+                link(WSITE, _['cmd_website']),
+            )
     #
     s_sb0 = _['x_extended_features']
     if isnosb():
@@ -6477,7 +6486,7 @@ $elif data['command'] == 'report.run.result':
                         $else:
                             $ccont
                     $else:    
-                        $tr_newline(ccont)
+                        <span class='pre'>$ccont</span>
                 </td>
             </tr>
         </table>
@@ -6498,7 +6507,7 @@ $elif data['command'] == 'report.run.result':
                     $ keys_header = 1
                 <tr>
                 $for k in keys:
-                    <th>$tr_newline(k)
+                    <th><span class='pre'>$k</span>
                     </th>
                 </tr>
             <tr>
@@ -6509,9 +6518,9 @@ $elif data['command'] == 'report.run.result':
                     $ ralign = style_align_default.get(dalignk)
                 $ rek = re.get(k, '')
                 $if isblob(rek):
-                    <td$:ralign>$_['z_view_blob']</td>
+                    <td$:ralign><span class='pre'>$_['z_view_blob']</span></td>
                 $else:
-                    <td$:ralign>$tr_newline(rek)
+                    <td$:ralign><span class='pre'>$rek</span>
                     </td>
             </tr>
             $ ctr = ctr + 1
@@ -6536,7 +6545,7 @@ $elif data['command'] == 'report.run.result':
                         $else:
                             $ccont
                     $else:    
-                        $tr_newline(ccont)
+                        <span class='pre'>$ccont</span>
                 </td>
             </tr>
         </table>
@@ -7219,7 +7228,7 @@ class index:
         stop()
         data = {'title': '', 'command': 'home', 'form': xform, 'report': xreport}
         content = (
-                    '%s <a href="%s">%s</a>' %(_['x_welcome2'], WSITE, NAME),
+                    '%s %s' %(_['x_welcome2'], NAME),
                     sysinfo(),
                 )
         return T(data, content)
