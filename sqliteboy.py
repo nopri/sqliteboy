@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.40'
+VERSION = '1.41'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -492,7 +492,9 @@ $datetime
 PROFILE_STYLE_ADD_ALIGN = '''
                                 .pre
                                 {
-                                    white-space     : pre;
+                                    white-space     : pre-wrap;
+                                    white-space     : -moz-pre-wrap;
+                                    word-wrap       : break-word;
                                 }                                
                                 .left
                                 {
@@ -6286,7 +6288,7 @@ $elif data['command'] == 'form.run':
     $if data['message']:
         <div>
             $for m in data['message']:
-                $': '.join(m)<br>
+                $:': '.join(m)<br>
         </div>
     $if data['ftitle']:
         <h3>
@@ -6294,7 +6296,7 @@ $elif data['command'] == 'form.run':
         </h3>
     $if data['finfo']:
         <div>
-            $data['finfo']
+            $:data['finfo']
         </div>
     <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
     $for h in data['hidden']:
@@ -6416,7 +6418,7 @@ $elif data['command'] == 'report.run':
     $if data['message']:
         <div>
             $for m in data['message']:
-                $': '.join(m)<br>
+                $:': '.join(m)<br>
         </div>
     $if data['ftitle']:
         <h3>
@@ -6424,7 +6426,7 @@ $elif data['command'] == 'report.run':
         </h3>
     $if data['finfo']:
         <div>
-            $data['finfo']
+            $:data['finfo']
         </div>
     <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
     $for h in data['hidden']:

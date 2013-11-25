@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     License: GPL
-    Version: 1.40
+    Version: 1.41
 
 
 
@@ -93,9 +93,15 @@ Links
 - SQLiteBoy Presentation (ppt format):
   http://tedut.com/sqliteboy.ppt
   
+- SQLiteBoy Development (ppt format, Bahasa Indonesia):
+  http://tedut.com/sqliteboy-dev-id.ppt
+
 - Script: medical_record:
   http://tedut.com/sqliteboy-script-medical_record.json
   
+- Commercial support: 
+  https://github.com/nopri/sqliteboy/wiki/Commercial-support
+
 - More: https://github.com/nopri/sqliteboy/wiki/_pages
 
 
@@ -1368,6 +1374,8 @@ Form Code Reference
 | title         | form title              | str           | optional    | "My Form"                |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | form information        | str           | optional    | "Form Information"       |
+|               |                         |               |             |                          |
+|               | (html is allowed)       |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | sub           | subform                 | list          | optional    |                          |              
 |               |                         |               |             |                          |
@@ -1432,6 +1440,8 @@ Form Code Reference
 |               |   handler (if provided, |               |             |                          |
 |               |   default: -1)          |               |             |                          |
 |               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               | (html is allowed)       |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | sql0          | additional sql query    | list          | optional    |                          |
 |               | statement(s)            |               |             |                          |
@@ -1819,6 +1829,8 @@ Report Code Reference
 | title         | report title            | str           | optional    | "My Report"              |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | report information      | str           | optional    | "Report Information"     |
+|               |                         |               |             |                          |
+|               | (html is allowed)       |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | header        | header order;           | list          | optional    |                          |
 |               | header order for query  |               |             |                          |
@@ -2651,22 +2663,4 @@ Python Handler Reference
     from external system
 
 
-Donate
-========================================================================
-
-- If you use this application, or find it useful, or want to support 
-  the development, please consider to donate :)
-
-- Any form of donation will be happily accepted
-
-
-Commercial Support
-========================================================================
-If you need commercial support (training, integration), 
-please let me know :) Support is provided by tedut.com. 
-
-
-Thank You
-========================================================================
-Thank You very much :)
 
