@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.42'
+VERSION = '1.43'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -825,6 +825,8 @@ from HTMLParser import HTMLParser
 import calendar
 
 import copy
+
+import traceback
 
 import xmlrpclib
 
@@ -3121,8 +3123,14 @@ def internalerror():
                 'title': _['th_error'],
                 'command': 'error_500',
                 'message': _['e_internalerror'],
+                'path': web.ctx.path,
+                'method': web.ctx.method,
             }
-    content = ''
+    #
+    exc_t, exc_v = sys.exc_info()[:2]
+    content = traceback.format_exception_only(exc_t, exc_v)
+    content = [str(x).strip() for x in content]
+    #
     stop()
     return web.internalerror(T(data, content))    
 
@@ -6796,6 +6804,13 @@ $elif data['command'] == 'error_500':
         <div>
             $data['message']
         </div>
+    <br>
+    <pre>
+    $data['method'] $data['path']
+    <br>
+    $for i in content:
+        $i
+    </pre>
 $elif data['command'] == 'page':
     <pre>$:content</pre>
 $elif data['command'] == 'calculator':
