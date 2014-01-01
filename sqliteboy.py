@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.41'
+VERSION = '1.42'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1827,6 +1827,7 @@ LANGS = {
             'cf_vacuum': 'confirm vacuum database',
             'e_db_static': 'ERROR: database file must not be placed in static directory',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
+            'e_internalerror': 'ERROR 500: internal server error',
             'e_access_forbidden': 'access forbidden',
             'e_connect': 'ERROR: unable to connect to',
             'e_insert': 'ERROR: insert into table',
@@ -3113,6 +3114,17 @@ def notfound():
     content = ''
     stop()
     return web.notfound(T(data, content))
+
+def internalerror():
+    start()
+    data = {
+                'title': _['th_error'],
+                'command': 'error_500',
+                'message': _['e_internalerror'],
+            }
+    content = ''
+    stop()
+    return web.internalerror(T(data, content))    
 
 def dflt():
     raise web.seeother('/')
@@ -6775,6 +6787,11 @@ $elif data['command'] == 'pages':
     </table>
     </form>
 $elif data['command'] == 'error_404':
+    $if data['message']:
+        <div>
+            $data['message']
+        </div>
+$elif data['command'] == 'error_500':
     $if data['message']:
         <div>
             $data['message']
@@ -11343,6 +11360,7 @@ if __name__ == '__main__':
     #
     app = web.application(URLS, globals())
     app.notfound = notfound
+    app.internalerror = internalerror
     #
     sess = web.session.Session(app, MemSession(), initializer = sess_init)
     prepsess()

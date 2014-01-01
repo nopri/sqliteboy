@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2013 
     License: GPL
-    Version: 1.41
+    Version: 1.42
 
 
 
@@ -32,8 +32,8 @@ What Is SQLiteBoy
   admin/user (configurable). Very simple subform is also supported.
   
   Form field supports predefined values (options) from SQL Query or 
-  Python list. Also, default value can be result of function call or 
-  static value. Constraint is also supported, to do checking before 
+  Python list. Also, default value can be result of function call, 
+  static value or SQL Query. Constraint is also supported, to check before 
   save, to prevent saving invalid value (it's possible to call 
   function before comparison). Onsave event is also supported, to 
   execute SQL Query (and use the result) just before the data is saved.
