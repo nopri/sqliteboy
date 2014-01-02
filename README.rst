@@ -4,9 +4,9 @@
     SQLiteBoy
     Simple Web SQLite Manager/Form/Report Application
     (c) Noprianto <nop@tedut.com>
-    2012-2013 
+    2012-2014 
     License: GPL
-    Version: 1.43
+    Version: 1.44
 
 
 

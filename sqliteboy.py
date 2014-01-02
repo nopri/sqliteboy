@@ -4,8 +4,8 @@
 # sqliteboy.py
 # Simple Web SQLite Manager/Form/Report Application
 # (c) Noprianto <nop@tedut.com>
-# 2012-2013
-# GPL
+# 2012-2014
+# License: GPL
 #
 # Please read README.rst
 #
@@ -24,7 +24,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.43'
+VERSION = '1.44'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -828,7 +828,6 @@ import copy
 
 import traceback
 
-import xmlrpclib
 
 try:
     import reportlab
@@ -4788,6 +4787,9 @@ def scmd_favicon(data):
     return ret
 
 def scmd_pyinstaller(data):
+    #
+    import xmlrpclib
+    #
     ret = ''
     #
     try:
