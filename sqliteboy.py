@@ -7,6 +7,12 @@
 # 2012-2014
 # License: GPL
 #
+# SQLiteBoy is an independent product, developed separately from the 
+# SQLite core library, which is maintained by SQLite.org.  
+# Neither SQLiteBoy.com nor SQLite.org take any responsibility for the 
+# work of the other.
+#
+#
 # Please read README.rst
 #
 # I apologize for:
@@ -24,7 +30,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.44'
+VERSION = '1.45'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -762,6 +768,8 @@ ENV_VAR_MAX = DEFAULT_VAR_MAX
 QUERY_STRING_MAX = 1 * SIZE_KB
 PDF_CTYPE = 'application/pdf'
 PDF_SUFFIX = '.pdf'
+RANDOM_SIMPLE_MIN = 10
+RANDOM_SIMPLE_MAX = 100
 
 
 #----------------------------------------------------------------------#
@@ -2026,6 +2034,44 @@ def sqliteboy_randrange(a, b):
     #
     return random.randrange(a, b)
 SQLITE_UDF.append(('sqliteboy_randrange', 2, sqliteboy_randrange))
+
+def sqliteboy_randstr(s, a, b):
+    ret = ''
+    #
+    s = str(s)
+    if not isinstance(a, int) or not isinstance(b, int):
+        return ret
+    if a<=0 or b<=0:
+        return ret
+    if b<a:
+        return ret
+    #
+    if b==a:
+        length = a
+    else:
+        length_choice = xrange(a, b)
+        length = random.choice(length_choice)
+    #
+    for i in xrange(length):
+        r = random.choice(s)
+        ret += r
+    #
+    return ret
+SQLITE_UDF.append(('sqliteboy_randstr', 3, sqliteboy_randstr))
+
+def sqliteboy_randstr2(a, b):
+    s = string.letters + string.digits + string.punctuation
+    return sqliteboy_randstr(s, a, b)
+SQLITE_UDF.append(('sqliteboy_randstr2', 2, sqliteboy_randstr2))
+
+def sqliteboy_randstr3(a, b):
+    s = string.letters + string.digits 
+    return sqliteboy_randstr(s, a, b)
+SQLITE_UDF.append(('sqliteboy_randstr3', 2, sqliteboy_randstr3))
+
+def sqliteboy_randstr_simple():
+    return sqliteboy_randstr3(RANDOM_SIMPLE_MIN, RANDOM_SIMPLE_MAX)
+SQLITE_UDF.append(('sqliteboy_randstr_simple', 0, sqliteboy_randstr_simple))
 
 def sqliteboy_is_datetime(s):
     ret = 0

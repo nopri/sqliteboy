@@ -6,7 +6,12 @@
     (c) Noprianto <nop@tedut.com>
     2012-2014 
     License: GPL
-    Version: 1.44
+    Version: 1.45
+    
+    SQLiteBoy is an independent product, developed separately from the 
+    SQLite core library, which is maintained by SQLite.org.  
+    Neither SQLiteBoy.com nor SQLite.org take any responsibility for the 
+    work of the other.
 
 
 
@@ -72,8 +77,9 @@ Links
 - screenshot, probably not up-to-date:  
   https://github.com/nopri/sqliteboy/wiki
 
-- Mengenal sqliteboy (intro to sqliteboy in Bahasa Indonesia):  
-  https://github.com/nopri/sqliteboy/wiki/Mengenal-sqliteboy 
+- Free Book: Form dan Report sederhana dengan SQLiteBoy
+  (Bahasa Indonesia, available as PDF/ODT, 251 pages):
+  http://tedut.com/#form-dan-report-sederhana-dengan-sqliteboy
   
 - Tutorial: simple medical record:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-simple-medical-record
@@ -557,6 +563,57 @@ User-defined Function
 - sqliteboy_b64decode(s)
 
 - sqliteboy_randrange(a, b)
+
+- sqliteboy_randstr(s, a, b)
+  ::
+  
+      random string
+      argument    :
+         s (set characters)
+         a (min length, > 0)
+         b (max length, > 0, >=a)
+         
+      example     :
+         sqliteboy_randstr('abcdef123456', 3, 8)
+         -> 'e2e6'
+      
+      tips        :
+      - fix length: a = b
+      - use sqliteboy_randstr2() or sqliteboy_randstr3() for predefined 
+        set characters
+      - use sqliteboy_randstr_simple() for simple random string
+      
+- sqliteboy_randstr2(a, b)
+  ::
+  
+      random string (predefined set characters, letters + digits + punctuation)
+      argument    :
+         a (min length, > 0)
+         b (max length, > 0, >=a)
+         
+      example     :
+         sqliteboy_randstr2(3, 8)
+         -> '"Z\@Z'
+
+- sqliteboy_randstr3(a, b)
+  ::
+  
+      random string (predefined set characters, letters + digits)
+      argument    :
+         a (min length, > 0)
+         b (max length, > 0, >=a)
+         
+      example     :
+         sqliteboy_randstr3(3, 8)
+         -> 'nItJ8'
+         
+- sqliteboy_randstr_simple()
+  ::
+  
+      random string (simple)         
+      example     :
+         sqliteboy_randstr_simple()
+         -> 'VUmDAQeJCpww9IjmiexrWRuRT6ZgpacKVdOA'
 
 - sqliteboy_is_datetime(s)
 
@@ -2264,7 +2321,7 @@ Script Code Reference
 
 - Script can be used to automate the creation of tables 
   (including addition of columns, for existing table),
-  forms or reports 
+  forms, reports or user-defined profiles
   
 - Solution can be deployed in form of script, that can be uploaded
   and run by admin 
@@ -2371,6 +2428,10 @@ Script Code Reference
 |               |                         |               |             |                          |
 |               | - reportcode: valid     |               |             |                          |
 |               |   report code (dict)    |               |             |                          |
+|               |                         |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| profiles      | user-defined profiles   | list          | optional    | (please see Examples     |
+|               |                         |               |             | below)                   |
 |               |                         |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | info          | script information      | str           | optional    | "Script Information"     |
