@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2014 
     License: GPL
-    Version: 1.45
+    Version: 1.46
     
     SQLiteBoy is an independent product, developed separately from the 
     SQLite core library, which is maintained by SQLite.org.  
@@ -615,7 +615,36 @@ User-defined Function
          sqliteboy_randstr_simple()
          -> 'VUmDAQeJCpww9IjmiexrWRuRT6ZgpacKVdOA'
 
+- sqliteboy_is_datetime_format(s, fmt)
+  ::
+  
+      is date time according to format
+      argument    :
+         s (input string)
+         fmt (date time format string)
+         
+      example     :
+         sqliteboy_is_datetime_format('2014', '%Y')
+         -> 1
+         
+         sqliteboy_is_datetime_format('2014-01-01', '%Y-%m-%d')
+         -> 1
+         
+         sqliteboy_is_datetime_format('2014-01-01', '%Y-%m-%d %H:%M:%S')
+         -> 0
+         
+         sqliteboy_is_datetime_format('2014-01-01 01:02:03', '%Y-%m-%d %H:%M:%S')
+         -> 1
+         
+      tips        :
+      - use sqliteboy_is_datetime(), sqliteboy_is_date() or sqliteboy_is_time()
+        for predefined date time format
+
 - sqliteboy_is_datetime(s)
+
+- sqliteboy_is_date(s)
+
+- sqliteboy_is_time(s)
 
 - sqliteboy_time()
 

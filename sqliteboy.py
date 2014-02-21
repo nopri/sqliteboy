@@ -30,7 +30,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.45'
+VERSION = '1.46'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -256,6 +256,8 @@ REFERENCE_FLAG_PASSWORD = 2
 FAVICON_WIDTH = 16
 FAVICON_HEIGHT = 16
 PYTIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+PYTIME_DATE_FORMAT = '%Y-%m-%d'
+PYTIME_TIME_FORMAT = '%H:%M:%S'
 PYTIME_FORMAT_BACKUP = '%Y-%m-%d_%H-%M-%S'
 REGEX_EMAIL = r'^[\w\.\+-]+@[\w\.-]+\.[a-zA-Z]+$'
 DAYS_IN_YEAR = 365.2425
@@ -2073,18 +2075,30 @@ def sqliteboy_randstr_simple():
     return sqliteboy_randstr3(RANDOM_SIMPLE_MIN, RANDOM_SIMPLE_MAX)
 SQLITE_UDF.append(('sqliteboy_randstr_simple', 0, sqliteboy_randstr_simple))
 
-def sqliteboy_is_datetime(s):
+def sqliteboy_is_datetime_format(s, fmt):
     ret = 0
     #
     try:
         s = s.strip()
-        p = time.strptime(s, PYTIME_FORMAT)
+        p = time.strptime(s, fmt)
         ret = 1
     except:
         pass
     #
     return ret
+SQLITE_UDF.append(('sqliteboy_is_datetime_format', 2, sqliteboy_is_datetime_format))
+
+def sqliteboy_is_datetime(s):
+    return sqliteboy_is_datetime_format(s, PYTIME_FORMAT)
 SQLITE_UDF.append(('sqliteboy_is_datetime', 1, sqliteboy_is_datetime))
+
+def sqliteboy_is_date(s):
+    return sqliteboy_is_datetime_format(s, PYTIME_DATE_FORMAT)
+SQLITE_UDF.append(('sqliteboy_is_date', 1, sqliteboy_is_date))
+
+def sqliteboy_is_time(s):
+    return sqliteboy_is_datetime_format(s, PYTIME_TIME_FORMAT)
+SQLITE_UDF.append(('sqliteboy_is_time', 1, sqliteboy_is_time))
 
 def sqliteboy_time():
     return time.time()
