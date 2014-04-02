@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2014 
     License: GPL
-    Version: 1.46
+    Version: 1.47
     
     SQLiteBoy is an independent product, developed separately from the 
     SQLite core library, which is maintained by SQLite.org.  
@@ -1385,6 +1385,20 @@ User-defined Function
     return value  : 
         user name (if extended feature is enabled, or '')
         
+- sqliteboy_x_profile_all(u, field, system)
+  ::
+  
+      read user profile (both system and user-defined)
+      
+      argument    :
+         u (user)
+         field (custom field)
+         system (0=user-defined, 1=system)
+
+      return value: 
+        field value (if extended feature is enabled and field is set,
+        or '')
+        
 - sqliteboy_x_profile(u, field)
   ::
   
@@ -1398,11 +1412,28 @@ User-defined Function
       return value: 
         field value (if extended feature is enabled and field is set,
         or '')
+
+- sqliteboy_x_profile_system(u, field)
+      read system profile for user u
+      Please read SYSTEM PROFILE REFERENCE section (below)
+      
+      argument    :
+         u (user)
+         field (field)
+
+      return value: 
+        field value (if extended feature is enabled and field is set,
+        or '')
         
 - sqliteboy_x_my(field)
   ::
   
       alias for sqliteboy_x_profile(sqliteboy_x_user(), field)
+
+- sqliteboy_x_my_system(field)
+  ::
+  
+      alias for sqliteboy_x_profile_system(sqliteboy_x_user(), field)
     
 
 Form Code Reference
@@ -2607,6 +2638,17 @@ Script Code Reference
                     ]    
                         
     }
+
+
+System Profile Reference
+========================================================================
+- style: user interface style (int)
+
+- first_name: first name (str)
+
+- last_name: last name (str)
+
+- email: email (str)
 
 
 User-defined Profile Reference

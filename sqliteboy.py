@@ -30,7 +30,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.46'
+VERSION = '1.47'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -761,6 +761,36 @@ PROFILE_ALL = [
                     int,
                     0,
                 ],
+                [
+                    'first_name',
+                    'x_first_name',
+                    [
+                    ],
+                    '',
+                    'pr_user',
+                    str,
+                    0,
+                ],
+                [
+                    'last_name',
+                    'x_last_name',
+                    [
+                    ],
+                    '',
+                    'pr_user',
+                    str,
+                    0,
+                ],
+                [
+                    'email',
+                    'x_email',
+                    [
+                    ],
+                    '',
+                    'pr_user',
+                    str,
+                    0,
+                ],                
             ]
 PROFILE_USER_DEFINED_LEN = 4
 PROFILE_USER_DEFINED_HANDLER = 'pr_user'
@@ -1735,6 +1765,9 @@ LANGS = {
             'x_please_wait': 'please wait...',
             'x_server_command_mode': 'server command mode',
             'x_style': 'style',
+            'x_first_name': 'first name',
+            'x_last_name': 'last name',
+            'x_email': 'email',
             'x_user_defined_profile': 'user-defined profile', 
             'x_profile': 'profile',
             'x_create_table_schema': 'create table based on this schema',
@@ -5186,6 +5219,33 @@ def pr_get0(name, usr):
 def pr_get(name):
     return pr_get0(name, user())
 
+def pr_sys_get0(name, usr):
+    ret = ''
+    name = str(name).strip()
+    usr = str(usr).strip()
+    #
+    if isnosb() or usr == '':
+        return ret
+    #
+    spr = [x[0] for x in PROFILE_ALL]
+    if not name in spr:
+        return ret
+    #
+    res = s_select('user.account..%s' %(usr))
+    try:
+        if len(res) != 1:
+            raise Exception
+        #
+        res = res[0]
+        g0 = res.get('g')
+        g = json.loads(g0)
+    except:
+        g = {}    
+    #
+    ret = g.get(name, '')
+    #
+    return ret
+
 def v_set(name, value):
     ret = 0
     #
@@ -5564,26 +5624,45 @@ def sqliteboy_x_user():
         return user()
 SQLITE_UDF.append(('sqliteboy_x_user', 0, sqliteboy_x_user))
 
-def sqliteboy_x_profile(u, field):
+def sqliteboy_x_profile_all(u, field, system):
     ret = ''
     #
     u = str(u)
     field = str(field)
+    if not sqliteboy_is_integer(system):
+        system = 0
     #
     if isnosb(): 
         return ret
     #
+    if system == 1:
+        func = pr_sys_get0
+    else:
+        func = pr_get0
+    #
     try:
-        ret = pr_get0(field, u)
+        ret = func(field, u)
     except:
         return ret
     #
     return ret
+SQLITE_UDF.append(('sqliteboy_x_profile_all', 3, sqliteboy_x_profile_all))
+
+def sqliteboy_x_profile(u, field):
+    return sqliteboy_x_profile_all(u, field, 0)
 SQLITE_UDF.append(('sqliteboy_x_profile', 2, sqliteboy_x_profile))
+
+def sqliteboy_x_profile_system(u, field):
+    return sqliteboy_x_profile_all(u, field, 1)
+SQLITE_UDF.append(('sqliteboy_x_profile_system', 2, sqliteboy_x_profile_system))
 
 def sqliteboy_x_my(field):
     return sqliteboy_x_profile(sqliteboy_x_user(), field)
 SQLITE_UDF.append(('sqliteboy_x_my', 1, sqliteboy_x_my))
+
+def sqliteboy_x_my_system(field):
+    return sqliteboy_x_profile_system(sqliteboy_x_user(), field)
+SQLITE_UDF.append(('sqliteboy_x_my_system', 1, sqliteboy_x_my_system))
 
 
 #----------------------------------------------------------------------#
