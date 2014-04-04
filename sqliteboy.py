@@ -30,7 +30,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.47'
+VERSION = '1.48'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1655,7 +1655,15 @@ class SimpleDropdown(web.form.Dropdown):
         #lines below are modified by sqliteboy author: 
         #- convert to str
         #- web.net 
-        if str(self.value) == str(value) or (isinstance(self.value, list) and value in self.value):
+        #- web.utils.safestr
+        #- ref: webpy pull request #279
+        value = web.utils.safestr(value)
+        if isinstance(self.value, (tuple, list)):
+            s_value = [web.utils.safestr(x) for x in self.value]
+        else:
+            s_value = web.utils.safestr(self.value)            
+        
+        if s_value == value or (isinstance(s_value, list) and value in s_value):
             select_p = ' selected="selected"'
         else:
             select_p = ''
