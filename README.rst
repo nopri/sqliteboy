@@ -6,7 +6,7 @@
     (c) Noprianto <nop@tedut.com>
     2012-2014 
     License: GPL
-    Version: 1.48
+    Version: 1.49
     
     SQLiteBoy is an independent product, developed separately from the 
     SQLite core library, which is maintained by SQLite.org.  
@@ -78,7 +78,7 @@ Links
   https://github.com/nopri/sqliteboy/wiki
 
 - Free Book: Form dan Report sederhana dengan SQLiteBoy
-  (Bahasa Indonesia, available as PDF/ODT, 251 pages):
+  (Bahasa Indonesia, available as PDF/ODT, 250+ pages):
   http://tedut.com/#form-dan-report-sederhana-dengan-sqliteboy
   
 - Tutorial: simple medical record:
@@ -95,6 +95,9 @@ Links
 
 - Tutorial: Search partners in OpenERP: 
   https://github.com/nopri/sqliteboy/wiki/Tutorial-search-partners-in-openerp
+
+- Tutorial: Hyperlink and Javascript in label: 
+  https://github.com/nopri/sqliteboy/wiki/Tutorial-hyperlink-and-javascript-in-label
 
 - SQLiteBoy Presentation (ppt format):
   http://tedut.com/sqliteboy.ppt
@@ -2651,6 +2654,8 @@ System Profile Reference
 - last_name: last name (str)
 
 - email: email (str)
+
+- website: website (str)
 
 
 User-defined Profile Reference

@@ -30,7 +30,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.48'
+VERSION = '1.49'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -784,6 +784,16 @@ PROFILE_ALL = [
                 [
                     'email',
                     'x_email',
+                    [
+                    ],
+                    '',
+                    'pr_user',
+                    str,
+                    0,
+                ],                
+                [
+                    'website',
+                    'x_website',
                     [
                     ],
                     '',
@@ -1776,6 +1786,7 @@ LANGS = {
             'x_first_name': 'first name',
             'x_last_name': 'last name',
             'x_email': 'email',
+            'x_website': 'website',
             'x_user_defined_profile': 'user-defined profile', 
             'x_profile': 'profile',
             'x_create_table_schema': 'create table based on this schema',
