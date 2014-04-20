@@ -30,7 +30,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.49'
+VERSION = '1.50'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -1075,6 +1075,9 @@ class MemSession(web.session.Store):
     def __init__(self):
         self.data = {}
     
+    def __len__(self):
+        return len(self.data.keys())
+    
     def __contains__(self, key):
         return self.data.has_key(key)
     
@@ -1787,6 +1790,7 @@ LANGS = {
             'x_last_name': 'last name',
             'x_email': 'email',
             'x_website': 'website',
+            'x_session': 'session(s)',
             'x_user_defined_profile': 'user-defined profile', 
             'x_profile': 'profile',
             'x_create_table_schema': 'create table based on this schema',
@@ -3657,6 +3661,7 @@ def sysinfo():
             s_sb,
             (_['x_admin'], s_adm),
             (_['x_allow'], allows()),
+            (_['x_session'], len(sess.store)),
         ]
     #
     return ret
