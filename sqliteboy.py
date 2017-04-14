@@ -2,14 +2,15 @@
 #
 #
 # sqliteboy.py
-# Simple Web SQLite Manager/Form/Report Application
-# (c) Noprianto <nop@tedut.com>
-# 2012-2014
+# Simple web-based management tool for SQLite database
+# (with form, report, and many other features)
+# (c) Noprianto <nop@noprianto.com>
+# 2012-2014, 2017
 # License: GPL
 #
-# SQLiteBoy is an independent product, developed separately from the 
-# SQLite core library, which is maintained by SQLite.org.  
-# Neither SQLiteBoy.com nor SQLite.org take any responsibility for the 
+# SQLiteBoy is an independent product, developed separately from the
+# SQLite core library, which is maintained by SQLite.org.
+# Neither noprianto.com nor SQLite.org take any responsibility for the
 # work of the other.
 #
 #
@@ -23,14 +24,16 @@
 # - bare except:
 # - PEP8 violations :)
 #
-
+# SQLiteBoy is planned to be rewritten in Python version 3,
+# using another libraries and technologies
+#
 
 #----------------------------------------------------------------------#
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-APP_DESC = 'Simple Web SQLite Manager/Form/Report Application'
-VERSION = '1.50'
+APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
+VERSION = '1.51'
 WSITE = 'http://%s.com' %(NAME)
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -148,7 +151,7 @@ MAX_COLUMN_ADD = 3
 CUSTOM_RT = {
                 'query': 4,
                 'calculator': 3,
-            } #command, rt 
+            } #command, rt
 PK_SYM = '*'
 URL_README = ('/sqliteboy/readme', 'sqliteboy_readme', 'README.rst')
 URL_SOURCE = ('/sqliteboy/source', 'sqliteboy_source', 'sqliteboy.py')
@@ -176,7 +179,7 @@ FORM_KEY_INSERT = 'insert'
 FORM_KEY_CONFIRM = 'confirm'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_X = (2,) #parsed index
-FORM_REQ_DATA = (FORM_KEY_DATA_TABLE, 
+FORM_REQ_DATA = (FORM_KEY_DATA_TABLE,
                     FORM_KEY_DATA_COLUMN,
                 )
 FORM_REFERENCE_SQL_0 = 'a'
@@ -188,7 +191,7 @@ FORM_MESSAGE_LEN = 3
 FORM_MESSAGE_VAR_RESULT = 'result'
 FORM_MESSAGE_VAR_PYTHON_HANDLER = 'python_handler'
 FORM_INSERT_DEFAULT = 1
-FORM_DEFAULT_SQL_RET = 'a' 
+FORM_DEFAULT_SQL_RET = 'a'
 #
 REPORT_KEY_DATA_TYPES = ['integer']
 REPORT_ALL = FORM_ALL
@@ -226,7 +229,7 @@ REPORT_MESSAGE_VAR_RESULT = 'result'
 REPORT_HEADERS_CELL_LEN = 3
 REPORT_FOOTERS_CELL_LEN = 3
 REPORT_HEADERS_CELL_TYPES = [
-                                (str, unicode, ), 
+                                (str, unicode, ),
                                 (str, unicode, int, ),
                                 (dict, ),
                             ]
@@ -280,7 +283,7 @@ SYSTEM_CONFIG = (
                         '',
                         'striphtml',
                         0,
-                    ),                    
+                    ),
                     (
                         'x_files',
                         'x_max_files_number',
@@ -325,32 +328,32 @@ SYSTEM_CONFIG = (
                         '',
                         'striphtml',
                         1,
-                    ),                    
+                    ),
                 )
 NOTFOUND_CHECK = [
                     '/fs',
                 ]
 REGEX_PAGE = (
                 (
-                    r'~([^~]+)~', 
+                    r'~([^~]+)~',
                     r'<em>\1</em>',
                     True,
                     '~text~ -> <em>text</em>',
                 ),
                 (
-                    r'\*([^\*]+)\*', 
+                    r'\*([^\*]+)\*',
                     r'<strong>\1</strong>',
                     True,
                     '*text* -> <strong>text</strong>',
                 ),
                 (
-                    r'_([^_]+)_', 
+                    r'_([^_]+)_',
                     r'<u>\1</u>',
                     True,
                     '_text_ -> <u>text</u>',
                 ),
                 (
-                    r'\[([^\|]+)\|(\S+)\]', 
+                    r'\[([^\|]+)\|(\S+)\]',
                     r'<a href="\2">\1</a>',
                     True,
                     '[text|url] -> <a href="url">text</a>',
@@ -388,7 +391,7 @@ SCRIPT_REPORT_EXISTS = -2
 SCRIPT_VALID_COLUMN_FLAG = (
                             ([], 0, ''), #none
                             ([], 1, ''), #primary key
-                            (['integer'], 2, 'primary key autoincrement'), 
+                            (['integer'], 2, 'primary key autoincrement'),
                         )
 JSON_INDENT = 4
 COPY_TARGET_EXCLUDE = [
@@ -400,19 +403,19 @@ EMPTY_EXCLUDE = [
                     FORM_TBL,
                     DEFAULT_TABLE,
                     SEQUENCE_TABLE,
-            ]            
+            ]
 IMPORT_EXCLUDE = [
                     FORM_TBL,
                     DEFAULT_TABLE,
                     SEQUENCE_TABLE,
-            ]            
+            ]
 PRAGMA_FREELIST_COUNT = 'freelist_count'
 SERVER_COMMAND_SEPARATOR = '-'
 SERVER_COMMAND_ALL = {
                         'generate_favicon': 'scmd_favicon',
                         'generate_pyinstaller': 'scmd_pyinstaller',
-                        'generate_build': 'scmd_build',    
-                        'generate_version': 'scmd_version',    
+                        'generate_build': 'scmd_build',
+                        'generate_version': 'scmd_version',
                     }
 SHORTCUT_TYPE_FORM = 'form'
 SHORTCUT_TYPE_REPORT = 'report'
@@ -439,10 +442,10 @@ a.datas += [
 pyz = PYZ(a.pure)
 
 exe = EXE(
-            pyz, 
-            a.scripts, 
-            a.binaries, 
-            a.datas, 
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.datas,
             name=r'$output',
             icon=r'$icon',
             console=True,
@@ -451,8 +454,8 @@ exe = EXE(
 
 #
 import sys
-import os 
-try: 
+import os
+try:
    from hashlib import md5
 except ImportError:
    from md5 import md5
@@ -488,7 +491,7 @@ try:
         sys.stdout.write('OK' + os.linesep)
 except:
     pass
-    
+
 
 '''
 
@@ -503,23 +506,23 @@ PROFILE_STYLE_ADD_ALIGN = '''
                                     white-space     : pre-wrap;
                                     white-space     : -moz-pre-wrap;
                                     word-wrap       : break-word;
-                                }                                
+                                }
                                 .left
                                 {
                                     text-align      : left;
-                                }                                
+                                }
                                 .center
                                 {
                                     text-align      : center;
-                                }                           
+                                }
                                 .right
                                 {
                                     text-align      : right;
-                                }                          
+                                }
                                 .justify
                                 {
                                     text-align      : justify;
-                                }                                                                                                           
+                                }
                     '''
 PROFILE_STYLE_PRINT = '''
                                 *
@@ -549,7 +552,7 @@ PROFILE_STYLE_PRINT = '''
                                 .main_menu
                                 {
                                     display         : none;
-                                }                                
+                                }
                                 .messages
                                 {
                                     display         : none;
@@ -600,17 +603,17 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 .main_menu
                                 {
-                                }                            
+                                }
                                 a
                                 {
-                                    color           : #406080;                                
+                                    color           : #406080;
                                 }
                                 .messages
                                 {
                                     padding         : 2px;
                                     background-color: #cccccc;
                                     border          : 1px solid #808080;
-                                }                                
+                                }
                                 table:not(.nohover) tr:hover
                                 {
                                     background-color: #ffffe0;
@@ -661,7 +664,7 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 .main_menu
                                 {
-                                }                            
+                                }
                                 input, select, textarea
                                 {
                                     background-color: #ffffff;
@@ -671,14 +674,14 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 a
                                 {
-                                    color           : #996600;                                
+                                    color           : #996600;
                                 }
                                 .messages
                                 {
                                     padding         : 2px;
                                     background-color: #f3e3c3;
                                     border          : 1px solid #ffcc66;
-                                }                                
+                                }
                                 table:not(.nohover) tr:hover
                                 {
                                     background-color: #ffffe0;
@@ -729,17 +732,17 @@ PROFILE_ITEM_STYLE = [
                                 }
                                 .main_menu
                                 {
-                                }                            
+                                }
                                 a
                                 {
-                                    color           : #00008b;                                
+                                    color           : #00008b;
                                 }
                                 .messages
                                 {
                                     padding         : 2px;
                                     background-color: #b0e0e6;
                                     border          : 1px solid #4169e1;
-                                }                                
+                                }
                                 table:not(.nohover) tr:hover
                                 {
                                     background-color: #ffffe0;
@@ -790,7 +793,7 @@ PROFILE_ALL = [
                     'pr_user',
                     str,
                     0,
-                ],                
+                ],
                 [
                     'website',
                     'x_website',
@@ -800,7 +803,7 @@ PROFILE_ALL = [
                     'pr_user',
                     str,
                     0,
-                ],                
+                ],
             ]
 PROFILE_USER_DEFINED_LEN = 4
 PROFILE_USER_DEFINED_HANDLER = 'pr_user'
@@ -849,7 +852,7 @@ try:
 except:
     pass
 
-try: 
+try:
    from hashlib import md5
 except ImportError:
    from md5 import md5
@@ -897,10 +900,10 @@ try:
     #
     PDF_DEFAULT_BORDER_STYLE = [
                                     (
-                                        'GRID', 
-                                        (0, 0), 
-                                        (-1, -1), 
-                                        1, 
+                                        'GRID',
+                                        (0, 0),
+                                        (-1, -1),
+                                        1,
                                         PDF_DEFAULT_BORDER_COLOR,
                                     ),
                                 ]
@@ -908,6 +911,17 @@ try:
     PDF_DEFAULT_SPACER_HEIGHT = 36
     PDF_DEFAULT_PARAGRAPH_STYLE = PDF_STYLE_SHEET()['BodyText']
 except ImportError:
+    PDF_TA_LEFT = 0
+    PDF_TA_CENTER = 0
+    PDF_TA_RIGHT = 0
+    PDF_TA_JUSTIFY = 0
+    PDF_TEMPLATE = None
+    PDF_TABLE = None
+    PDF_IMAGE = None
+    PDF_SPACER = None
+    PDF_PARAGRAPH = None
+    PDF_DEFAULT_PAGE_SIZE = ()
+    PDF_UNIT_INCH = 0
     reportlab = None
 
 if reportlab:
@@ -932,13 +946,13 @@ if reportlab:
         from reportlab.pdfbase import _fontdata_widths_timesitalic
         from reportlab.pdfbase import _fontdata_widths_timesbolditalic
         from reportlab.pdfbase import _fontdata_widths_symbol
-        from reportlab.pdfbase import _fontdata_widths_zapfdingbats        
+        from reportlab.pdfbase import _fontdata_widths_zapfdingbats
     except:
         pass
 
 try:
-    import sqlite3    
-    
+    import sqlite3
+
     import json
 
     import web
@@ -952,8 +966,8 @@ try:
         import OpenSSL
         from web.wsgiserver import CherryPyWSGIServer
         CherryPyWSGIServer.ssl_certificate = ssl_cert
-        CherryPyWSGIServer.ssl_private_key = ssl_pkey    
-    
+        CherryPyWSGIServer.ssl_private_key = ssl_pkey
+
 except Exception, e:
     lsep = os.linesep
     emsg = '%s%s%s%s%s%s%s' %(
@@ -1026,8 +1040,8 @@ dbfile = ''
 dbfile0 = ''
 rendertime = [0, 0]
 rowid = '_%s___%s___%s___%s_' %(
-        NAME, 
-        ROWID, 
+        NAME,
+        ROWID,
         random.randrange(0, 999999999),
         int(time.time()),
         )
@@ -1062,7 +1076,7 @@ class StripHTMLParser(HTMLParser):
     def __init__(self):
         self.reset()
         self.text = []
-    
+
     def handle_data(self, data):
         self.text.append(data)
 
@@ -1074,13 +1088,13 @@ class MemSession(web.session.Store):
     data = {}
     def __init__(self):
         self.data = {}
-    
+
     def __len__(self):
         return len(self.data.keys())
-    
+
     def __contains__(self, key):
         return self.data.has_key(key)
-    
+
     def __getitem__(self, key):
         if not self.data.has_key(key):
             raise KeyError, key
@@ -1089,15 +1103,15 @@ class MemSession(web.session.Store):
         v[0] = time.time()
         self.data[key] = v
         return v[1]
-    
+
     def __setitem__(self, key, value):
         v = [time.time(), value]
         self.data[key] = v
-        
+
     def __delitem__(self, key):
         if self.data.has_key(key):
             del self.data[key]
-            
+
     def cleanup(self, timeout):
         kdel = []
         now = time.time()
@@ -1110,7 +1124,7 @@ class MemSession(web.session.Store):
         for k in kdel:
             if self.data.has_key(k):
                 del self.data[k]
-        
+
 
 #----------------------------------------------------------------------#
 # NUMBER TO WORDS                                                      #
@@ -1128,7 +1142,7 @@ class NumberToWords:
         self.data = {}
         #
         self.chunk_size = 3
-        
+
     def maxlength(self):
         ret = 0
         #
@@ -1138,13 +1152,13 @@ class NumberToWords:
             ret = ( ( 2 * ln1 ) - 1) * self.chunk_size
         #
         return ret
-        
+
     def separator(self):
         return self.style.get('separator', ' ')
-        
+
     def decimal_separator(self):
         return self.style.get('decimal_separator', ' ')
-    
+
     def is_number(self, s, check_length=True):
         s = str(s)
         #
@@ -1161,7 +1175,7 @@ class NumberToWords:
             pass
         #
         return ret
-    
+
     def is_negative(self, s):
         ret = False
         #
@@ -1173,7 +1187,7 @@ class NumberToWords:
             pass
         #
         return ret
-        
+
     def split(self, s):
         s = str(s).lower()
         #
@@ -1184,7 +1198,7 @@ class NumberToWords:
         #
         if 'e' in s:
             return ret
-        #    
+        #
         P1 = ''
         P2 = ''
         if '.' in s:
@@ -1231,13 +1245,13 @@ class NumberToWords:
         #
         ret = self.separator().join(res)
         return ret
-    
+
     def get_1d(self, s):
         s = str(s)
         #
         ret = ''
         #
-        if not len(s) == 1: 
+        if not len(s) == 1:
             return ret
         #
         r = self.word.get(s, '')
@@ -1245,37 +1259,37 @@ class NumberToWords:
             r = r[1]
         #
         ret = r
-        return ret    
+        return ret
 
     def get_2d(self, s):
         '''
         override this
         '''
         s = str(s)
-        #        
+        #
         ret = ''
         #
-        if not len(s) == 2: 
+        if not len(s) == 2:
             return ret
         #
-        return ret    
+        return ret
 
     def get_3d(self, s):
         '''
         override this
-        '''        
+        '''
         s = str(s)
-        #        
+        #
         ret = ''
         #
-        if not len(s) == 3: 
+        if not len(s) == 3:
             return ret
         #
-        return ret    
+        return ret
 
     def get_d(self, s):
         s = str(s)
-        #        
+        #
         ls = len(s)
         #
         ret = ''
@@ -1287,18 +1301,18 @@ class NumberToWords:
         elif ls == 3:
             ret = self.get_3d(s)
         #
-        return ret        
-        
+        return ret
+
     def get_x1(self, c, s, separator):
         '''
         override this if needed
-        '''        
+        '''
         s = str(s)
         separator = str(separator)
         #
         ret = (s, separator)
         return ret
-        
+
     def get_p1(self, p):
         p = str(p)
         #
@@ -1316,12 +1330,12 @@ class NumberToWords:
                         lp1[-mx:],
                     ]
         else:
-            ret = [ 
-                        lp1, 
+            ret = [
+                        lp1,
                     ]
         #
         return ret
-    
+
     def words_p1(self, p):
         ret = []
         #
@@ -1351,12 +1365,12 @@ class NumberToWords:
                 c += 1
         #
         return ret
-        
+
     def words_p2(self, p):
         p = str(p)
         #
         return self.get_single(p)
-        
+
     def get_words(self, s):
         ret = ''
         #
@@ -1414,18 +1428,18 @@ class NumberToWordsId(NumberToWords):
                         1: 'ribu',
                         2: 'juta',
                         3: 'milyar',
-                        4: 'triliun',        
+                        4: 'triliun',
                     }
         #
         self.name2 = {
                         1: '',
                         2: ('belas', 'puluh'),
-                        3: ('ratus', 'seratus'),        
+                        3: ('ratus', 'seratus'),
                     }
         #
         self.sign = {
                         True: 'min',
-                        False: '',        
+                        False: '',
                     }
         #
         self.replace = {
@@ -1433,7 +1447,7 @@ class NumberToWordsId(NumberToWords):
                     }
         #
         self.style = {
-                        'separator': ' ', 
+                        'separator': ' ',
                         'decimal_separator': ' koma ',
                     }
         #
@@ -1442,7 +1456,7 @@ class NumberToWordsId(NumberToWords):
         s = str(s)
         #
         ret = ''
-        if not len(s) == 2: 
+        if not len(s) == 2:
             return ret
         #
         res = []
@@ -1479,7 +1493,7 @@ class NumberToWordsId(NumberToWords):
         s = str(s)
         #
         ret = ''
-        if not len(s) == 3: 
+        if not len(s) == 3:
             return ret
         #
         res = []
@@ -1508,7 +1522,7 @@ class NumberToWordsId(NumberToWords):
         #
         ret = self.separator().join(res)
         return ret
-        
+
     def get_x1(self, c, s, separator):
         for k in self.replace.keys():
             if c == k:
@@ -1557,7 +1571,7 @@ class NumberToWordsEn1(NumberToWords):
                         1: 'thousand',
                         2: 'million',
                         3: 'billion',
-                        4: 'trillion',        
+                        4: 'trillion',
                     }
         #
         self.name2 = {
@@ -1568,13 +1582,13 @@ class NumberToWordsEn1(NumberToWords):
         #
         self.sign = {
                         True: 'minus',
-                        False: '',        
+                        False: '',
                     }
         #
         self.replace = {}
         #
         self.style = {
-                        'separator': ' ', 
+                        'separator': ' ',
                         'decimal_separator': ' point ',
                         'dash_separator': '-',
                     }
@@ -1584,7 +1598,7 @@ class NumberToWordsEn1(NumberToWords):
         s = str(s)
         #
         ret = ''
-        if not len(s) == 2: 
+        if not len(s) == 2:
             return ret
         #
         res = []
@@ -1621,7 +1635,7 @@ class NumberToWordsEn1(NumberToWords):
         s = str(s)
         #
         ret = ''
-        if not len(s) == 3: 
+        if not len(s) == 3:
             return ret
         #
         res = []
@@ -1649,7 +1663,7 @@ class NumberToWordsEn1(NumberToWords):
 
 NUMBER_TO_WORDS['id'] = NumberToWordsId
 NUMBER_TO_WORDS['en1'] = NumberToWordsEn1
-    
+
 
 #----------------------------------------------------------------------#
 # SIMPLEDROPDOWN                                                       #
@@ -1658,36 +1672,36 @@ class SimpleDropdown(web.form.Dropdown):
     def __init__(self, name, args, *validators, **attrs):
         self.args = args
         super(SimpleDropdown, self).__init__(name, args, *validators, **attrs)
-    
+
     def _render_option(self, arg, indent='  '):
         if isinstance(arg, (tuple, list)):
             value, desc= arg
         else:
-            value, desc = arg, arg 
+            value, desc = arg, arg
 
-        #lines below are modified by sqliteboy author: 
+        #lines below are modified by sqliteboy author:
         #- convert to str
-        #- web.net 
+        #- web.net
         #- web.utils.safestr
         #- ref: webpy pull request #279
         value = web.utils.safestr(value)
         if isinstance(self.value, (tuple, list)):
             s_value = [web.utils.safestr(x) for x in self.value]
         else:
-            s_value = web.utils.safestr(self.value)            
-        
+            s_value = web.utils.safestr(self.value)
+
         if s_value == value or (isinstance(s_value, list) and value in s_value):
             select_p = ' selected="selected"'
         else:
             select_p = ''
         return indent + '<option%s value="%s">%s</option>\n' % (select_p, web.net.websafe(value), web.net.websafe(desc))
-    
+
 
 #----------------------------------------------------------------------#
 # LANG                                                                 #
 #----------------------------------------------------------------------#
 LANGS = {
-    'default': 
+    'default':
         {
             'usage': '<database_file> [port]',
             'pf_b' : 'B',
@@ -1767,10 +1781,10 @@ LANGS = {
             'x_shared': 'shared',
             'x_preview': 'preview',
             'x_expression_too_long': 'expression too long',
-            'x_expression_invalid': 'invalid expression',            
+            'x_expression_invalid': 'invalid expression',
             'x_info': 'info',
             'x_author': 'author',
-            'x_license': 'license',        
+            'x_license': 'license',
             'x_run_time': 'run (time)',
             'x_scripts': 'scripts',
             'x_max_script_size': 'maximum script size',
@@ -1791,7 +1805,7 @@ LANGS = {
             'x_email': 'email',
             'x_website': 'website',
             'x_session': 'session(s)',
-            'x_user_defined_profile': 'user-defined profile', 
+            'x_user_defined_profile': 'user-defined profile',
             'x_profile': 'profile',
             'x_create_table_schema': 'create table based on this schema',
             'x_messages': 'messages',
@@ -1993,7 +2007,7 @@ LANGS = {
     }
 
 def res(all, type, default=DEFAULT_LANG):
-    if not all.has_key(type): 
+    if not all.has_key(type):
         return all[default]
     #
     ret = all[type]
@@ -2123,7 +2137,7 @@ def sqliteboy_randstr2(a, b):
 SQLITE_UDF.append(('sqliteboy_randstr2', 2, sqliteboy_randstr2))
 
 def sqliteboy_randstr3(a, b):
-    s = string.letters + string.digits 
+    s = string.letters + string.digits
     return sqliteboy_randstr(s, a, b)
 SQLITE_UDF.append(('sqliteboy_randstr3', 2, sqliteboy_randstr3))
 
@@ -2222,7 +2236,7 @@ def sqliteboy_time5(s1, s2, mode):
         ret = d / (60 * 60 * 24 * DAYS_IN_YEAR)
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_time5', 3, sqliteboy_time5)) 
+SQLITE_UDF.append(('sqliteboy_time5', 3, sqliteboy_time5))
 
 def sqliteboy_time6(f, year, month, day, mode):
     ret = ''
@@ -2249,7 +2263,7 @@ def sqliteboy_time6(f, year, month, day, mode):
         return ret
     #
     leftm = f - y
-    fm = float(leftm * 12) 
+    fm = float(leftm * 12)
     m1, m2 = str(fm).split('.')
     try:
         m = int(round(float(m1), 0))
@@ -2308,7 +2322,7 @@ def sqliteboy_capitalize(s, what):
     if not sqliteboy_is_integer(what) or what < 0:
         what = 0
     #
-    if what == 0: #first 
+    if what == 0: #first
         return s.capitalize()
     else:
         return string.capwords(s)
@@ -2389,7 +2403,7 @@ def sqliteboy_count(s, sub, case):
     if not case: #ignore case
         s = s.lower()
         sub = sub.lower()
-    #    
+    #
     ret = s.count(sub)
     return ret
 SQLITE_UDF.append(('sqliteboy_count', 3, sqliteboy_count))
@@ -2465,7 +2479,7 @@ def sqliteboy_normalize_separator(s, separator, remove_space, unique):
         splitted3 = [x.replace(' ', '') for x in splitted2]
     else:
         splitted3 = splitted2
-    
+
     if unique:
         splitted4 = []
         for i in splitted3:
@@ -2476,7 +2490,7 @@ def sqliteboy_normalize_separator(s, separator, remove_space, unique):
 
     #
     splitted5 = splitted4
-        
+
     newlist = []
     for part in splitted5:
         if part:
@@ -2520,7 +2534,7 @@ def sqliteboy_chunk(s, n, separator, justify, padding):
     if (not n) or (not s) or (n < 1):
         return s
     #
-    if padding: 
+    if padding:
         pad = padding[0]
     else:
         pad = ' '
@@ -2639,10 +2653,10 @@ def sqliteboy_lookup1(table, field, field1, value1, function, distinct):
     if not function in function_all:
         return ret
     if not sqliteboy_is_number(distinct) or distinct < 0:
-        distinct = 0        
+        distinct = 0
     #
     where = [
-            '%s=$%s' %(field1, field1), 
+            '%s=$%s' %(field1, field1),
             ]
     var = {field1: value1}
     #
@@ -2662,7 +2676,7 @@ def sqliteboy_lookup1(table, field, field1, value1, function, distinct):
     except:
         pass
     #
-    if ret: 
+    if ret:
         ret = str(ret)
     #
     return ret
@@ -2688,15 +2702,15 @@ def sqliteboy_lookup2(table, field, field1, value1, order, default):
     ret = default
     #
     where = [
-            '%s=$%s' %(field1, field1), 
+            '%s=$%s' %(field1, field1),
             ]
     var = {field1: value1}
     #
     try:
         r = db.select(
-            table, 
+            table,
             where=' and '.join(where),
-            order=sorder, 
+            order=sorder,
             vars=var).list()
         r = r[0]
         ret = r[field]
@@ -2705,7 +2719,7 @@ def sqliteboy_lookup2(table, field, field1, value1, order, default):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_lookup2', 6, sqliteboy_lookup2))
-    
+
 def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default):
     table = str(table).lower()
     field = str(field).lower()
@@ -2727,16 +2741,16 @@ def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, defau
     ret = default
     #
     where = [
-            '%s=$%s' %(field1, field1), 
+            '%s=$%s' %(field1, field1),
             '%s=$%s' %(field2, field2),
             ]
     var = {field1: value1, field2: value2}
     #
     try:
         r = db.select(
-            table, 
+            table,
             where=' and '.join(where),
-            order=sorder, 
+            order=sorder,
             vars=var).list()
         r = r[0]
         ret = r[field]
@@ -2813,7 +2827,7 @@ def sqliteboy_split1(s, separator, table, column, convert):
         ret = count
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_split1', 5, sqliteboy_split1))    
+SQLITE_UDF.append(('sqliteboy_split1', 5, sqliteboy_split1))
 
 def sqliteboy_list_datetime1(s, n, interval, table, column, local):
     ret = 0
@@ -2861,7 +2875,7 @@ def sqliteboy_list_datetime1(s, n, interval, table, column, local):
             r = db.query(
                     '''
                         insert into $table ($column) values($data)
-                    ''', 
+                    ''',
                     vars={
                         'table': web.sqlliteral(table),
                         'column': web.sqlliteral(column),
@@ -2962,17 +2976,17 @@ def s_select(p, string=True, what='*, rowid', order='rowid asc'):
             sd[fi] = pri
             st.append(s)
     #
-    r = db.select(FORM_TBL, 
-                    what=what, 
+    r = db.select(FORM_TBL,
+                    what=what,
                     order=order,
-                    where = ' and '.join(st), 
+                    where = ' and '.join(st),
                     vars=sd)
     ret = []
     for i in r:
         d = {}
-        for k in i.keys(): 
+        for k in i.keys():
             ik = i[k]
-            if string: 
+            if string:
                 if ik:
                     ik = str(ik)
                 else:
@@ -3000,7 +3014,7 @@ def s_save(p, last=False, maxsplit=0):
         #
         s = '%s=$%s' %(fi, fi)
         st.append(s)
-        sd[fi] = pri        
+        sd[fi] = pri
     #
     ret = False
     #
@@ -3039,7 +3053,7 @@ def s_save(p, last=False, maxsplit=0):
         pass
     #
     return ret
-    
+
 def s_check(p, value):
     if not s_select(p):
         s_save(value)
@@ -3051,8 +3065,8 @@ def s_check(p, value):
     except:
         pass
     #
-    return ret 
-    
+    return ret
+
 def s_check2(p, default):
     value = FORM_SPLIT.join([p, str(default)])
     return s_check(p, value)
@@ -3060,7 +3074,7 @@ def s_check2(p, default):
 def canform(key, form, obj='form.code..'):
     ret = False
     #
-    if isadmin(): 
+    if isadmin():
         ret = True
     else:
         try:
@@ -3080,7 +3094,7 @@ def canform(key, form, obj='form.code..'):
             pass
     #
     return ret
-    
+
 def canreport(key, report):
     return canform(key, report, 'report.code..')
 
@@ -3093,13 +3107,13 @@ def proc_access(handle):
             return handle()
     else:
         saved = s_select('security.hosts')
-        if not saved: 
+        if not saved:
             db.insert(FORM_TBL, a='security', b='hosts', d=HOST_LOCAL, e=json.dumps([]))
         #
         saved = s_select('security.hosts')
         saved = saved[0]
         #
-        if saved['d'] == HOST_ALL: 
+        if saved['d'] == HOST_ALL:
             return handle()
         else:
             if saved['d'] == HOST_CUSTOM:
@@ -3178,11 +3192,11 @@ def proc_account_check(handle):
     if not isnosb():
         a = s_select('user.account')
         if not a:
-            db.insert(FORM_TBL, 
-                a='user', 
-                b='account', 
-                d=DEFAULT_ADMIN_USER, 
-                e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), 
+            db.insert(FORM_TBL,
+                a='user',
+                b='account',
+                d=DEFAULT_ADMIN_USER,
+                e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(),
                 f='1'
             )
     #
@@ -3199,7 +3213,7 @@ def allows():
         ret = hosts[HOST_LOCAL]
     else:
         saved = s_select('security.hosts')
-        if not saved: 
+        if not saved:
             return ret
         #
         try:
@@ -3247,7 +3261,7 @@ def internalerror():
     content = [str(x).strip() for x in content]
     #
     stop()
-    return web.internalerror(T(data, content))    
+    return web.internalerror(T(data, content))
 
 def dflt():
     raise web.seeother('/')
@@ -3282,7 +3296,7 @@ def ssort(sort):
     else:
         index = 0
     return SORT[index]
-    
+
 def vsort(sort):
     ret = ''
     if not sort in SORT: return ret
@@ -3300,7 +3314,7 @@ def log(msg, newline=1, stream=sys.stdout):
     end = os.linesep * newline
     #
     if not stream in [sys.stdout, sys.stderr]:
-        return 
+        return
     #
     stream.write('%s%s' %(msg, end) )
 
@@ -3314,7 +3328,7 @@ def title(t, link='/'):
 
 def link(href, label):
     return '<a href="%s">%s</a>' %(href, label)
-    
+
 def size(s=None):
     if s is None:
         s = os.path.getsize(dbfile)
@@ -3337,7 +3351,7 @@ def size(s=None):
 
 def validfname(s):
     try:
-        if not s.strip(): 
+        if not s.strip():
             return False
     except:
         return False
@@ -3354,7 +3368,7 @@ def tables(first_blank=False, exclude=EXCLUDE_TABLE):
     ret = []
     if first_blank == True: ret.append('')
     #
-    r = db.select('sqlite_master', 
+    r = db.select('sqlite_master',
             where='type="table"',
             what='lower(name) as name',
             order="name asc")
@@ -3418,7 +3432,7 @@ def forms(first_blank=False, obj='form.code'):
     ret = [str(x).lower() for x in ret]
     ret.sort()
     return ret
-    
+
 def reports(first_blank=False):
     return forms(first_blank, 'report.code')
 
@@ -3459,8 +3473,8 @@ def menugen():
     ret = []
     #
     f = web.form.Dropdown(
-        name='table', 
-        args=tables(first_blank=True), 
+        name='table',
+        args=tables(first_blank=True),
         )
     #
     if (isnosb()) or (not isnosb() and sess.admin == 1):
@@ -3469,7 +3483,7 @@ def menugen():
                 '/table/action',
                 'get',
                 _['x_table'],
-                f, 
+                f,
                 (
                     ['browse/%s' %(DEFAULT_LIMIT), _['cmd_browse']],
                     ['insert', _['cmd_insert']],
@@ -3499,13 +3513,13 @@ def menugen():
             if not canform(FORM_KEY_SECURITY_RUN, af):
                 aform.remove(af)
         #
-        if isadmin(): 
+        if isadmin():
             formact.append(['edit', _['cmd_edit']])
             formact.append(['create', _['cmd_form_create']])
         #
         f2 = web.form.Dropdown(
-            name='form', 
-            args=aform, 
+            name='form',
+            args=aform,
             )
         #
         ret.append(
@@ -3513,7 +3527,7 @@ def menugen():
                 '/form/action',
                 'get',
                 _['x_form'],
-                f2, 
+                f2,
                 formact,
             ])
         #
@@ -3524,10 +3538,10 @@ def menugen():
                     '/form/run',
                     'get',
                     '',
-                    [], 
+                    [],
                     [],
                     shortcut_form,
-                ])            
+                ])
     #
     if not isnosb() and sess.user:
         arep = reports(first_blank=True)
@@ -3541,13 +3555,13 @@ def menugen():
             if not canreport(REPORT_KEY_SECURITY_RUN, af):
                 arep.remove(af)
         #
-        if isadmin(): 
+        if isadmin():
             repact.append(['edit', _['cmd_edit']])
             repact.append(['create', _['cmd_report_create']])
         #
         f3 = web.form.Dropdown(
-            name='report', 
-            args=arep, 
+            name='report',
+            args=arep,
             )
         #
         ret.append(
@@ -3555,7 +3569,7 @@ def menugen():
                 '/report/action',
                 'get',
                 _['x_report'],
-                f3, 
+                f3,
                 repact,
             ])
         #
@@ -3566,10 +3580,10 @@ def menugen():
                     '/report/run',
                     'get',
                     '',
-                    [], 
+                    [],
                     [],
                     shortcut_report,
-                ])                        
+                ])
     #
     return ret
 
@@ -3596,7 +3610,7 @@ def prepsess():
             sess.table[t] = {}
     #
     for t in tables():
-        if not sess.table[t]: 
+        if not sess.table[t]:
             sess.table[t] = {}
     #
     for t in tables():
@@ -3611,17 +3625,17 @@ def isblob(s):
     except:
         return ret
     return ret
-    
+
 def user():
     return sess.user
-    
+
 def isnosb():
     return not FORM_TBL in tables()
-    
+
 def sysinfo():
     s_a = '%s %s %s %s' %(
-                VERSION, 
-                link(URL_README[0], _['cmd_readme']), 
+                VERSION,
+                link(URL_README[0], _['cmd_readme']),
                 link(URL_SOURCE[0], _['cmd_source']),
                 link(WSITE, _['cmd_website']),
             )
@@ -3636,9 +3650,9 @@ def sysinfo():
     s_sb = (s_sb0, '%s %s' %(s_sb1, s_sb2))
     #
     s_adm = _['x_no']
-    if isadmin(): 
+    if isadmin():
         s_adm = '%s %s %s %s %s %s' %(
-            _['x_yes'], 
+            _['x_yes'],
             link('/admin/users', _['cmd_users']),
             link('/admin/hosts', _['cmd_hosts']),
             link('/admin/system', _['cmd_system']),
@@ -3696,7 +3710,7 @@ def fref(reference, execute_sql=True, input_name='input_name'):
             for r in res:
                 reference2.append(
                     [
-                        r.get(FORM_REFERENCE_SQL_0, ''), 
+                        r.get(FORM_REFERENCE_SQL_0, ''),
                         r.get(FORM_REFERENCE_SQL_1, '')
                     ]
                 )
@@ -3716,7 +3730,7 @@ def fref(reference, execute_sql=True, input_name='input_name'):
         reference2 = 0
     #
     return reference2
-    
+
 def fref2(reference, name):
     ret = None
     #
@@ -3726,7 +3740,7 @@ def fref2(reference, name):
         ret = reference
     #
     return ret
-    
+
 def fdef(default, execute_sql=True):
     default2 = default
     if not default2:
@@ -3773,8 +3787,8 @@ def fsqlx(db, sql, data):
         for fsql in fsql2:
             if fsql and hasattr(fsql, 'strip'):
                 if fsql.strip():
-                    db.query(fsql, vars=ocols)    
-    
+                    db.query(fsql, vars=ocols)
+
 def parseform2(code, table, execute_sql=True):
     fsub = code
     if not type(fsub) == type([]):
@@ -3823,7 +3837,7 @@ def parseform2(code, table, execute_sql=True):
                 default = d[3]
                 if (not dc) or (not dc in fsub2_columns) or dc == fsub_key:
                     raise Exception
-                if not dl: 
+                if not dl:
                     dl = dc
                 #
                 dcname = '%s.%s' %(fsub_table, dc)
@@ -3938,12 +3952,12 @@ def parseform(form, virtual={}, execute_sql=True):
                     #
                     input.append(
                         (
-                            label, 
-                            col, 
-                            ftype, 
-                            readonly, 
-                            required,  
-                            reference3, 
+                            label,
+                            col,
+                            ftype,
+                            readonly,
+                            required,
+                            reference3,
                             default2,
                             constraint2,
                             table,
@@ -3954,15 +3968,15 @@ def parseform(form, virtual={}, execute_sql=True):
     fsub = fo.get(FORM_KEY_SUB, [])
     fsub2 = parseform2(fsub, table, execute_sql)
     #
-    message1 = fo.get(FORM_KEY_MESSAGE, [])  
+    message1 = fo.get(FORM_KEY_MESSAGE, [])
     if not type(message1) == type([]):
         message1 = []
     message2 = []
     if len(message1) == FORM_MESSAGE_LEN:
         message2 = message1
-    message2 = [str(x) for x in message2]        
+    message2 = [str(x) for x in message2]
     #
-    sql2 = fo.get(FORM_KEY_SQL2, [])  
+    sql2 = fo.get(FORM_KEY_SQL2, [])
     if not type(sql2) == type([]):
         sql2 = []
     sql2 = [str(x) for x in sql2 if isstr(x)]
@@ -3981,7 +3995,7 @@ def parseform(form, virtual={}, execute_sql=True):
     except:
         fconfirm = ''
     #
-    sql0 = fo.get(FORM_KEY_SQL0, [])  
+    sql0 = fo.get(FORM_KEY_SQL0, [])
     if not type(sql0) == type([]):
         sql0 = []
     sql0 = [str(x) for x in sql0 if isstr(x)]
@@ -4019,7 +4033,7 @@ def rheaders(data, cell_len, cell_types):
     #
     for i in data:
         #
-        if not isinstance(i, list):    
+        if not isinstance(i, list):
             continue
         #
         if not i:
@@ -4059,8 +4073,8 @@ def rheaders(data, cell_len, cell_types):
             r0.append(temp)
     #
     ret = [r0, r1]
-    return ret    
-    
+    return ret
+
 def rfooters(data, cell_len, cell_types):
     return rheaders(data, cell_len, cell_types)
 
@@ -4081,7 +4095,7 @@ def parsereport(report, execute_sql=True):
     finfo = fo.get(REPORT_KEY_INFO, '')
     rquery = fo.get(REPORT_KEY_SQL, '').strip()
     rheader = fo.get(REPORT_KEY_HEADER, [])
-    message1 = fo.get(REPORT_KEY_MESSAGE, [])    
+    message1 = fo.get(REPORT_KEY_MESSAGE, [])
     #
     if not type(rheader) == type([]):
         rheader = []
@@ -4091,7 +4105,7 @@ def parsereport(report, execute_sql=True):
     message2 = []
     if len(message1) == REPORT_MESSAGE_LEN:
         message2 = message1
-    message2 = [str(x) for x in message2]    
+    message2 = [str(x) for x in message2]
     #
     fdata = fo.get(REPORT_KEY_DATA)
     input = []
@@ -4148,10 +4162,10 @@ def parsereport(report, execute_sql=True):
             input.append(
                 (
                     label,
-                    key,  
-                    readonly, 
-                    required,  
-                    reference3, 
+                    key,
+                    readonly,
+                    required,
+                    reference3,
                     default2,
                     constraint2,
                     type2,
@@ -4160,24 +4174,24 @@ def parsereport(report, execute_sql=True):
     #
     xheaders = fo.get(REPORT_KEY_HEADERS, [])
     oheaders = rheaders(
-                        xheaders, 
-                        REPORT_HEADERS_CELL_LEN, 
+                        xheaders,
+                        REPORT_HEADERS_CELL_LEN,
                         REPORT_HEADERS_CELL_TYPES,
                     )
     #
     xfooters = fo.get(REPORT_KEY_FOOTERS, [])
     ofooters = rfooters(
-                        xfooters, 
-                        REPORT_FOOTERS_CELL_LEN, 
+                        xfooters,
+                        REPORT_FOOTERS_CELL_LEN,
                         REPORT_FOOTERS_CELL_TYPES,
                     )
     #
     xpaper = fo.get(REPORT_KEY_PAPER, [])
     try:
-        if not isinstance(xpaper, list): 
+        if not isinstance(xpaper, list):
             raise Exception
         #
-        xpaper2 = [ 
+        xpaper2 = [
                         float(xpaper[0]), #width
                         float(xpaper[1]), #height
                 ]
@@ -4188,10 +4202,10 @@ def parsereport(report, execute_sql=True):
     #
     xmargins = fo.get(REPORT_KEY_MARGINS, [])
     try:
-        if not isinstance(xmargins, list): 
+        if not isinstance(xmargins, list):
             raise Exception
         #
-        xmargins2 = [ 
+        xmargins2 = [
                         float(xmargins[0]), #left
                         float(xmargins[1]), #right
                         float(xmargins[2]), #top
@@ -4208,10 +4222,10 @@ def parsereport(report, execute_sql=True):
             fconfirm = str(fconfirm)
         fconfirm = fconfirm.strip()
     except:
-        fconfirm = ''    
+        fconfirm = ''
     #
     aligns = fo.get(REPORT_KEY_ALIGN, [])
-    if not isinstance(aligns, list): 
+    if not isinstance(aligns, list):
         aligns = []
     aligns2 = {}
     for i in range(0, len(rheader)):
@@ -4222,7 +4236,7 @@ def parsereport(report, execute_sql=True):
         except:
             ialign = REPORT_ALIGN_DEFAULT
         aligns2[rheader[i]] = ialign
-    #    
+    #
     return [ftitle, finfo, input, rquery, rheader, message2, oheaders, ofooters,
             xpaper2,
             xmargins2,
@@ -4237,14 +4251,14 @@ def nqtype(ftype):
     if ftype in NOQUOTE_TYPE or 'int' in ftype:
         ret = True
     #
-    return ret 
+    return ret
 
 def s_init_q(table=FORM_TBL):
     af = [x + ' ' + FORM_FIELD_TYPE for x in FORM_FIELDS]
     #
     ret = '''
         CREATE TABLE %s (
-                rowid integer primary key autoincrement, 
+                rowid integer primary key autoincrement,
                 rowtime integer default (datetime('now', 'localtime')),
                 %s
             )
@@ -4258,7 +4272,7 @@ def s_init():
     cmd = s_init_q()
     db.query(cmd)
     prepsess()
-    db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER, 
+    db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER,
         e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), f='1')
 
 def favicon(width=FAVICON_WIDTH, height=FAVICON_HEIGHT, data=None):
@@ -4334,11 +4348,11 @@ def favicon(width=FAVICON_WIDTH, height=FAVICON_HEIGHT, data=None):
 def fdialog_open():
     ret = ()
     #
-    if sys.platform.lower() == 'win32': 
+    if sys.platform.lower() == 'win32':
         try:
             import win32gui
             res = win32gui.GetOpenFileNameW(
-                    InitialDir=CWDIR, 
+                    InitialDir=CWDIR,
                     Title=TITLE
                 )
             resf = res[0]
@@ -4417,8 +4431,8 @@ def r_fs_content(sid):
     ret = []
     #
     try:
-        r = db.select(FORM_TBL, 
-                        what='d, e, g', 
+        r = db.select(FORM_TBL,
+                        what='d, e, g',
                         where='rowid=$sid',
                         vars={
                                 'sid': long(sid),
@@ -4431,7 +4445,7 @@ def r_fs_content(sid):
         if fraw == 1 or isblob(r.e):
             fc = r.e
         else:
-            fc = base64.b64decode(r.e)    
+            fc = base64.b64decode(r.e)
         #
         ret = [fn, ft, fc]
     except:
@@ -4460,7 +4474,7 @@ def tr_page(code):
             pass
     #
     return s
-        
+
 def fsize(f, working_dir=CURDIR, human_readable=True):
     sz = 0
     #
@@ -4636,7 +4650,7 @@ def xparsescript(script):
                 virtual_tables[tnamel] = []
             for n in ncols:
                 vt = {
-                        'name': n[0], 
+                        'name': n[0],
                         'type': n[1],
                     }
                 vtt = virtual_tables.get(tnamel, [])
@@ -4685,7 +4699,7 @@ def xparsescript(script):
         #
         ttemp = [tname, tstat, tcont, jcont]
         tcode2.append(ttemp)
-    ret[SCRIPT_KEY_FORMS] = tcode2            
+    ret[SCRIPT_KEY_FORMS] = tcode2
     #
     tcode = e.get(SCRIPT_KEY_REPORTS, [])
     if not isinstance(tcode, list):
@@ -4722,10 +4736,10 @@ def xparsescript(script):
             jcont = json.dumps(tcont, indent=JSON_INDENT)
         except:
             pass
-        #        
+        #
         ttemp = [tname, tstat, tcont, jcont]
         tcode2.append(ttemp)
-    ret[SCRIPT_KEY_REPORTS] = tcode2            
+    ret[SCRIPT_KEY_REPORTS] = tcode2
     #
     tcode = e.get(SCRIPT_KEY_PROFILES, [])
     if not isinstance(tcode, list):
@@ -4773,12 +4787,12 @@ def xokscript(pscript):
     for a in alls:
         if not isinstance(a, list):
             errors += 1
-            continue                
+            continue
         #
         for i in a:
             if not isinstance(i, list):
                 errors += 1
-                continue                
+                continue
             #
             if not len(i) > 2: #check: xparsescript, dirty, at least
                 errors += 1
@@ -4806,7 +4820,7 @@ def s_isold():
             break
     #
     return ret
-    
+
 def s_xupdate():
     allt = tables()
     while True:
@@ -4857,7 +4871,7 @@ def p_pragma(pragma, default=''):
     ret = default
     #
     try:
-        r = db.query('pragma $pragma', 
+        r = db.query('pragma $pragma',
                 vars={
                         'pragma': web.sqlliteral(pragma),
                     }
@@ -4919,7 +4933,7 @@ def scmd_pyinstaller(data):
         ico = scmdx_path(ico)
         #
         tpl = string.Template(PYINSTALLER_SPEC)
-        tplo = tpl.substitute(tpl, 
+        tplo = tpl.substitute(tpl,
                 title=TITLE,
                 command=cmd,
                 source=URL_SOURCE[2],
@@ -4934,7 +4948,7 @@ def scmd_pyinstaller(data):
             )
         #
         if os.path.exists(out):
-            raise Exception        
+            raise Exception
         #
         if not os.path.exists(ico):
             raise Exception
@@ -4970,7 +4984,7 @@ def scmd_build(data):
         return ret
     #
     return ret
-    
+
 def scmd_version(data):
     ret = ''
     #
@@ -4981,11 +4995,11 @@ def scmd_version(data):
         out = scmdx_path(out)
         #
         tpl = string.Template(VERSION_SPEC)
-        tplo = tpl.substitute(tpl, 
+        tplo = tpl.substitute(tpl,
                 title=TITLE,
-                command=cmd,                
+                command=cmd,
                 datetime=sqliteboy_time3(sqliteboy_time())
-            )        
+            )
         #
         if os.path.exists(out):
             raise Exception
@@ -5174,11 +5188,11 @@ def pr_all(execute_sql=True, usr=None):
         if name in upr2a:
             continue
         #
-        data = [ 
-                    name, 
-                    label, 
-                    i[2], 
-                    i[3], 
+        data = [
+                    name,
+                    label,
+                    i[2],
+                    i[3],
                     PROFILE_USER_DEFINED_HANDLER,
                     PROFILE_USER_DEFINED_TYPE,
                     PROFILE_USER_DEFINED_LEVEL,
@@ -5209,7 +5223,7 @@ def pr_all(execute_sql=True, usr=None):
                     if isinstance(v, list):
                         uv = []
                         for iv in v:
-                            if iv is not None: 
+                            if iv is not None:
                                 ivv = PROFILE_USER_DEFINED_TYPE(iv)
                             else:
                                 ivv = ''
@@ -5222,7 +5236,7 @@ def pr_all(execute_sql=True, usr=None):
             try:
                 value2.set_value(dflt)
             except:
-                pass        
+                pass
         #
         data = [name, label, value, dflt, rcheck, value2, func, level]
         ret.append(data)
@@ -5239,7 +5253,7 @@ def pr_get0(name, usr):
             break
     #
     return ret
-    
+
 def pr_get(name):
     return pr_get0(name, user())
 
@@ -5264,7 +5278,7 @@ def pr_sys_get0(name, usr):
         g0 = res.get('g')
         g = json.loads(g0)
     except:
-        g = {}    
+        g = {}
     #
     ret = g.get(name, '')
     #
@@ -5305,7 +5319,7 @@ def v_set(name, value):
     ret = 1
     #
     return ret
-    
+
 def v_get(name):
     ret = ''
     #
@@ -5317,7 +5331,7 @@ def v_get(name):
         pass
     #
     return ret
-    
+
 def v_del(name):
     ret = 0
     #
@@ -5345,7 +5359,7 @@ def py_o(name, func, prefix):
     #
     ret = '%s%s' %(prefix, name)
     return ret
-    
+
 def py_f(name):
     return py_o(name, forms, DEFAULT_PY_FORM)
 
@@ -5375,8 +5389,8 @@ def r_schema(table):
     ret = ''
     #
     try:
-        r = db.select(DEFAULT_TABLE, 
-                        what='sql', 
+        r = db.select(DEFAULT_TABLE,
+                        what='sql',
                         where=" type='table' and tbl_name=$tbl_name",
                         vars={
                                 'tbl_name': table,
@@ -5446,7 +5460,7 @@ def uquery(content):
     return ret
 
 def rpt_csv(data, content):
-    
+
     def header_footer(hf):
         ret = []
         #
@@ -5455,7 +5469,7 @@ def rpt_csv(data, content):
             for col in row:
                 ccont = col.get('content', '')
                 temp.append(ccont)
-            ret.append(temp)   
+            ret.append(temp)
         #
         return ret
     #
@@ -5501,7 +5515,7 @@ def rpt_csv(data, content):
     footers = data.get(REPORT_KEY_FOOTERS)
     footers_export = header_footer(footers)
     export.extend(footers_export)
-    #    
+    #
     fout = cStringIO.StringIO()
     writer = csv.writer(fout)
     writer.writerows(export)
@@ -5510,7 +5524,7 @@ def rpt_csv(data, content):
     return ret
 
 def rpt_pdf(data, content, parsed):
-    
+
     def header_footer(hf):
         ret = []
         #
@@ -5528,7 +5542,7 @@ def rpt_pdf(data, content, parsed):
                         ccont2 = PDF_IMAGE(ccont_fimg)
                 #
                 temp.append(ccont2)
-            ret.append(temp)   
+            ret.append(temp)
         #
         return ret
     #
@@ -5607,9 +5621,9 @@ def rpt_pdf(data, content, parsed):
     footers_export_table = PDF_TABLE(
                                         footers_export,
                                         style=PDF_DEFAULT_BORDER_STYLE
-                                    )    
+                                    )
     export.append(footers_export_table)
-    #    
+    #
     upaper = parsed[8]
     umargins = parsed[9]
     upaper2 = PDF_DEFAULT_PAGE_SIZE
@@ -5635,14 +5649,14 @@ def rpt_pdf(data, content, parsed):
     writer.build(export)
     ret = fout.getvalue()
     #
-    return ret    
-    
-    
+    return ret
+
+
 #----------------------------------------------------------------------#
 # SQLITE UDF (2)                                                       #
 #----------------------------------------------------------------------#
 def sqliteboy_x_user():
-    if isnosb(): 
+    if isnosb():
         return ''
     else:
         return user()
@@ -5656,7 +5670,7 @@ def sqliteboy_x_profile_all(u, field, system):
     if not sqliteboy_is_integer(system):
         system = 0
     #
-    if isnosb(): 
+    if isnosb():
         return ret
     #
     if system == 1:
@@ -5715,10 +5729,10 @@ $ pr_get_style = pr_get('style')
 $if data.has_key(print_data_key):
     <style>
     $pr_get_style[0]
-    </style>    
-$else:    
+    </style>
+$else:
     <style>
-    $pr_get_style[1]    
+    $pr_get_style[1]
     </style>
 <script>
 function toggle(src, dst)
@@ -5748,10 +5762,10 @@ $:title(data['title'])
 <td align='right' width='25%'>
 $if user():
     $user() <a href='/password'>$_['cmd_password']</a>
-    <a href='/profile'>$_['cmd_profile']</a> 
-    <a href='/files'>$_['cmd_files']</a> 
-    <a href='/notes'>$_['cmd_notes']</a> 
-    <a href='/pages'>$_['cmd_pages']</a> 
+    <a href='/profile'>$_['cmd_profile']</a>
+    <a href='/files'>$_['cmd_files']</a>
+    <a href='/notes'>$_['cmd_notes']</a>
+    <a href='/pages'>$_['cmd_pages']</a>
     <a href='/calculator'>$_['cmd_calculator']</a>
     <a href='/logout'>$_['cmd_logout']</a>
 </td>
@@ -5769,7 +5783,7 @@ $if data['command'] in crt.keys():
         $if crtq:
             $crtq[crt['calculator']]
         $else:
-            $rt()            
+            $rt()
 $else:
     $rt()
 </td>
@@ -5828,10 +5842,10 @@ $if data['command'] == 'browse':
         $else:
             <input type='$b[4]' name='$b[0]' value='$b[1]'>
     <br><br>
-    $if data['limit']: 
+    $if data['limit']:
         $_['x_page'] $data['page'], $_['x_limit'] $data['limit'], $rows $_['x_row'], $len(data['selected']) $_['x_selected']
         <br>
-        $_['x_limit']: 
+        $_['x_limit']:
         $for l in data['browse_limit']:
             $if l == data['limit']:
                 $l
@@ -5875,7 +5889,7 @@ $if data['command'] == 'browse':
             </th>
         $else:
             <th>
-            $c['name'] 
+            $c['name']
             $if c['pk']:
                 $pk_sym
             &nbsp;
@@ -5883,7 +5897,7 @@ $if data['command'] == 'browse':
                 <a href="$data['url']?$data['ksort']=$data['sort'][s]&$data['klimit']=$data['limit']&$data['kpage']=$data['page']&$data['korder']=$c['name']&pages=$data['input_pages']">$:data['vsort'][s]</a>
             </th>
     </tr>
-    
+
     $for x in content:
         <tr>
         $ rowid = data['rowid']
@@ -5903,7 +5917,7 @@ $if data['command'] == 'browse':
             </td>
         </tr>
     </table>
-    
+
     <br>
     $for b in data['action_button']:
         $if b[2]:
@@ -5953,7 +5967,7 @@ $elif data['command'] == 'insert':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -5974,7 +5988,7 @@ $elif data['command'] == 'edit':
                 <input type='hidden' name='$h[0]' value='$x[data[h[0]]]'>
             $else:
                 <input type='hidden' name='$h[0]' value='$h[1]'>
-        
+
         $if msgp[0] == x[rowid]:
             <div>
                 $msgp[1]
@@ -6018,7 +6032,7 @@ $elif data['command'] == 'edit':
                 $if b[2]:
                     <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
                 $else:
-                    <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+                    <input type='$b[4]' name='$b[0]' value='$b[1]'>
         </td>
         </tr>
         </table>
@@ -6071,7 +6085,7 @@ $elif data['command'] == 'column':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6099,7 +6113,7 @@ $elif data['command'] == 'rename':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6122,7 +6136,7 @@ $elif data['command'] == 'drop':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6150,7 +6164,7 @@ $elif data['command'] == 'query':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6183,7 +6197,7 @@ $elif data['command'] == 'query':
                             </td>
                     </tr>
                     $ ctr = ctr + 1
-                </table>    
+                </table>
                 $ctr $_['x_row']
             $else:
                 $_['x_empty']
@@ -6209,7 +6223,7 @@ $elif data['command'] == 'create1':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6252,7 +6266,7 @@ $elif data['command'] == 'create2':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6306,7 +6320,7 @@ $elif data['command'] == 'login':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6329,7 +6343,7 @@ $elif data['command'] == 'password':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6348,7 +6362,7 @@ $elif data['command'] == 'users':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -6406,7 +6420,7 @@ $elif data['command'] == 'users':
 $elif data['command'] == 'hosts':
     <p>
     <i>$:data['hint'].capitalize()</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $data['message']
@@ -6430,7 +6444,7 @@ $elif data['command'] == 'hosts':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6439,7 +6453,7 @@ $elif data['command'] == 'form.edit':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
     <i>$:hint</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -6460,7 +6474,7 @@ $elif data['command'] == 'form.edit':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6469,7 +6483,7 @@ $elif data['command'] == 'form.run':
     <p>
     $ hint = data['hint']
     <i>$:hint</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -6498,7 +6512,7 @@ $elif data['command'] == 'form.run':
         $ ro = ''
         $if i[3]:
             $ ro = ' readonly'
-        
+
         $ defv = ''
         $if i[5]:
             $if ucontent is not None:
@@ -6514,7 +6528,7 @@ $elif data['command'] == 'form.run':
             $elif i[2] in data['text_type']:
                 <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
             $else:
-                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
+                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>
         </td>
         </tr>
     $if data['sub']:
@@ -6560,7 +6574,7 @@ $elif data['command'] == 'form.run':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6569,7 +6583,7 @@ $elif data['command'] == 'report.edit':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
     <i>$:hint</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -6590,7 +6604,7 @@ $elif data['command'] == 'report.edit':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6599,7 +6613,7 @@ $elif data['command'] == 'report.run':
     <p>
     $ hint = data['hint']
     <i>$:hint</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -6628,18 +6642,18 @@ $elif data['command'] == 'report.run':
         $ ro = ''
         $if i[2]:
             $ ro = ' readonly'
-        
+
         $ defv = ''
         $if i[4]:
             $if ucontent is not None:
-                $i[4].set_value(ucontent)        
+                $i[4].set_value(ucontent)
             $:i[4].render()
         $else:
             $if i[5]:
                 $ defv = i[5]
             $if ucontent is not None:
-                $ defv = ucontent                
-            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>        
+                $ defv = ucontent
+            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>
         </td>
         </tr>
     <tr>
@@ -6648,7 +6662,7 @@ $elif data['command'] == 'report.run':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -6672,12 +6686,12 @@ $elif data['command'] == 'report.run.result':
                                 <img src='/fs?sid=$ccont' border='0'>
                         $else:
                             $ccont
-                    $else:    
+                    $else:
                         <span class='pre'>$ccont</span>
                 </td>
             </tr>
         </table>
-        
+
     <br>
     $ ctr = 0
     $if data['table']:
@@ -6711,7 +6725,7 @@ $elif data['command'] == 'report.run.result':
                     </td>
             </tr>
             $ ctr = ctr + 1
-        </table>    
+        </table>
 
     $if data.has_key('footers'):
         <br>
@@ -6731,12 +6745,12 @@ $elif data['command'] == 'report.run.result':
                                 <img src='/fs?sid=$ccont' border='0'>
                         $else:
                             $ccont
-                    $else:    
+                    $else:
                         <span class='pre'>$ccont</span>
                 </td>
             </tr>
         </table>
-    
+
     <br>
 $elif data['command'] == 'notes':
     <p>
@@ -6753,7 +6767,7 @@ $elif data['command'] == 'notes':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -6782,7 +6796,7 @@ $elif data['command'] == 'notes':
         <td>
             $if data['xaction']:
                 $for a in data['xaction']:
-                    <a href='$a[1]$u['rowid']'>$a[0]</a> 
+                    <a href='$a[1]$u['rowid']'>$a[0]</a>
             $else:
                 &nbsp;
         </td>
@@ -6818,7 +6832,7 @@ $elif data['command'] == 'system':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -6861,7 +6875,7 @@ $elif data['command'] == 'files':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -6895,12 +6909,12 @@ $elif data['command'] == 'files':
             <select name='f'>
                 <option value=''>$_['x_no']</option>
                 <option value='1'$sel>$_['x_yes']</option>
-            </select>        
+            </select>
         </td>
         <td>
             $if data['xaction']:
                 $for a in data['xaction']:
-                    <a href='$a[1]$u['rowid']' target='$a[2]'>$a[0]</a> 
+                    <a href='$a[1]$u['rowid']' target='$a[2]'>$a[0]</a>
             $else:
                 &nbsp;
         </td>
@@ -6933,7 +6947,7 @@ $elif data['command'] == 'pages':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -7001,7 +7015,7 @@ $elif data['command'] == 'calculator':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -7020,7 +7034,7 @@ $elif data['command'] == 'scripts':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
     <i>$:hint</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -7032,7 +7046,7 @@ $elif data['command'] == 'scripts':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -7056,10 +7070,10 @@ $elif data['command'] == 'scripts':
         </td>
         <td>
             $u['license']
-        </td>        
+        </td>
         <td>
             $u['f']
-        </td>        
+        </td>
         </tr>
     <tr>
     <td colspan="5">
@@ -7071,7 +7085,7 @@ $elif data['command'] == 'scripts':
 $elif data['command'] == 'script':
     <p>
     <i>$:data['hint'].capitalize()</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -7083,7 +7097,7 @@ $elif data['command'] == 'script':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -7094,20 +7108,20 @@ $elif data['command'] == 'script':
             $i
         </th>
     </tr>
-        
+
     $for i in data['info']:
         <tr>
         <td>$i[0]</td>
         <td>$content.get(i[1], '')</td>
         <td>&nbsp;</td>
         </tr>
-        
+
     <tr>
     <td>$_['x_run_time']</td>
     <td>$data['run']</td>
     <td>&nbsp;</td>
     </tr>
-    
+
     $ table_detail = data.get('table_detail', {})
     $ allx = [ ['tables', _['x_table'], data['table_info']], ['forms', _['x_form'], data['form_info']],  ['reports', _['x_report'], data['report_info']], ['profiles', _['x_profile'], data['profile_info']] ]
     $for x in allx:
@@ -7137,10 +7151,10 @@ $elif data['command'] == 'script':
                     <br>
             </td>
             </tr>
-    
+
     </table>
     </form>
-    
+
     <br>
     <br>
     <textarea style="width: 100%;" rows=10 readonly>
@@ -7148,11 +7162,11 @@ $elif data['command'] == 'script':
     </textarea>
     <br>
     <br>
-    
+
 $elif data['command'] == 'copy':
     <p>
     <i>$:data['hint'].capitalize()</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -7164,7 +7178,7 @@ $elif data['command'] == 'copy':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -7176,7 +7190,7 @@ $elif data['command'] == 'copy':
             <td>
             $data['table']
             <input type='hidden' name='table' value='$data["table"]'>
-            </td>            
+            </td>
         </tr>
         <tr>
             <td>
@@ -7184,7 +7198,7 @@ $elif data['command'] == 'copy':
             </td>
             <td>
             $:data['target'].render()
-            </td>            
+            </td>
         </tr>
     </table>
     </form>
@@ -7208,7 +7222,7 @@ $elif data['command'] == 'empty':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -7235,7 +7249,7 @@ $elif data['command'] == 'vacuum':
             </td>
         </tr>
     </table>
-    <br>    
+    <br>
     <form action="$data['action_url']" method="$data['action_method']">
     $for h in data['hidden']:
         <input type='hidden' name='$h[0]' value='$h[1]'>
@@ -7246,7 +7260,7 @@ $elif data['command'] == 'vacuum':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -7276,7 +7290,7 @@ $elif data['command'] == 'import':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
     </td>
     </tr>
     </table>
@@ -7296,7 +7310,7 @@ $elif data['command'] == 'profile':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -7331,7 +7345,7 @@ $elif data['command'] == 'profile':
 $elif data['command'] == 'schema':
     <p>
     <i>$:data['hint'].capitalize()</i>
-    </p>    
+    </p>
     $if data['message']:
         <div>
             $for m in data['message']:
@@ -7343,7 +7357,7 @@ $elif data['command'] == 'schema':
         $if b[2]:
             <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
         $else:
-            <input type='$b[4]' name='$b[0]' value='$b[1]'>    
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
         &nbsp;
     <br>
     <br>
@@ -7364,7 +7378,7 @@ $elif data['command'] == 'schema':
             <td>
             <input type='hidden' name='table' value='$data["table"]'>
             <input type='text' name='target' value='$data["target"]'>
-            </td>            
+            </td>
         </tr>
     </table>
     </form>
@@ -7444,7 +7458,7 @@ class favicon_ico:
         #
         web.header('Content-Type', 'image/x-icon')
         return content
-        
+
 
 class table_action:
     def GET(self):
@@ -7477,7 +7491,7 @@ class table_action:
                 raise web.seeother(i[1])
         #
         dflt()
-        
+
     def POST(self):
         input = web.input(select=[])
         if not input.has_key('table'):
@@ -7490,7 +7504,7 @@ class table_action:
         http_referer = web.ctx.env.get('HTTP_REFERER', '')
         http_home = web.ctx.home
         if http_referer and http_home and http_referer.startswith(http_home):
-            real_redir = http_referer        
+            real_redir = http_referer
         #
         select = input.select
         if not len(select):
@@ -7515,10 +7529,10 @@ class table_action:
             raise web.seeother(real_redir)
         #
         dflt()
-        
+
 class table_row:
     def GET(self, table):
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         input = web.input(mode='')
@@ -7621,7 +7635,7 @@ class table_save:
                 db.query(q, vars=vars)
                 sess.table[table][SKT_M_INSERT] = _['o_insert']
             except Exception, e:
-                sess.table[table][SKT_M_INSERT] = '%s: %s' %(_['e_insert'], e.message) 
+                sess.table[table][SKT_M_INSERT] = '%s: %s' %(_['e_insert'], e.message)
             raise web.seeother('/table/row/%s?mode=insert' %(table))
         else:
             if not rowid:
@@ -7644,27 +7658,27 @@ class table_save:
             if not vk:
                 raise web.seeother('/table/row/%s' %(table))
             #
-            va = ['%s=$%s' %(v, v) for v in vk] 
+            va = ['%s=$%s' %(v, v) for v in vk]
             q = 'update %s set %s where rowid=%s' %(table, ','.join(va), rowid)
             sess.table[table][SKT_P_EDIT] = rowid
             try:
                 db.query(q, vars=vars)
                 sess.table[table][SKT_M_EDIT] = _['o_edit']
             except Exception, e:
-                sess.table[table][SKT_M_EDIT] = '%s: %s' %(_['e_edit'], e.message) 
+                sess.table[table][SKT_M_EDIT] = '%s: %s' %(_['e_edit'], e.message)
             raise web.seeother('/table/row/%s#%s' %(table, rowid))
-        
+
 
 class table_blob:
     def GET(self, table):
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         input = web.input(column='', rowid=0)
         column = input.column
         rowid = input.rowid
         #
-        if not column in columns(table, True): 
+        if not column in columns(table, True):
             dflt()
         #
         d = None
@@ -7681,11 +7695,11 @@ class table_blob:
             web.header('Content-Type', BLOB_CTYPE)
             web.header('Content-Disposition', disposition)
             return r[0][column]
-        
+
 
 class table_browse:
     def GET(self, table):
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         start()
@@ -7760,7 +7774,7 @@ class table_browse:
         r = db.select(table, what='%s as %s, *' %(ROWID, rowid), order=qorder, limit=limit, offset=offset).list()
         #
         data = {
-            'title': table, 
+            'title': table,
             'command': 'browse',
             'table': table,
             'columns': columns(table),
@@ -7774,12 +7788,12 @@ class table_browse:
             'korder': 'order',
             'klimit': 'limit',
             'kpage': 'page',
-            'limit': glimit, 
+            'limit': glimit,
             'select': NAME_SELECT,
             'action_url': '/table/action',
             'action_method': 'post',
             'action_button': (
-                                ('delete', _['cmd_delete_selected'], True, _['cf_delete_selected'], 'submit'), 
+                                ('delete', _['cmd_delete_selected'], True, _['cf_delete_selected'], 'submit'),
                                 ('edit', _['cmd_edit_selected'], False, '', 'submit'),
                                 ('clear', _['cmd_clear_selected'], False, '', 'submit'),
                             ),
@@ -7810,7 +7824,7 @@ class table_browse:
 class table_column:
     def GET(self):
         table = web.input(table='').table
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         start()
@@ -7830,7 +7844,7 @@ class table_column:
             'hint': _['h_column'],
             'column_max': MAX_COLUMN_ADD,
             'column_header': (
-                                (_['x_name'], 0), 
+                                (_['x_name'], 0),
                                 (_['x_type'], 0),
                                 (_['x_default'], 1),
                             ),
@@ -7843,14 +7857,14 @@ class table_column:
         content = ''
         stop()
         return T(data, content)
-        
+
     def POST(self):
         input = web.input(table='', name=[], type=[], default=[])
         table = input.table
         name = input.name
         type = input.type
         default = input.default
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         name = [x.strip() for x in name]
@@ -7861,7 +7875,7 @@ class table_column:
         #
         st = []
         for i in range(len(name)):
-            if not name[i] or not type[i]: 
+            if not name[i] or not type[i]:
                 continue
             #
             if default[i]:
@@ -7893,12 +7907,12 @@ class table_column:
         sess.table[table][SKT_M_COLUMN] = msg
         #
         raise web.seeother('/table/column?table=%s' %(table))
-        
+
 
 class table_rename:
     def GET(self):
         table = web.input(table='').table
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         start()
@@ -7919,12 +7933,12 @@ class table_rename:
         content = ''
         stop()
         return T(data, content)
-        
+
     def POST(self):
         input = web.input(table='', name='')
         table = input.table.strip().lower()
         name = input.name.strip().lower()
-        if not table in tables() or not name: 
+        if not table in tables() or not name:
             dflt()
         #
         if name == table:
@@ -7954,7 +7968,7 @@ class table_rename:
 class table_drop:
     def GET(self):
         table = web.input(table='').table
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         start()
@@ -7975,12 +7989,12 @@ class table_drop:
         content = ''
         stop()
         return T(data, content)
-        
+
     def POST(self):
         input = web.input(table='', confirm='')
         table = input.table.strip()
         confirm = input.confirm.strip()
-        if not table in tables() or not confirm: 
+        if not table in tables() or not confirm:
             dflt()
         #
         q = 'drop table %s' %(table) #FIXME: security sql injection?
@@ -7993,13 +8007,13 @@ class table_drop:
             redir = '/table/drop?table=%s' %(table)
             raise web.seeother(redir)
         #
-        dflt()        
+        dflt()
 
 
 class table_export_csv:
     def GET(self):
         table = web.input(table='').table
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         cols = columns(table)
@@ -8038,7 +8052,7 @@ class table_export_csv:
         web.header('Content-Type', CSV_CTYPE)
         web.header('Content-Disposition', disposition)
         return content
-        
+
 
 class query:
     def GET(self):
@@ -8073,7 +8087,7 @@ class query:
         content = ''
         stop()
         return T(data, content)
-        
+
     def POST(self):
         q = web.input(q='').q.strip()
         if not q:
@@ -8086,7 +8100,7 @@ class query:
             err = _['th_ok']
             multi = 1
             if isinstance(msg, (int, long, float)):
-                multi = 0 
+                multi = 0
         except Exception, e:
             msg = e.message
             err = _['th_error']
@@ -8124,7 +8138,7 @@ class query:
             disposition = 'attachment; filename=' + '%s' %(DEFAULT_QUERY_EXPORT)
             web.header('Content-Type', CSV_CTYPE)
             web.header('Content-Disposition', disposition)
-            return content            
+            return content
         else:
             sess.query = [q, err, multi, msg, t]
             raise web.seeother('/query')
@@ -8161,7 +8175,7 @@ class table_create:
                 'message': smsgq(SK_CREATE, default=''),
                 'hint': _['h_create2'],
                 'column_header': (
-                                    (_['x_name'], 0), 
+                                    (_['x_name'], 0),
                                     (_['x_type'], 0),
                                     (_['x_primary_key'], 1),
                                     (_['x_default'], 1),
@@ -8220,7 +8234,7 @@ class table_create:
             st = []
             pkeys = []
             for i in range(len(name)):
-                if not name[i] or not type[i]: 
+                if not name[i] or not type[i]:
                     continue
                 #
                 if pk[i] and not 'primary' in type[i]:
@@ -8276,8 +8290,8 @@ class sqliteboy_init:
             s_init()
         #
         dflt()
-     
-        
+
+
 class sqliteboy_readme:
     def GET(self):
         start()
@@ -8316,7 +8330,7 @@ class sqliteboy_source:
         #
         inp = web.input(download='')
         download = inp.download.strip()
-        #        
+        #
         data = {
                 'title': _['tt_source'],
                 'command': 'source',
@@ -8331,7 +8345,7 @@ class sqliteboy_source:
             if download == '1':
                 content2 = open(os.path.join(CURDIR, URL_SOURCE[2])).read()
         except:
-            content = _['e_open_file'] 
+            content = _['e_open_file']
         #
         stop()
         #
@@ -8366,7 +8380,7 @@ class login:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         input = web.input(user='', password='')
         user = input.user.strip()
@@ -8378,7 +8392,7 @@ class login:
         for a in all:
             if a['d'] == user and a['e'] == md5(password).hexdigest():
                 sess.user = user
-                if a['f'] == '1': 
+                if a['f'] == '1':
                     sess.admin = 1
         #
         if not sess.user:
@@ -8386,7 +8400,7 @@ class login:
             raise web.seeother('/login')
         #
         dflt()
-        
+
 
 class logout:
     def GET(self):
@@ -8419,7 +8433,7 @@ class password:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         input = web.input(old='', password1='', password2='')
         old = input.old.strip()
@@ -8440,8 +8454,8 @@ class password:
                     sess[SK_PASSWORD] = _['e_password_blank']
                 else:
                     try:
-                        db.update(FORM_TBL, where='a=$a and b=$b and d=$d', 
-                            e = md5(password1).hexdigest(), 
+                        db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
+                            e = md5(password1).hexdigest(),
                             vars = {'a': 'user', 'b': 'account', 'd': sess.user}
                         )
                         sess[SK_PASSWORD] = _['o_password']
@@ -8467,9 +8481,9 @@ class admin_users:
                                     ('save', _['cmd_save'], False, '', 'submit'),
                                 ),
                 'columns': (
-                            _['x_delete'], 
-                            _['x_user'], 
-                            _['x_password_new'], 
+                            _['x_delete'],
+                            _['x_user'],
+                            _['x_password_new'],
                             _['x_admin'],
                         ),
                 'protected': protected,
@@ -8482,7 +8496,7 @@ class admin_users:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         protected = PROTECTED_USERS + [sess.user]
         input = web.input(select=[], d=[], e=[], f=[])
@@ -8498,7 +8512,7 @@ class admin_users:
         for s in select:
             if s in alld and not s in protected:
                 try:
-                    db.delete(FORM_TBL, where='a=$a and b=$b and d=$d', 
+                    db.delete(FORM_TBL, where='a=$a and b=$b and d=$d',
                         vars={'a': 'user', 'b': 'account', 'd': s}
                     )
                     m = (_['x_deleted'], s)
@@ -8553,7 +8567,7 @@ class admin_users:
             fi = f[i].strip()
             if (di) and (not di in alld) and (not di in select) and (not di in protected) and (not hasws(di)) and (ei) and (fi in ['', '1']):
                 try:
-                    db.insert(FORM_TBL, a='user', b='account', d=di, 
+                    db.insert(FORM_TBL, a='user', b='account', d=di,
                         e=md5(ei).hexdigest(), f=fi
                     )
                     m = (_['x_added'], di)
@@ -8563,7 +8577,7 @@ class admin_users:
         #
         sess[SK_USERS] = msg
         raise web.seeother('/admin/users')
-                
+
 
 class admin_hosts:
     def GET(self):
@@ -8587,8 +8601,8 @@ class admin_hosts:
                                 ),
                 'custom': custom,
                 'input_host': web.form.Radio('host', args=hosts, value=saved['d']),
-                'input_custom': web.form.Textarea('custom', 
-                                    cols=DEFAULT_TEXTAREA_COLS, 
+                'input_custom': web.form.Textarea('custom',
+                                    cols=DEFAULT_TEXTAREA_COLS,
                                     rows=DEFAULT_TEXTAREA_ROWS
                                 ),
                 'message': smsgq(SK_HOSTS, default=''),
@@ -8598,7 +8612,7 @@ class admin_hosts:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         input = web.input(host='', custom='')
         host = input.host.strip()
@@ -8664,7 +8678,7 @@ class admin_system:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         inp = web.input()
         #
@@ -8700,7 +8714,7 @@ class admin_system:
 class admin_backup:
     def GET(self):
         bf = '%s_%s' %(
-            time.strftime(PYTIME_FORMAT_BACKUP), 
+            time.strftime(PYTIME_FORMAT_BACKUP),
             os.path.basename(dbfile0),
             )
         #
@@ -8794,7 +8808,7 @@ class form_run:
         message = smsgq(SKF_RUN, default=[])
         #
         data = {
-                'title': '%s - %s' %(_['tt_form_run'], form), 
+                'title': '%s - %s' %(_['tt_form_run'], form),
                 'command': 'form.run',
                 'form': form,
                 'message': message,
@@ -8814,7 +8828,7 @@ class form_run:
         content = web.input()
         stop()
         return T(data, content)
-        
+
     def POST(self, unused):
         input = web.input(hform='')
         form = input.hform.strip()
@@ -8857,7 +8871,7 @@ class form_run:
         #
         for f in finput:
             try:
-                label = f[0] 
+                label = f[0]
                 col = f[1]
                 ftype = f[2]
                 readonly = f[3]
@@ -8890,8 +8904,8 @@ class form_run:
                     cv = onsaver[0][FORM_ONSAVE_SQL_RET]
                 except Exception, e:
                     ecols.append(col)
-                    errors.append( [ _['e_form_run_onsave'], label, str(e)] )                    
-            #            
+                    errors.append( [ _['e_form_run_onsave'], label, str(e)] )
+            #
             if constraint2:
                 try:
                     constf = constraint2[0].strip()
@@ -8901,9 +8915,9 @@ class form_run:
                     #
                     if not conste:
                         constm = [
-                                    _['e_form_run_constraint'], 
-                                    label, 
-                                    constf, 
+                                    _['e_form_run_constraint'],
+                                    label,
+                                    constf,
                                     constc
                                 ]
                     else:
@@ -8965,7 +8979,7 @@ class form_run:
                     fsub_col = f[0]
                     fsub_k = '%s.%s' %(fsub_table, fsub_col)
                     fsub_i = web.webapi.rawinput().get(fsub_k)
-                    if not isinstance(fsub_i, list): 
+                    if not isinstance(fsub_i, list):
                         fsub_i = [fsub_i]
                     fsub_all[fsub_col] = fsub_i
             #
@@ -8975,7 +8989,7 @@ class form_run:
                 try:
                     for k in fsub_keys:
                         fsub_t[k] = fsub_all[k][i]
-                        if not fsub_t[k] or not fsub_t[k].strip(): 
+                        if not fsub_t[k] or not fsub_t[k].strip():
                             fsub_t = {}
                             break
                 except:
@@ -8993,7 +9007,7 @@ class form_run:
                         )
         except Exception, e:
             errors.append( [ _['e_form_run_subform'], str(e)] )
-        #        
+        #
         ucontent = ''
         if errors:
             sess[SKF_RUN] = errors
@@ -9015,7 +9029,7 @@ class form_run:
                 form_last = finsert
                 #
                 #custom SQL (sql0)
-                fsqlx(db, fsql0, ocols)                
+                fsqlx(db, fsql0, ocols)
                 #
                 if finsert > 0:
                     form_res = db.query(q, vars=ocols)
@@ -9043,9 +9057,9 @@ class form_run:
                 try:
                     py_func = py_handler(py_f(form))
                     f_python_handler = py_func(
-                                            user(), 
-                                            db, 
-                                            pform, 
+                                            user(),
+                                            db,
+                                            pform,
                                             [
                                                 table,
                                                 ocols,
@@ -9086,7 +9100,7 @@ class form_run:
                 form_trans.commit()
         #
         raise web.seeother('/form/run/%s?%s' %(form, ucontent))
-        
+
 
 class form_edit:
     def GET(self):
@@ -9129,8 +9143,8 @@ class form_edit:
                                 ),
                 'input': (
                             (web.form.Textbox('name', value=name), _['x_form_name']),
-                            (web.form.Textarea('code', value=code, 
-                                    cols=DEFAULT_TEXTAREA_COLS*2, 
+                            (web.form.Textarea('code', value=code,
+                                    cols=DEFAULT_TEXTAREA_COLS*2,
                                     rows=DEFAULT_TEXTAREA_ROWS
                                 ), _['x_code']),
                         ),
@@ -9148,7 +9162,7 @@ class form_edit:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         input = web.input(name='', code='', mode='', form='')
         name = input.name.lower().strip()
@@ -9302,8 +9316,8 @@ class report_edit:
                                 ),
                 'input': (
                             (web.form.Textbox('name', value=name), _['x_report_name']),
-                            (web.form.Textarea('code', value=code, 
-                                    cols=DEFAULT_TEXTAREA_COLS*2, 
+                            (web.form.Textarea('code', value=code,
+                                    cols=DEFAULT_TEXTAREA_COLS*2,
                                     rows=DEFAULT_TEXTAREA_ROWS
                                 ), _['x_code']),
                         ),
@@ -9321,7 +9335,7 @@ class report_edit:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         input = web.input(name='', code='', mode='', report='')
         name = input.name.lower().strip()
@@ -9398,7 +9412,7 @@ class report_edit:
                                 'e': SHORTCUT_TYPE_REPORT,
                             },
                         d=name
-                    )                    
+                    )
                 code = json.loads(code)
                 code = json.dumps(code)
                 db.update(FORM_TBL, where='a=$a and b=$b and d=$d',
@@ -9412,8 +9426,8 @@ class report_edit:
             raise web.seeother('/?report=%s' %(xreport))
         #
         dflt()
-        
-        
+
+
 class report_run:
     def GET(self, report):
         start()
@@ -9454,13 +9468,13 @@ class report_run:
                 if reportlab:
                     action_button.append(
                                             (
-                                                REPORT_FORMAT_PDF, 
-                                                _['cmd_pdf'], 
-                                                yconfirm, 
-                                                fconfirm, 
+                                                REPORT_FORMAT_PDF,
+                                                _['cmd_pdf'],
+                                                yconfirm,
+                                                fconfirm,
                                                 'submit'
                                             ),
-                                        )                        
+                                        )
             except:
                 preport = [ftitle, finfo, input]
             #
@@ -9471,7 +9485,7 @@ class report_run:
         message = smsgq(SKR_RUN, default=[])
         #
         data = {
-                'title': '%s - %s' %(_['tt_report_run'], report), 
+                'title': '%s - %s' %(_['tt_report_run'], report),
                 'command': 'report.run',
                 'report': report,
                 'message': message,
@@ -9490,7 +9504,7 @@ class report_run:
         content = web.input()
         stop()
         return T(data, content)
-        
+
     def POST(self, unused):
         input = web.input(hreport='')
         report = input.hreport.strip()
@@ -9520,7 +9534,7 @@ class report_run:
         pfooters = []
         pheaders2 = []
         pfooters2 = []
-        palign = {}        
+        palign = {}
         try:
             preport = parsereport(report)
             freport = preport[0]
@@ -9535,7 +9549,7 @@ class report_run:
         except:
             preport = None
         #
-        #if not preport or not finput: 
+        #if not preport or not finput:
         #as of 9-July-2013/v1.06, data might be empty
         if not preport:
             dflt()
@@ -9550,7 +9564,7 @@ class report_run:
         #
         for f in finput:
             try:
-                label = f[0] 
+                label = f[0]
                 key = f[1]
                 readonly = f[2]
                 required = f[3]
@@ -9580,9 +9594,9 @@ class report_run:
                     #
                     if not conste:
                         constm = [
-                                    _['e_report_run_constraint'], 
-                                    label, 
-                                    constf, 
+                                    _['e_report_run_constraint'],
+                                    label,
+                                    constf,
                                     constc
                                 ]
                     else:
@@ -9637,9 +9651,9 @@ class report_run:
                 py_func = py_handler(py_r(report))
                 if py_func:
                     rreport = py_func(
-                                        user(), 
-                                        db, 
-                                        preport, 
+                                        user(),
+                                        db,
+                                        preport,
                                         [
                                             ocols,
                                         ],
@@ -9655,7 +9669,7 @@ class report_run:
         r_report_result = -1
         #
         data = {
-                'title': '%s - %s' %(_['tt_report_run_result'], report), 
+                'title': '%s - %s' %(_['tt_report_run_result'], report),
                 'command': 'report.run.result',
                 'report': report,
                 'header': rheader,
@@ -9682,7 +9696,7 @@ class report_run:
                     message2b = message2[2]
                 #
                 message2b = string.Template(message2b)
-                message3 = message2b.safe_substitute(ocols)                
+                message3 = message2b.safe_substitute(ocols)
             except:
                 pass
         else:
@@ -9703,13 +9717,13 @@ class report_run:
         #
         pboth = [
                     [
-                        pheaders, 
+                        pheaders,
                         pheaders2,
                         REPORT_HEADERS_CELL_LEN,
                         REPORT_HEADERS_CELL_TYPES,
                     ],
                     [
-                        pfooters, 
+                        pfooters,
                         pfooters2,
                         REPORT_FOOTERS_CELL_LEN,
                         REPORT_FOOTERS_CELL_TYPES,
@@ -9740,7 +9754,7 @@ class report_run:
                 #
                 for pc in p:
                     if not len(pc) == phfz:
-                        continue 
+                        continue
                     #
                     if not isinstance(pc[0], phft[0]) \
                         or not isinstance(pc[2], phft[2]) \
@@ -9768,7 +9782,7 @@ class report_run:
                         if rformat in REPORT_FORMAT_ALL:
                             phfq = pc[1]
                             phfqr = ''
-                            #                            
+                            #
                             try:
                                 phfqr0 = db.query(phfq, vars=ocols).list()
                                 phfqr1 = phfqr0[0]
@@ -9790,9 +9804,9 @@ class report_run:
                             phfc = {
                                         'content': str(pc[1]),
                                         'data': pc2,
-                                    }                            
+                                    }
                     #
-                    phfl.append(phfc)                        
+                    phfl.append(phfc)
                 #
                 phfl2 = [x for x in phfl if x]
                 #
@@ -9926,9 +9940,9 @@ class notes:
                                     ('save', _['cmd_save'], False, '', 'submit'),
                                 ),
                 'columns': (
-                            _['x_delete'], 
-                            _['x_title'], 
-                            _['x_content'], 
+                            _['x_delete'],
+                            _['x_title'],
+                            _['x_content'],
                             _['x_action'],
                         ),
                 'select': 'select',
@@ -9944,7 +9958,7 @@ class notes:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         inp = web.input(select=[], rowid=[], e=[], f=[])
         select = inp.select
@@ -9964,16 +9978,16 @@ class notes:
             fi = f[i]
             if (ri in alld) and (not ri in select):
                 if not ei.strip() and not fi.strip():
-                    select.append(ri)       
+                    select.append(ri)
         for s in select:
             if s in alld:
                 try:
-                    db.delete(FORM_TBL, 
-                        where='a=$a and b=$b and c=$c and rowid=$ri', 
+                    db.delete(FORM_TBL,
+                        where='a=$a and b=$b and c=$c and rowid=$ri',
                         vars={
-                            'a': 'my', 
-                            'b': 'notes', 
-                            'c': user(), 
+                            'a': 'my',
+                            'b': 'notes',
+                            'c': user(),
                             'ri': s
                         }
                     )
@@ -10003,8 +10017,8 @@ class notes:
                         e=ei,
                         f=fi,
                         vars = {
-                            'a': 'my', 
-                            'b': 'notes', 
+                            'a': 'my',
+                            'b': 'notes',
                             'c': user(),
                             'ri': ri
                         }
@@ -10025,7 +10039,7 @@ class notes:
             #
             if ei.strip() or fi.strip():
                 try:
-                    db.insert(FORM_TBL, a='my', b='notes', c=user(),  
+                    db.insert(FORM_TBL, a='my', b='notes', c=user(),
                         e=ei, f=fi
                     )
                     ex = get_value1([ei.strip(), fi.strip()], '')
@@ -10061,9 +10075,9 @@ class files:
                                     ('save', _['cmd_save'], False, '', 'submit'),
                                 ),
                 'columns': (
-                            _['x_delete'], 
-                            _['x_file_name'], 
-                            _['x_file_size'], 
+                            _['x_delete'],
+                            _['x_file_name'],
+                            _['x_file_size'],
                             _['x_shared'],
                             _['x_action'],
                         ),
@@ -10079,7 +10093,7 @@ class files:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         inp = web.input(select=[], rowid=[], d=[], f=[])
         select = inp.select
@@ -10096,12 +10110,12 @@ class files:
         for s in select:
             if s in alld:
                 try:
-                    db.delete(FORM_TBL, 
-                        where='a=$a and b=$b and c=$c and rowid=$ri', 
+                    db.delete(FORM_TBL,
+                        where='a=$a and b=$b and c=$c and rowid=$ri',
                         vars={
-                            'a': 'my', 
-                            'b': 'files', 
-                            'c': user(), 
+                            'a': 'my',
+                            'b': 'files',
+                            'c': user(),
                             'ri': s
                         }
                     )
@@ -10129,8 +10143,8 @@ class files:
                     db.update(FORM_TBL, where='a=$a and b=$b and c=$c and rowid=$ri',
                         f=fi,
                         vars = {
-                            'a': 'my', 
-                            'b': 'files', 
+                            'a': 'my',
+                            'b': 'files',
                             'c': user(),
                             'ri': ri
                         }
@@ -10162,21 +10176,21 @@ class files:
             if max_num:
                 allx = r_files()
                 if len(allx) >= max_num:
-                    m = (_['x_max_files_number_error'], 
-                            n.filename, 
+                    m = (_['x_max_files_number_error'],
+                            n.filename,
                             str(max_num),
                         )
-                    msg.append(m)                    
+                    msg.append(m)
                     continue
             #
             if max_size:
                 if len(n.value) >= max_size:
-                    m = (_['x_max_file_size_error'], 
+                    m = (_['x_max_file_size_error'],
                             n.filename,
                             size(len(n.value)),
                             size(max_size),
                         )
-                    msg.append(m)                    
+                    msg.append(m)
                     continue
             #
             #
@@ -10201,9 +10215,9 @@ class files:
                 else:
                     n_value2 = n_value
                 #
-                db.insert(FORM_TBL, a='my', b='files', c=user(),  
-                    d=n.filename, 
-                    e=n_value2, 
+                db.insert(FORM_TBL, a='my', b='files', c=user(),
+                    d=n.filename,
+                    e=n_value2,
                     f='0',
                     g=gj,
                 )
@@ -10215,7 +10229,7 @@ class files:
         if updated:
             m = (_['o_files'],)
             msg.append(m)
-        #        
+        #
         sess[SK_FILES] = msg
         raise web.seeother('/files')
 
@@ -10261,9 +10275,9 @@ class pages:
                                     ('save', _['cmd_save'], False, '', 'submit'),
                                 ),
                 'columns': (
-                            _['x_code'], 
-                            _['x_preview'], 
-                        ),                                
+                            _['x_code'],
+                            _['x_preview'],
+                        ),
                 'message': smsgq(SK_PAGES),
                 'url': '/page/%s' %(user()),
                 'hint': _['h_pages'],
@@ -10279,7 +10293,7 @@ class pages:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         inp = web.input(content='')
         content = inp.content
@@ -10288,8 +10302,8 @@ class pages:
         #
         try:
             if s_select(q):
-                r = db.update(FORM_TBL, 
-                        e=striphtml(content), 
+                r = db.update(FORM_TBL,
+                        e=striphtml(content),
                         where=' a=$a and b=$b and c=$c and d=$d ',
                         vars = {
                                     'a': 'my',
@@ -10313,7 +10327,7 @@ class page:
         users = [x['d'] for x in allu]
         #
         u = u.strip()
-        if not u or not u in users: 
+        if not u or not u in users:
             dflt()
         #
         q = 'my.pages.%s.home' %(u)
@@ -10370,7 +10384,7 @@ class calculator:
         content = ''
         stop()
         return T(data, content)
-        
+
     def POST(self):
         q = web.input(q='').q.strip()
         q0 = q
@@ -10390,7 +10404,7 @@ class calculator:
                     raise Exception, _['x_expression_invalid']
             #
             q2 = 'select $e'
-            msg = db.query(q2, 
+            msg = db.query(q2,
                         vars = {
                                 'e': web.sqlliteral(q),
                             }
@@ -10424,12 +10438,12 @@ class admin_scripts:
                                     ('save', _['cmd_save'], False, '', 'submit'),
                                 ),
                 'columns': (
-                            _['x_name'], 
-                            _['x_info'], 
-                            _['x_author'], 
-                            _['x_license'], 
+                            _['x_name'],
+                            _['x_info'],
+                            _['x_author'],
+                            _['x_license'],
                             _['x_run_time'],
-                        ),                                
+                        ),
                 'message': smsgq(SK_SCRIPTS),
                 'hint': _['h_scripts'],
             }
@@ -10474,7 +10488,7 @@ class admin_scripts:
             g['type'] = d_new.type
             g['type_options'] = d_new.type_options
             g['disposition'] = d_new.disposition
-            g['disposition_options'] = d_new.disposition_options            
+            g['disposition_options'] = d_new.disposition_options
         except Exception, e:
             msg = [
                     [ fname, str(e) ],
@@ -10490,14 +10504,14 @@ class admin_scripts:
                     [ _['e_scripts_name'] ],
                 ]
             sess[SK_SCRIPTS] = msg
-            raise web.seeother('/admin/scripts')            
+            raise web.seeother('/admin/scripts')
         #
         try:
             g['user'] = user()
-            #            
+            #
             gj = json.dumps(g)
             #
-            r = db.insert(FORM_TBL, 
+            r = db.insert(FORM_TBL,
                     a='install',
                     b='scripts',
                     c='',
@@ -10510,7 +10524,7 @@ class admin_scripts:
             msg = [
                     [ _['o_scripts'] ],
                 ]
-            sess[SK_SCRIPTS] = msg            
+            sess[SK_SCRIPTS] = msg
         except:
             pass
         #
@@ -10576,10 +10590,10 @@ class admin_script:
                 'action_enctype': 'multipart/form-data',
                 'action_button': action_button,
                 'columns': (
-                            _['x_key'], 
-                            _['x_detail'], 
-                            _['x_system_check'], 
-                        ),                                
+                            _['x_key'],
+                            _['x_detail'],
+                            _['x_system_check'],
+                        ),
                 'info': (
                             (_['x_name'], SCRIPT_KEY_NAME),
                             (_['x_info'], SCRIPT_KEY_INFO),
@@ -10601,7 +10615,7 @@ class admin_script:
                                 SCRIPT_REPORT_ERROR: _['th_error'],
                                 SCRIPT_REPORT_OK: _['th_ok'],
                                 SCRIPT_REPORT_EXISTS: _['e_report_edit_exists'],
-                            },                            
+                            },
                 'profile_info': {
                             },
                 'table_detail': table_detail,
@@ -10628,7 +10642,7 @@ class admin_script:
             dflt()
         #
         url = '/admin/script/%s' %(script,)
-        #        
+        #
         content = xparsescript(scode)
         if not xokscript(content):
             sess[SK_SCRIPT] = [
@@ -10640,7 +10654,7 @@ class admin_script:
             raise web.seeother(url)
         #
         msg = []
-        script_trans = db.transaction() 
+        script_trans = db.transaction()
         oldtables = tables()
         oldtables = [x.lower() for x in oldtables]
         newtables = []
@@ -10714,7 +10728,7 @@ class admin_script:
                         q = 'create table %s(%s)' %(
                             tname,
                             ','.join(newcols),
-                        )                        
+                        )
                     #
                     r = db.query(q)
                     if r:
@@ -10750,7 +10764,7 @@ class admin_script:
                                         _['o_form_create'],
                                         tname,
                                     ]
-                        )                        
+                        )
                         newforms.append(tname.lower())
             #
             #
@@ -10798,11 +10812,11 @@ class admin_script:
                                         i[0],
                                     ]
                         )
-                
+
             except:
                 pass
             #
-            db.update(FORM_TBL, where='rowid=$script', 
+            db.update(FORM_TBL, where='rowid=$script',
                 f=sqliteboy_time3(sqliteboy_time()),
                 vars = {
                     'script': itest,
@@ -10861,7 +10875,7 @@ class table_copy:
         start()
         #
         table = web.input(table='').table
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         excludes = COPY_TARGET_EXCLUDE[:]
@@ -10905,7 +10919,7 @@ class table_copy:
         #
         if target in COPY_TARGET_EXCLUDE:
             dflt()
-        #        
+        #
         oldtables = tables()
         oldtables = [x.lower() for x in oldtables]
         if not table in oldtables or not target in oldtables:
@@ -10921,7 +10935,7 @@ class table_copy:
         sall = (
                 (
                     scols,
-                    sdcols, 
+                    sdcols,
                 ),
                 (
                     tcols,
@@ -10953,7 +10967,7 @@ class table_copy:
         msg = [
                 [
                     _['x_column'],
-                    ','.join(ncols), 
+                    ','.join(ncols),
                 ]
             ]
         #
@@ -11000,7 +11014,7 @@ class table_empty:
         table = str(table)
         table = table.lower().strip()
         #
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         if table in EMPTY_EXCLUDE:
@@ -11024,12 +11038,12 @@ class table_empty:
         #
         stop()
         return T(data, content)
-        
+
     def POST(self):
         input = web.input(table='', confirm='')
         table = input.table.lower().strip()
         confirm = input.confirm.strip()
-        if not table in tables() or not confirm: 
+        if not table in tables() or not confirm:
             dflt()
         #
         if table in EMPTY_EXCLUDE:
@@ -11082,7 +11096,7 @@ class vacuum:
                         [
                             _['x_unused_pages'],
                             p_pragma(
-                                PRAGMA_FREELIST_COUNT, 
+                                PRAGMA_FREELIST_COUNT,
                                 default=DEFAULT_ERROR_INT
                             ),
                         ],
@@ -11094,7 +11108,7 @@ class vacuum:
         #
         stop()
         return T(data, content)
-    
+
     def POST(self):
         inp = web.input(confirm='')
         confirm = inp.confirm.strip()
@@ -11189,7 +11203,7 @@ class table_import_csv:
         table = str(table)
         table = table.strip().lower()
         #
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         if table in IMPORT_EXCLUDE:
@@ -11214,15 +11228,15 @@ class table_import_csv:
         #
         stop()
         return T(data, content)
-        
+
     def POST(self):
         inp = web.input(table='', f={})
         table = inp.table.strip().lower()
         f = inp.f
         #
-        redir = '/table/import/csv?table=%s' %(table)        
+        redir = '/table/import/csv?table=%s' %(table)
         #
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         if table in IMPORT_EXCLUDE:
@@ -11287,7 +11301,7 @@ class table_import_csv:
                         _['x_row'],
                         str(counter),
                     ]
-                ]            
+                ]
         except Exception, e:
             t.rollback()
             msg = [
@@ -11295,11 +11309,11 @@ class table_import_csv:
                         _['e_import_csv'],
                         str(e),
                     ]
-                ]            
+                ]
         #
         sess.table[table][SKT_M_IMPORT] = msg
         #
-        raise web.seeother(redir)        
+        raise web.seeother(redir)
 
 
 class profile:
@@ -11325,7 +11339,7 @@ class profile:
         #
         stop()
         return T(data, content)
-        
+
     def POST(self):
         inp = web.input()
         #
@@ -11337,7 +11351,7 @@ class profile:
             name = i[0]
             func = i[6]
             if inp.has_key(name):
-                value = inp.get(name)  
+                value = inp.get(name)
                 try:
                     value = func(value)
                 except:
@@ -11346,7 +11360,7 @@ class profile:
         #
         try:
             p = json.dumps(p)
-            r = db.update(FORM_TBL, g=p, 
+            r = db.update(FORM_TBL, g=p,
                     where='a=$a and b=$b and d=$d',
                     vars={
                         'a': 'user',
@@ -11358,13 +11372,13 @@ class profile:
                     [
                         _['o_profile'],
                     ]
-                ]                        
+                ]
         except:
             msg = [
                     [
                         _['e_profile'],
                     ]
-                ]                        
+                ]
         #
         sess[SK_PROFILE] = msg
         #
@@ -11376,7 +11390,7 @@ class table_schema:
         start()
         #
         table = web.input(table='').table
-        if not table in tables(): 
+        if not table in tables():
             dflt()
         #
         target = web.input(target='').target
@@ -11456,7 +11470,7 @@ class table_schema:
             raise web.seeother('/table/browse/%s' %(target))
         #
         dflt()
-        
+
 
 #----------------------------------------------------------------------#
 # MAIN                                                                 #
@@ -11477,7 +11491,7 @@ if __name__ == '__main__':
     #
     if wtest:
         dbfile0 = wtest[0]
-        dbfile = wtest[1]        
+        dbfile = wtest[1]
     else:
         dbfile0 = sys.argv[1]
         dbfile = os.path.abspath(dbfile0)
@@ -11527,8 +11541,8 @@ if __name__ == '__main__':
     #
     try:
         db = web.database(
-                dbn=DBN, 
-                db=dbfile, 
+                dbn=DBN,
+                db=dbfile,
                 check_same_thread=CHECK_SAME_THREAD
             )
         db.select(DEFAULT_TABLE)
@@ -11583,4 +11597,4 @@ if __name__ == '__main__':
         log('', stream=sys.stderr)
         log(emsg, stream=sys.stderr)
         sys.exit(GENERAL_ERROR_CODE)
-    
+

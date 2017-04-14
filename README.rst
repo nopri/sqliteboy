@@ -2,116 +2,112 @@
 ::
 
     SQLiteBoy
-    Simple Web SQLite Manager/Form/Report Application
-    (c) Noprianto <nop@tedut.com>
-    2012-2014 
+    Simple web-based management tool for SQLite database
+    (with form, report, and many other features)
+    (c) Noprianto <nop@noprianto.com>
+    2012-2014, 2017
     License: GPL
-    Version: 1.50
-    
-    SQLiteBoy is an independent product, developed separately from the 
-    SQLite core library, which is maintained by SQLite.org.  
-    Neither SQLiteBoy.com nor SQLite.org take any responsibility for the 
+    Version: 1.51
+
+    SQLiteBoy is an independent product, developed separately from the
+    SQLite core library, which is maintained by SQLite.org.
+    Neither noprianto.com nor SQLite.org take any responsibility for the
     work of the other.
 
 
 
 
-.. contents:: 
+.. contents::
 
 
 
 What Is SQLiteBoy
 ========================================================================
 
-- Easy to use, python and web.py based, Web SQLite Manager with 
+- Easy to use, python and web.py based, Web SQLite Manager with
   user-defined function and many extended features (Free/open source)
-  
-- User-defined functions: number to words (multi language), number format, 
-  table lookup, hash, base64, random, additional date/time, additional 
+
+- User-defined functions: number to words (multi language), number format,
+  table lookup, hash, base64, random, additional date/time, additional
   string, regular expression, utility
 
-- If Extended feature is enabled: 
+- If Extended feature is enabled:
 
-  Multi user, simple (yet flexible) form (data entry) and reporting can 
-  be created by admin (simple JSON syntax), and can be run by 
+  Multi user, simple (yet flexible) form (data entry) and reporting can
+  be created by admin (simple JSON syntax), and can be run by
   admin/user (configurable). Very simple subform is also supported.
-  
-  Form field supports predefined values (options) from SQL Query or 
-  Python list. Also, default value can be result of function call, 
-  static value or SQL Query. Constraint is also supported, to check before 
-  save, to prevent saving invalid value (it's possible to call 
-  function before comparison). Onsave event is also supported, to 
-  execute SQL Query (and use the result) just before the data is saved.
-  
-  Reporting wizard also supports form field predefined values, default 
-  value and constraint (checking before reporting query is executed). 
-  Supported report format: PDF, HTML, HTML (printer friendly) and CSV. 
 
-  Form and Report support python handler, which will be automatically called, if 
+  Form field supports predefined values (options) from SQL Query or
+  Python list. Also, default value can be result of function call,
+  static value or SQL Query. Constraint is also supported, to check before
+  save, to prevent saving invalid value (it's possible to call
+  function before comparison). Onsave event is also supported, to
+  execute SQL Query (and use the result) just before the data is saved.
+
+  Reporting wizard also supports form field predefined values, default
+  value and constraint (checking before reporting query is executed).
+  Supported report format: PDF, HTML, HTML (printer friendly) and CSV.
+
+  Form and Report support python handler, which will be automatically called, if
   provided. Python handler eases the integration with external system
-  (for example: ERP system). Python handler also could be useful in, 
-  for example, complex database operation, reading from/writing to 
+  (for example: ERP system). Python handler also could be useful in,
+  for example, complex database operation, reading from/writing to
   external devices, etc.
 
   User accounts, Notes, Files (with file sharing support), Page (home page),
-  calculator, configurable hosts allowed, database backup, system configuration, 
-  Scripts, profile (with user-defined profile support) 
+  calculator, configurable hosts allowed, database backup, system configuration,
+  Scripts, profile (with user-defined profile support)
   and others are available as extended features
-  
-  sqliteboy script (simple JSON syntax, single file) can be used to automate 
-  the creation of tables (including addition of columns, for existing table), 
+
+  sqliteboy script (simple JSON syntax, single file) can be used to automate
+  the creation of tables (including addition of columns, for existing table),
   forms, reports or user-defined profiles
-  
-- If you are using Windows, standalone / portable application is 
-  available (single file executable). Run from Windows Explorer 
-  (double-click), no command line needed. Can be run from USB Flash 
-  Disk. Can be run by standard user.
-  
+
 
 Links
 ========================================================================
 
-- Standalone Windows Application:
-  http://tedut.com/sqliteboy.exe
-
-- screenshot, probably not up-to-date:  
+- screenshot, probably not up-to-date:
   https://github.com/nopri/sqliteboy/wiki
 
 - Free Book: Form dan Report sederhana dengan SQLiteBoy
-  (Bahasa Indonesia, available as PDF/ODT, 250+ pages):
-  http://tedut.com/#form-dan-report-sederhana-dengan-sqliteboy
-  
+  (Bahasa Indonesia, available as PDF/ODT, 250+ pages, revision 2):
+  https://github.com/nopri/publication/raw/master/form-dan-report-sederhana-dengan-sqliteboy.pdf
+
 - Tutorial: simple medical record:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-simple-medical-record
 
 - Tutorial: install sqliteboy on ACRyan Playon!HD Mini2 ACRPV73800:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-install-sqliteboy-on-ACRyan-Playon!HD-Mini2-ACRPV73800
 
-- Tutorial: Using sqliteboy udf in python handler: 
+- Tutorial: Using sqliteboy udf in python handler:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-using-sqliteboy-udf-in-python-handler
 
 - Tutorial: Create a new partner in OpenERP:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-create-a-new-partner-in-openerp
 
-- Tutorial: Search partners in OpenERP: 
+- Tutorial: Search partners in OpenERP:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-search-partners-in-openerp
 
-- Tutorial: Hyperlink and Javascript in label: 
+- Tutorial: Hyperlink and Javascript in label:
   https://github.com/nopri/sqliteboy/wiki/Tutorial-hyperlink-and-javascript-in-label
 
-- SQLiteBoy Presentation (ppt format):
-  http://tedut.com/sqliteboy.ppt
-  
-- SQLiteBoy Development (ppt format, Bahasa Indonesia):
-  http://tedut.com/sqliteboy-dev-id.ppt
-
-- Script: medical_record:
-  http://tedut.com/sqliteboy-script-medical_record.json
-  
-- Commercial support: 
-  https://github.com/nopri/sqliteboy/wiki/Commercial-support
-
 - More: https://github.com/nopri/sqliteboy/wiki/_pages
+
+
+Updates
+========================================================================
+
+- SQLiteBoy is planned to be rewritten in Python version 3,
+  using another libraries and technologies
+
+- Standalone version is no longer provided, but codes for this
+  are still in the source code
+
+- Version 1.51 is released to fix a bug, reported in issue #1. In this
+  commit, many lines (both in this file and the source code) have been
+  added/removed. This should be text reformatting only. But, please,
+  let me know if something unrelated is deleted or added.
 
 
 Features
@@ -128,20 +124,20 @@ Features
 - Basic/Extended Feature
 
   - Basic: Database management + User-defined function
-  
+
   - Extended: Form, Report, User/Login, etc
-  
+
     - Completely optional
-  
+
     - Can be enabled in menu
-  
+
     - If enabled, one table::
-      
-        _sqliteboy_ 
-        
-      will be created. You can delete this table 
+
+        _sqliteboy_
+
+      will be created. You can delete this table
       and extended feature will be disabled
-      
+
 - Form Support (Extended feature, new in v0.12)
 
   - Simple data entry
@@ -154,48 +150,48 @@ Features
 
   - Required field
 
-  - Predefined values (field options) from SQL Query 
+  - Predefined values (field options) from SQL Query
     or Python list
 
   - Default value: function call or static value or SQL Query
 
-  - Constraint: check before save, 
+  - Constraint: check before save,
     prevent saving invalid value
     (possible to call function before comparison)
 
   - Simple security setting
 
-  - As of v0.21, onsave event is also supported, to execute SQL Query 
-    (and use the result) just before the data is saved. The SQL Query 
+  - As of v0.21, onsave event is also supported, to execute SQL Query
+    (and use the result) just before the data is saved. The SQL Query
     can be very complex and involves nested function calls.
 
-  - As of v0.26, very simple subform is also supported. Subform can be 
-    used in one to many relationship. However, fields in subform is 
-    limited, compared to form. 
-    
-  - As of v0.27, custom result message (based on SQL query result), 
-    is also supported. 
-    
-  - As of v0.27, optional, additional SQL query statement(s) can be 
-    provided, and each of them will be executed in order, if you need 
-    to perform additional task(s), after the form data is saved (for 
-    example, write to another table). Previously, one might use report 
-    if need to write to several tables. Last insert rowid value is 
+  - As of v0.26, very simple subform is also supported. Subform can be
+    used in one to many relationship. However, fields in subform is
+    limited, compared to form.
+
+  - As of v0.27, custom result message (based on SQL query result),
+    is also supported.
+
+  - As of v0.27, optional, additional SQL query statement(s) can be
+    provided, and each of them will be executed in order, if you need
+    to perform additional task(s), after the form data is saved (for
+    example, write to another table). Previously, one might use report
+    if need to write to several tables. Last insert rowid value is
     provided.
 
   - As of v0.75, insert into table can be disabled by setting insert key
-    to zero/negative value. This is useful if you need to update/delete data in 
-    table(s), using additional SQL query statement(s). By default, 
-    form/subform save will insert new row(s) into table(s).  
-  
-  - As of v0.98, form supports python handler, which will be automatically 
-    called, if provided. Python handler eases the integration with external 
-    system (for example: ERP system). Please read PYTHON HANDLER REFERENCE 
+    to zero/negative value. This is useful if you need to update/delete data in
+    table(s), using additional SQL query statement(s). By default,
+    form/subform save will insert new row(s) into table(s).
+
+  - As of v0.98, form supports python handler, which will be automatically
+    called, if provided. Python handler eases the integration with external
+    system (for example: ERP system). Please read PYTHON HANDLER REFERENCE
     section.
 
-  - As of v1.33, optional, (run before) additional SQL query statement(s) 
+  - As of v1.33, optional, (run before) additional SQL query statement(s)
     can be provided.
-    
+
 - Report Support (Extended feature, new in v0.16)
 
   - Simple reporting (and data entry)
@@ -206,12 +202,12 @@ Features
 
   - Readonly field
 
-  - Predefined values (field options) from SQL Query 
+  - Predefined values (field options) from SQL Query
     or Python list
 
   - Default value: function call or static value or SQL Query
 
-  - Constraint: check before query, 
+  - Constraint: check before query,
     (possible to call function before comparison)
 
   - Flexible SQL query
@@ -221,65 +217,65 @@ Features
   - Custom header order
 
   - Simple security setting
-  
-  - As of v0.18, report also can be used as form/data entry, using 
-    insert SQL query. Custom result message (based on SQL query result), 
-    is also supported. 
-    
-  - As of v0.60, headers and footers are supported. If not defined, a 
-    default one will be created. Plain text, SQL Query, and Image are 
-    supported.  
-    
-  - As of v0.85, printer friendly version of report result is supported 
+
+  - As of v0.18, report also can be used as form/data entry, using
+    insert SQL query. Custom result message (based on SQL query result),
+    is also supported.
+
+  - As of v0.60, headers and footers are supported. If not defined, a
+    default one will be created. Plain text, SQL Query, and Image are
+    supported.
+
+  - As of v0.85, printer friendly version of report result is supported
     in default output format (HTML)
 
-  - As of v1.00, report supports python handler, which will be automatically 
-    called, if provided. Python handler eases the integration with external 
-    system (for example: ERP system). Please read PYTHON HANDLER REFERENCE 
+  - As of v1.00, report supports python handler, which will be automatically
+    called, if provided. Python handler eases the integration with external
+    system (for example: ERP system). Please read PYTHON HANDLER REFERENCE
     section.
-    
+
   - As of v1.17, CSV output is supported
-  
+
   - As of v1.28, PDF output (paper size, margins, image) is supported
-  
+
   - As of v1.36, text align is supported (HTML and PDF only)
 
 - Files (Extended feature, new in v0.47)
 
   - System configuration: maximum number of files per user (admin: unlimited)
-  
+
   - System configuration: maximum file size (admin: unlimited)
-  
+
   - Multiple file upload (content type, filename, etc are saved)
-  
-  - Action: view 
-  
+
+  - Action: view
+
   - Action: download (disposition attachment)
-  
-  - Simple file sharing support 
-  
+
+  - Simple file sharing support
+
   - Human readable file size
-  
+
   - URL: /fs
-  
+
   - HTTP 404 Error: file not found or not shared
-  
+
 - Page (Extended feature, new in v0.48)
 
   - Static page per user (home page)
-  
+
   - URL: /page/<user>
-  
+
   - Please read PAGE CODE REFERENCE section (below)
 
 - Scripts (Extended feature, new in v0.71)
 
   - Simple script, to automate the creation of tables
-    (including addition of columns, for existing table), 
+    (including addition of columns, for existing table),
     forms, reports or user-defined profiles
-    
+
   - Solution can be deployed in form of script, that can be uploaded
-    and run by admin 
+    and run by admin
 
   - Simple syntax (JSON) in single file
 
@@ -288,20 +284,20 @@ Features
 - Profile (Extended feature, new in v0.91)
 
   - User profile
-  
+
     - style
-  
-  - User-defined profile is also supported. Using this feature, 
-    custom field(s) in user profile can be added. This is useful, 
-    for example, in multi-company environment. 
-    
+
+  - User-defined profile is also supported. Using this feature,
+    custom field(s) in user profile can be added. This is useful,
+    for example, in multi-company environment.
+
     - system configuration
-    
+
     - Simple syntax (JSON)
-    
+
     - Predefined values (field options) from SQL Query or Python list
       (as in form or report, is also supported)
-    
+
     - Please read USER-DEFINED PROFILE REFERENCE section (below)
 
 - Browse table
@@ -319,7 +315,7 @@ Features
   - Maintain last selected row(s)
 
   - Limit rows
-  
+
   - Pagination
 
 - Insert into table
@@ -340,7 +336,7 @@ Features
 
   - Upload for BLOB type
 
-- Column 
+- Column
 
   - Add column (with type and default value)
 
@@ -348,11 +344,11 @@ Features
 
 - Rename table
 
-- Empty table 
+- Empty table
 
-- Drop table 
+- Drop table
 
-- CSV export/import 
+- CSV export/import
 
 - Schema (view schema, create new table)
 
@@ -374,18 +370,18 @@ Features
   - Free form SQL Query
 
   - Automatically view query output (as integer or table)
-  
+
   - Export query result to CSV (if applicable)
-  
-  - User-defined variable is also supported (max per user: 3). 
-    Please use the following functions: sqliteboy_var_set, 
+
+  - User-defined variable is also supported (max per user: 3).
+    Please use the following functions: sqliteboy_var_set,
     sqliteboy_var_get, sqliteboy_var_del.
 
 - Vacuum
 
 - User account (Extended feature)
 
-  - Type: admin (full access), 
+  - Type: admin (full access),
     standard (limited or configurable form/report access)
 
   - Change password
@@ -394,22 +390,22 @@ Features
 
 - Notes (Extended feature, new in v0.41)
 
-  - Simple notes 
-  
+  - Simple notes
+
   - Content as SQL Query (admin), calculator
 
 - Calculator (Extended feature, new in v0.50)
 
-  - Simple calculator 
-  
+  - Simple calculator
+
   - Valid characters: 0123456789.-+*/()
-  
+
   - Maximum length: 36
-  
+
 - User-defined function
 
   - Prefix::
-  
+
         sqliteboy_
 
   - Can be used in Query or Form or Report
@@ -437,9 +433,9 @@ Features
 - Minimum use of Javascript in default/builtin template
   (only for confirmation dialog and toggle select all)
 
-- Table name limitation: 
-  could not handle table with whitespace in name 
-  
+- Table name limitation:
+  could not handle table with whitespace in name
+
 
 Requirements
 ========================================================================
@@ -456,20 +452,10 @@ Requirements
 
 - Optional: pyOpenSSL (SSL support)
 
-(or see below if you prefer standalone application on Windows)
 
-
-Standalone Windows Application
+Standalone Version
 ========================================================================
-- Standalone / portable / run from USB Flash Disk 
-- Can be run by standard user
-- There is no need to install Python / requirements above
-- Single file executable (+/- 6 MB)
-- Run from Windows Explorer (double-click), no command line needed
-- To quit properly, press CTRL-C in terminal (cmd) window
-- Documentation and source code are included
-- SSL support 
-- Download: http://tedut.com/sqliteboy.exe
+Note: Standalone version is no longer provided
 
 
 Default Admin User And Password
@@ -479,15 +465,15 @@ admin
 
 SSL Support
 ========================================================================
-To enable SSL support, please put the following files into current 
+To enable SSL support, please put the following files into current
 working directory:
 
 - sqliteboy.cert (SSL certificate)
 - sqliteboy.key  (SSL private key)
 
-If you need to create a self-signed test certificate, 
+If you need to create a self-signed test certificate,
 OpenSSL can be used::
-    
+
     openssl req -new -x509 -newkey rsa:1024 -keyout sqliteboy.key -out sqliteboy.cert -days 365 -nodes
 
 
@@ -495,34 +481,19 @@ How To Run
 ========================================================================
 Command::
 
-    run sqliteboy.exe (double-click) from Windows Explorer, and select
-    database file (automatically create when opening a non-existent 
-    file). 
-    
-    (if you are using Standalone Windows Application)
-    
+    python sqliteboy.py <database_file> [port]
+
+    (if you are using source code)
+
     or
 
-    sqliteboy.exe <database_file> [port]
-    
-    (if you are using Standalone Windows Application and prefer command
-    line or need to set port)
-    
-    or
-    
-    python sqliteboy.py <database_file> [port]
-    
-    (if you are using source code)
-    
-    or 
-    
     python sqliteboy.py <database_file> [port] > LOGFILE 2>&1 &
-    
-    (if you are using source code, sh compatible shell (with job control), 
-    and want to run in the background. If applicable, You could use 
+
+    (if you are using source code, sh compatible shell (with job control),
+    and want to run in the background. If applicable, You could use
     /dev/null as LOGFILE if you don't care about the logs.)
 
-then, using web browser, visit localhost:11738, or localhost:PORT, if 
+then, using web browser, visit localhost:11738, or localhost:PORT, if
 PORT is specified
 
 Please use https if SSL support is enabled
@@ -569,76 +540,76 @@ User-defined Function
 
 - sqliteboy_randstr(s, a, b)
   ::
-  
+
       random string
       argument    :
          s (set characters)
          a (min length, > 0)
          b (max length, > 0, >=a)
-         
+
       example     :
          sqliteboy_randstr('abcdef123456', 3, 8)
          -> 'e2e6'
-      
+
       tips        :
       - fix length: a = b
-      - use sqliteboy_randstr2() or sqliteboy_randstr3() for predefined 
+      - use sqliteboy_randstr2() or sqliteboy_randstr3() for predefined
         set characters
       - use sqliteboy_randstr_simple() for simple random string
-      
+
 - sqliteboy_randstr2(a, b)
   ::
-  
+
       random string (predefined set characters, letters + digits + punctuation)
       argument    :
          a (min length, > 0)
          b (max length, > 0, >=a)
-         
+
       example     :
          sqliteboy_randstr2(3, 8)
          -> '"Z\@Z'
 
 - sqliteboy_randstr3(a, b)
   ::
-  
+
       random string (predefined set characters, letters + digits)
       argument    :
          a (min length, > 0)
          b (max length, > 0, >=a)
-         
+
       example     :
          sqliteboy_randstr3(3, 8)
          -> 'nItJ8'
-         
+
 - sqliteboy_randstr_simple()
   ::
-  
-      random string (simple)         
+
+      random string (simple)
       example     :
          sqliteboy_randstr_simple()
          -> 'VUmDAQeJCpww9IjmiexrWRuRT6ZgpacKVdOA'
 
 - sqliteboy_is_datetime_format(s, fmt)
   ::
-  
+
       is date time according to format
       argument    :
          s (input string)
          fmt (date time format string)
-         
+
       example     :
          sqliteboy_is_datetime_format('2014', '%Y')
          -> 1
-         
+
          sqliteboy_is_datetime_format('2014-01-01', '%Y-%m-%d')
          -> 1
-         
+
          sqliteboy_is_datetime_format('2014-01-01', '%Y-%m-%d %H:%M:%S')
          -> 0
-         
+
          sqliteboy_is_datetime_format('2014-01-01 01:02:03', '%Y-%m-%d %H:%M:%S')
          -> 1
-         
+
       tips        :
       - use sqliteboy_is_datetime(), sqliteboy_is_date() or sqliteboy_is_time()
         for predefined date time format
@@ -653,81 +624,81 @@ User-defined Function
 
 - sqliteboy_time2(s)
   ::
-  
+
       get time from string (YYYY-MM-DD HH:MM:SS)
       argument    :
          s (date/time string)
-         
+
       example     :
          sqliteboy_time2('2012-03-28 19:20:21')
          -> 1332937221.0
 
 - sqliteboy_time3(f)
   ::
-  
-      get string (YYYY-MM-DD HH:MM:SS) from time (local time) 
+
+      get string (YYYY-MM-DD HH:MM:SS) from time (local time)
       argument    :
          f (time)
-         
+
       example     :
          sqliteboy_time3(1)
          -> 1970-01-01 07:00:01
-         -> timezone is UTC+7 
+         -> timezone is UTC+7
 
 - sqliteboy_time3a()
   ::
-  
+
       alias for sqliteboy_time3(sqliteboy_time())
 
 - sqliteboy_time4(f)
   ::
-  
-      get string (YYYY-MM-DD HH:MM:SS) from time (UTC) 
+
+      get string (YYYY-MM-DD HH:MM:SS) from time (UTC)
       argument    :
          f (time)
-         
+
       example     :
          sqliteboy_time4(1)
          -> 1970-01-01 00:00:01
 
 - sqliteboy_time4a()
   ::
-  
+
       alias for sqliteboy_time4(sqliteboy_time())
 
 - sqliteboy_time5(s1, s2, mode)
   ::
-  
+
       calculate the difference between two dates in seconds, minutes, hours, days, or years
       (1 year = 365.2425 days)
       argument    :
          s1 (YYYY-MM-DD HH:MM:SS)
          s2 (YYYY-MM-DD HH:MM:SS)
          mode (1=seconds, 2=minutes, 3=hours, 4=days, 5=years)
-         
+
       example     :
          sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 1)
-         -> 34218061.0 
-         
+         -> 34218061.0
+
          sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 2)
-         -> 570301.016667 
-         
+         -> 570301.016667
+
          sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 3)
-         -> 9505.01694444 
-         
+         -> 9505.01694444
+
          sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 4)
-         -> 396.042372685 
-         
+         -> 396.042372685
+
          sqliteboy_time5('2010-11-12 13:14:15', '2011-12-13 14:15:16', 5)
-         -> 1.08432718724 
-      
+         -> 1.08432718724
+
       tips        :
          empty/invalid s1 or s2: current date/time (localtime)
          use sqliteboy_number_format() to format the result
 
 - sqliteboy_time6(f, year, month, day, mode)
   ::
-  
+
       format the difference between two dates in
       y (years) m (months) d (days) format
       argument    :
@@ -736,46 +707,46 @@ User-defined Function
          month (month string)
          day (day string)
          mode (1=30.44 days/month, 1=30 days/month, 2=31 days/month)
-         
+
       example     :
          sqliteboy_time6(sqliteboy_time5('2010-11-12 01:02:03', '2011-12-13 11:12:13', 5), ' years ', ' months ', ' days ', 0)
-         -> 1 years 1 months 1 days 
-         
+         -> 1 years 1 months 1 days
+
          sqliteboy_time6(sqliteboy_time5('2010-11-12 01:02:03', '2011-10-11 11:12:13', 5), ' years ', ' months ', ' days ', 0)
-         -> 0 years 10 months 29 days 
-      
+         -> 0 years 10 months 29 days
+
          sqliteboy_time6(sqliteboy_time5('2013-01-01 10:20:30', '2013-01-02 10:20:30', 5), ' years ', ' months ', ' days ', 0)
-         -> 0 years 0 months 1 days 
-         
+         -> 0 years 0 months 1 days
+
          sqliteboy_time6(sqliteboy_time5('2013-01-02 10:20:30', '2013-01-01 10:20:30', 5), ' years ', ' months ', ' days ', 0)
-         -> 0 years 0 months -1 days 
-         
+         -> 0 years 0 months -1 days
+
          sqliteboy_time6(1000, ' years ', ' months ', ' days ', 0)
-         -> 1000 years 0 months 0 days 
-         
+         -> 1000 years 0 months 0 days
+
          sqliteboy_time6(1.5, ' years ', ' months ', ' days ', 0)
-         -> 1 years 6 months 0 days  
-         
+         -> 1 years 6 months 0 days
+
          sqliteboy_time6(1.24, ' years ', ' months ', ' days ', 0)
-         -> 1 years 2 months 27 days 
-         
+         -> 1 years 2 months 27 days
+
          sqliteboy_time6(1.24, ' years ', ' months ', ' days ', 1)
-         -> 1 years 2 months 26 days 
-         
+         -> 1 years 2 months 26 days
+
          sqliteboy_time6(1.24, ' years, ', ' months, ', ' days', 0)
-         -> 1 years, 2 months, 27 days 
-         
+         -> 1 years, 2 months, 27 days
+
          sqliteboy_time6(1.24, ' tahun ', ' bulan ', ' hari ', 0)
-         -> 1 tahun 2 bulan 27 hari 
+         -> 1 tahun 2 bulan 27 hari
 
 - sqliteboy_is_leap(n)
   ::
-  
-      is leap year  
+
+      is leap year
       argument    :
          n (year)
-         
-      return value: 
+
+      return value:
         1 (leap year) or 0 (not leap year)
 
 - sqliteboy_lower(s)
@@ -786,45 +757,45 @@ User-defined Function
 
 - sqliteboy_capitalize(s, what)
   ::
-  
-      capitalize string  
+
+      capitalize string
       argument    :
          s (input string)
          what (0=first word, 1=all)
-         
-      example     : 
+
+      example     :
         sqliteboy_capitalize('hello world', 0)
-        -> 'Hello world' 
-        
+        -> 'Hello world'
+
         sqliteboy_capitalize('hello world', 1)
-        -> 'Hello World' 
+        -> 'Hello World'
 
 - sqliteboy_justify(s, justify, length, padding)
   ::
-  
-      left, right, center justify string  
+
+      left, right, center justify string
       argument    :
          s (input string)
          justify (0=left, 1=right, 2=center)
          length (length)
          padding (single padding character)
-         
-      example     : 
+
+      example     :
         sqliteboy_justify('hello', 0, 10, 'x')
-        -> 'helloxxxxx' 
-        
+        -> 'helloxxxxx'
+
         sqliteboy_justify('hello', 1, 10, 'x')
         -> 'xxxxxhello'
-        
+
         sqliteboy_justify('hello', 2, 10, 'x')
         -> 'xxhelloxxx'
-        
+
         sqliteboy_justify(12345, 1, 10, 0)
         -> '0000012345'
-        
+
 - sqliteboy_find(s, sub, position, case)
   ::
-  
+
       find index in s where substring sub is found
       argument    :
          s (input string)
@@ -832,279 +803,279 @@ User-defined Function
          position (0=lowest index, 1=highest index)
          case (0=ignore case, 1=case sensitive)
 
-      return value: 
+      return value:
         -1 (not found) or > -1 (found, starts from 0)
 
-      example     : 
+      example     :
         sqliteboy_find('hello sqliteboy', 'e', 0, 0)
         -> 1
-        
+
         sqliteboy_find('hello sqliteboy', 'e', 1, 0)
         -> 11
-        
+
         sqliteboy_find('hello sqlitEboy', 'e', 1, 0)
         -> 11
-        
+
         sqliteboy_find('hello sqlitEboy', 'e', 1, 1)
         -> 1
 
 - sqliteboy_reverse(s)
   ::
-  
+
       reverse string
       argument    :
          s (input string)
-         
-      example     : 
+
+      example     :
         sqliteboy_reverse('hello world')
         -> 'dlrow olleh'
-        
+
         sqliteboy_reverse(12345)
         -> '54321'
 
 - sqliteboy_repeat(s, n)
   ::
-  
+
       repeat s (n times)
       argument    :
          s (input string)
          n (n times)
 
-      example     : 
+      example     :
         sqliteboy_repeat('sqliteboy ', 5)
         -> 'sqliteboy sqliteboy sqliteboy sqliteboy sqliteboy'
-        
+
         sqliteboy_repeat(1, 20)
         -> '11111111111111111111'
-        
+
         sqliteboy_repeat('=', 10)
         -> '=========='
 
 - sqliteboy_count(s, sub, case)
   ::
-  
+
       count substring sub in s
       argument    :
          s (input string)
          sub (substring)
          case (0=ignore case, 1=case sensitive)
 
-      return value: 
+      return value:
         0 (not found) or > 0 (found)
 
-      example     : 
+      example     :
         sqliteboy_count('hello sqliteboy', 'e', 0)
-        -> 2 
-        
+        -> 2
+
         sqliteboy_count('hello hello hello', 'Hello', 0)
-        -> 3 
-        
+        -> 3
+
         sqliteboy_count('hello hello hello', 'Hello', 1)
         -> 0
 
 - sqliteboy_is_valid_email(s)
   ::
-  
-    return value  : 
+
+    return value  :
         1 (valid) or 0 (invalid)
 
 - sqliteboy_match(s1, s2)
   ::
-  
-      regular expression match  
+
+      regular expression match
       argument    :
          s1 (pattern string)
          s2 (test string)
-         
-      return value: 
+
+      return value:
         1 (match) or 0 (not match)
 
 - sqliteboy_is_number(n)
   ::
 
-      argument    : 
+      argument    :
          n (number or string to test)
-  
-      return value: 
+
+      return value:
         1 (number) or 0 (not number)
 
 - sqliteboy_is_float(n)
   ::
-  
-      return value: 
+
+      return value:
         1 (float) or 0 (not float)
 
 - sqliteboy_is_integer(n)
   ::
-  
-      return value: 
+
+      return value:
         1 (integer) or 0 (not integer)
 
 - sqliteboy_normalize_separator(s, separator, remove_space, unique)
   ::
-  
-      argument    : 
+
+      argument    :
          separator (separator string)
          remove_space (remove space in s, 1 or 0)
          unique (1 or 0)
-         
-      example     : 
+
+      example     :
         sqliteboy_normalize_separator
-          (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)    
-        -> '1,2,3,4' 
+          (',,,,,1,1,,  2,  3,  4,,,,', ',', 1, 1)
+        -> '1,2,3,4'
 
 - sqliteboy_split0(s, separator, index)
   ::
-  
-      split string s using separator as the delimiter string and 
+
+      split string s using separator as the delimiter string and
       return index (in list)
       argument    :
          s (input string)
          separator (separator string)
          index (index)
 
-      return value: 
+      return value:
         index (in list) or ''
 
-      example     : 
+      example     :
         sqliteboy_split0('s.q.l.i.t.e.b.o.y', '.', 1)
         -> 'q'
-        
+
         sqliteboy_split0('s.q.l.i.t.e.b.o.y', '', 1)
         -> ''
-        
+
         sqliteboy_split0('s.q.l.i.t.e.b.o.y', '.', -3)
         -> 'b'
-        
+
         sqliteboy_split0('h e l l o', '', 1)
         -> 'e'
-        
+
       tips        :
          empty separator: use whitespace
 
 - sqliteboy_chunk(s, n, separator, justify, padding)
   ::
-  
+
       split string into evenly sized chunks
-      argument    : 
+      argument    :
          s (string)
          n (length/size)
          separator (separator string)
          justify (0=left, 1=right)
          padding (single padding character)
-         
-      example     : 
+
+      example     :
         select sqliteboy_chunk('123456789', 3, '-', 1, 'x')
-        -> '123-456-789' 
-        
+        -> '123-456-789'
+
         select sqliteboy_chunk('123456789', 2, '-', 0, 'x')
         -> '12-34-56-78-9x'
-        
+
         select sqliteboy_chunk('123456789', 2, '-', 1, 'x')
         -> 'x1-23-45-67-89'
-        
+
         select sqliteboy_chunk('123456789', 4, ',', 1, '*')
         -> '***1,2345,6789'
 
 - sqliteboy_number_format(n, decimals, decimal_point, thousands_separator)
   ::
-  
+
       format a number (or number as string) with grouped thousands and decimals
       (works with number in scientific notation (e))
-      argument    : 
+      argument    :
          n (number or number as string), use string for very big number
          decimals (number of decimal points)
          decimal_point (separator for the decimal point)
          thousands_separator (thousands separator)
-         
-      example     : 
+
+      example     :
         sqliteboy_number_format(12345, 3, '.', ',')
         -> '12,345'
-      
+
         sqliteboy_number_format(12345, 3, ',', '.')
-        -> '12.345' 
-        
+        -> '12.345'
+
         sqliteboy_number_format(12345.1234, 3, ',', '.')
         -> '12.345,123'
-        
+
         sqliteboy_number_format(12345.1234, 0, ',', '.')
         -> '12.345'
-        
+
         sqliteboy_number_format(12345.1234, 10, ',', '.')
         -> '12.345,1234000000'
-        
+
         sqliteboy_number_format(12345.1234, 2, ',', ' ')
         -> '12 345,12'
-        
+
         sqliteboy_number_format('-12345678912345678912345678912345678912.123', 10, ',', '.')
         -> '-12.345.678.912.345.678.912.345.678.912.345.678.912,1230000000'
 
 - sqliteboy_number_to_words(s, language)
   ::
-  
+
       number to words
       Please read NUMBER TO WORDS REFERENCE section (below)
-      
-      argument    : 
+
+      argument    :
          s (number as string)
          language (language code)
-         
-      return value: 
+
+      return value:
         number to words or '' (error/unsupported)
-         
-      example     : 
+
+      example     :
         language  : 'id'
-        
+
         sqliteboy_number_to_words('-0', 'id')
         -> 'nol'
-        
+
         sqliteboy_number_to_words('11', 'id')
         -> 'sebelas'
-        
+
         sqliteboy_number_to_words('1000', 'id')
         -> 'seribu'
-        
+
         sqliteboy_number_to_words('1000000', 'id')
         -> 'satu juta'
-        
+
         sqliteboy_number_to_words('-123456789123456789123456789.123456789', 'id')
         -> 'min seratus dua puluh tiga triliun empat ratus lima puluh enam milyar tujuh ratus delapan puluh sembilan juta seratus dua puluh tiga ribu empat ratus lima puluh enam triliun tujuh ratus delapan puluh sembilan milyar seratus dua puluh tiga juta empat ratus lima puluh enam ribu tujuh ratus delapan puluh sembilan koma satu dua tiga empat lima enam tujuh delapan sembilan'
 
         language  : 'en1'
-        
+
         sqliteboy_number_to_words('-0', 'en1')
         -> 'zero'
-        
+
         sqliteboy_number_to_words('11', 'en1')
         -> 'eleven'
-        
+
         sqliteboy_number_to_words('1000', 'en1')
         -> 'one thousand'
-        
+
         sqliteboy_number_to_words('1000000', 'en1')
         -> 'one million'
-        
+
         sqliteboy_number_to_words('-123456789123456789123456789.123456789', 'en1')
-        -> 'minus one hundred twenty-three trillion four hundred fifty-six billion seven hundred eighty-nine million one hundred twenty-three thousand four hundred fifty-six trillion seven hundred eighty-nine billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine point one two three four five six seven eight nine'        
+        -> 'minus one hundred twenty-three trillion four hundred fifty-six billion seven hundred eighty-nine million one hundred twenty-three thousand four hundred fifty-six trillion seven hundred eighty-nine billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine point one two three four five six seven eight nine'
 
 - sqliteboy_lookup1(table, field, field1, value1, function, distinct)
   ::
-  
+
       SELECT <function>(<field>) FROM <table> WHERE <field1>=<value1>
       and
       return function result
-      argument    : 
+      argument    :
          table (table name)
          field (field name)
          field1 (where field)
          value1 (where field value)
          function (avg, count, group_concat, max, min, sum, total)
          distinct (0=non distinct, 1=distinct)
-         
-      return value: 
-        function result (as str) or '' (error)         
-         
-      example     : 
+
+      return value:
+        function result (as str) or '' (error)
+
+      example     :
         data in 'lookup' table:
         | a | b |
         ---------
@@ -1112,77 +1083,77 @@ User-defined Function
         |a  | 1 |
         |a1 | 2 |
         |a2 | 3 |
-        
+
         sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'avg', 0)
-        -> '0.5' 
-        
+        -> '0.5'
+
         sqliteboy_lookup1('lookup', 'a', 'a', 'a', 'count', 0)
-        -> '2' 
-        
+        -> '2'
+
         sqliteboy_lookup1('lookup', 'a', 'a', 'a', 'count', 1)
-        -> '1' 
-        
+        -> '1'
+
         sqliteboy_lookup1('lookup', 'a', 'a', 'a', 'group_concat', 0)
-        -> 'a,a' 
-        
+        -> 'a,a'
+
         sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'max', 0)
-        -> '1' 
-        
+        -> '1'
+
         sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'min', 0)
-        -> '0' 
-        
+        -> '0'
+
         sqliteboy_lookup1('lookup', 'b', 'a', 'a', 'sum', 0)
-        -> '1' 
-        
+        -> '1'
+
         sqliteboy_lookup1('lookup', 'b', 'a', 'a2', 'total', 0)
-        -> '3.0' 
+        -> '3.0'
 
 - sqliteboy_lookup2(table, field, field1, value1, order, default)
   ::
-  
+
       lookup into table
       SELECT <field> FROM <table> WHERE <field1>=<value1> ORDER BY rowid asc
       or
       SELECT <field> FROM <table> WHERE <field1>=<value1> ORDER BY rowid desc
       and
       return first row
-      argument    : 
+      argument    :
          table (table name)
          field (field name)
          field1 (where field)
          value1 (where field value)
          order (0=asc, 1=desc)
          default (default return value)
-         
-      example     : 
+
+      example     :
         data in 'lookup' table:
         | a | b | c |
         -------------
         |a1 |b1 |c1 |
         |a2 |b2 |c2 |
-        
+
         sqliteboy_lookup2('lookup', 'c', 'a', 'a1', 0, ':(')
-        -> 'c1' 
-        
+        -> 'c1'
+
         sqliteboy_lookup2('lookup', 'c_notfound', 'a', 'a1', 0, ':(')
         -> ':('
-        
+
         sqliteboy_lookup2('lookup', 'b', 'a', 'a1', 0, ':(')
         -> 'b1'
-        
+
         sqliteboy_lookup2(12345, 'b', 'a', 'a1', 0, ':(')
         -> ':('
 
 - sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default)
   ::
-  
+
       lookup into table
       SELECT <field> FROM <table> WHERE <field1>=<value1> and <field2>=<value2> ORDER BY rowid asc
       or
       SELECT <field> FROM <table> WHERE <field1>=<value1> and <field2>=<value2> ORDER BY rowid desc
       and
       return first row
-      argument    : 
+      argument    :
          table (table name)
          field (field name)
          field1 (where field1)
@@ -1191,27 +1162,27 @@ User-defined Function
          value2 (where field2 value)
          order (0=asc, 1=desc)
          default (default return value)
-         
-      example     : 
+
+      example     :
         data in 'lookup' table:
         | a | b | c |
         -------------
         |a1 |b1 |c1 |
         |a2 |b2 |c2 |
-        
+
         sqliteboy_lookup3('lookup', 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
-        -> 'c1' 
-        
+        -> 'c1'
+
         sqliteboy_lookup3('lookup', 'c', 'a', 'a1', 'b', 'b2', 0, ':(')
         -> ':('
-                
+
         sqliteboy_lookup3(12345, 'c', 'a', 'a1', 'b', 'b1', 0, ':(')
         -> ':('
-        
+
 - sqliteboy_split1(s, separator, table, column, convert)
   ::
-  
-      split string s using separator as the delimiter string and 
+
+      split string s using separator as the delimiter string and
       insert into table (column) for each member in list
       argument    :
          s (input string)
@@ -1220,23 +1191,23 @@ User-defined Function
          column (column in table)
          convert(0=no conversion, 1=convert to column type if applicable (or to string) )
 
-      return value: 
+      return value:
         number of row(s) inserted into table, or 0
 
-      example     : 
+      example     :
         sqliteboy_split1('h.e.l.l.o.w.o.r.l.d', '.', 'test_split', 'c', 1)
-        -> 10 
-        
+        -> 10
+
         sqliteboy_split1('hello', '', 'test_split', 'c', 0)
-        -> 1  
+        -> 1
 
       tips        :
          empty separator: use whitespace
 
 - sqliteboy_list_datetime1(s, n, interval, table, column, local)
   ::
-  
-      generate list of datetime starting with s (inclusive), 
+
+      generate list of datetime starting with s (inclusive),
       as much as n, with interval,
       and insert into table (column) for each member in list
       argument    :
@@ -1247,240 +1218,240 @@ User-defined Function
          column (column in table)
          local (0=UTC, 1=local)
 
-      return value: 
+      return value:
         number of row(s) inserted into table, or 0
 
-      example     : 
+      example     :
         (local timezone is UTC+7)
-        
+
         sqliteboy_list_datetime1('', 5, 60*60*24, 'test_date', 'a', 1)
         -> 5
         (data in table)
-        2013-06-03 23:13:27 
-        2013-06-04 23:13:27 
-        2013-06-05 23:13:27 
-        2013-06-06 23:13:27  
-        2013-06-07 23:13:27 
-        
+        2013-06-03 23:13:27
+        2013-06-04 23:13:27
+        2013-06-05 23:13:27
+        2013-06-06 23:13:27
+        2013-06-07 23:13:27
+
         sqliteboy_list_datetime1('', 5, 60*60*24, 'test_date', 'a', 0)
         -> 5
         (data in table)
-        2013-06-03 16:14:09 
-        2013-06-04 16:14:09  
-        2013-06-05 16:14:09 
-        2013-06-06 16:14:09 
-        2013-06-07 16:14:09 
-        
+        2013-06-03 16:14:09
+        2013-06-04 16:14:09
+        2013-06-05 16:14:09
+        2013-06-06 16:14:09
+        2013-06-07 16:14:09
+
         sqliteboy_list_datetime1('', 5, -60*60*24, 'test_date', 'a', 1)
         -> 5
         (data in table)
-        2013-06-03 23:14:55 
-        2013-06-02 23:14:55 
-        2013-06-01 23:14:55 
-        2013-05-31 23:14:55 
-        2013-05-30 23:14:55 
+        2013-06-03 23:14:55
+        2013-06-02 23:14:55
+        2013-06-01 23:14:55
+        2013-05-31 23:14:55
+        2013-05-30 23:14:55
 
         sqliteboy_list_datetime1('2013-01-01 00:00:00', 5, 60*60, 'test_date', 'a', 1)
         -> 5
         (data in table)
-        2013-01-01 00:00:00 
-        2013-01-01 01:00:00 
-        2013-01-01 02:00:00 
-        2013-01-01 03:00:00 
-        2013-01-01 04:00:00 
+        2013-01-01 00:00:00
+        2013-01-01 01:00:00
+        2013-01-01 02:00:00
+        2013-01-01 03:00:00
+        2013-01-01 04:00:00
 
       tips        :
          empty s: current date/time (localtime)
 
 - sqliteboy_http_remote_addr()
   ::
-  
-    return value  : 
-        http remote address 
+
+    return value  :
+        http remote address
 
 - sqliteboy_http_user_agent()
   ::
-  
-    return value  : 
+
+    return value  :
         http user agent (for example: web browser)
-        
+
 - sqliteboy_app_title()
   ::
-  
-      return value: 
+
+      return value:
         application title
-        
-      example     : 
+
+      example     :
         sqliteboy_app_title()
         -> 'sqliteboy 1.10'
 
 - sqliteboy_var_set(name, value)
   ::
-  
+
       user-defined variable: set
       (max per user apply)
       argument    :
          name (variable name, underscore and alphanumeric only, not case-sensitive)
          value (value)
 
-      return value: 
-        1 (ok) or 0 
+      return value:
+        1 (ok) or 0
 
-      example     : 
+      example     :
         sqliteboy_var_set('a', 1000)
         -> 1
-        
+
         sqliteboy_var_set('b', 'hello')
         -> 1
 
       tips        :
         to free some space, please use sqliteboy_var_del function below,
-        setting to empty string or 0 does not delete the variable        
+        setting to empty string or 0 does not delete the variable
 
 - sqliteboy_var_get(name)
   ::
-  
+
       user-defined variable: get
       argument    :
          name (variable name, underscore and alphanumeric only, not case-sensitive)
 
-      return value: 
+      return value:
         value of variable or ''
 
-      example     : 
+      example     :
         sqliteboy_var_get('a')
         -> 1000
-        
+
         sqliteboy_var_get('b')
-        -> hello 
-        
+        -> hello
+
 - sqliteboy_var_del(name)
   ::
-  
+
       user-defined variable: delete
       argument    :
          name (variable name, underscore and alphanumeric only, not case-sensitive)
 
-      return value: 
-        1 (ok) or 0 
+      return value:
+        1 (ok) or 0
 
-      example     : 
+      example     :
         sqliteboy_var_del('a')
         -> 1
-        
+
         sqliteboy_var_del('b')
         -> 1
 
 - sqliteboy_strip_html(s)
   ::
-  
+
       strip html
       argument    :
          s (input string)
 
-      example     : 
+      example     :
         sqliteboy_strip_html('<b>hello</b>')
         -> 'hello'
 
 - sqliteboy_x_user()
   ::
-  
-    return value  : 
+
+    return value  :
         user name (if extended feature is enabled, or '')
-        
+
 - sqliteboy_x_profile_all(u, field, system)
   ::
-  
+
       read user profile (both system and user-defined)
-      
+
       argument    :
          u (user)
          field (custom field)
          system (0=user-defined, 1=system)
 
-      return value: 
+      return value:
         field value (if extended feature is enabled and field is set,
         or '')
-        
+
 - sqliteboy_x_profile(u, field)
   ::
-  
+
       read custom field in user-defined profile for user u
       Please read USER-DEFINED PROFILE REFERENCE section (below)
-      
+
       argument    :
          u (user)
          field (custom field)
 
-      return value: 
+      return value:
         field value (if extended feature is enabled and field is set,
         or '')
 
 - sqliteboy_x_profile_system(u, field)
   ::
-  
+
       read system profile for user u
       Please read SYSTEM PROFILE REFERENCE section (below)
-      
+
       argument    :
          u (user)
          field (field)
 
-      return value: 
+      return value:
         field value (if extended feature is enabled and field is set,
         or '')
-        
+
 - sqliteboy_x_my(field)
   ::
-  
+
       alias for sqliteboy_x_profile(sqliteboy_x_user(), field)
 
 - sqliteboy_x_my_system(field)
   ::
-  
+
       alias for sqliteboy_x_profile_system(sqliteboy_x_user(), field)
-    
+
 
 Form Code Reference
 ========================================================================
 
 - Must be valid JSON syntax (json.org)
 
-- String (including keys below) must be double-quoted 
+- String (including keys below) must be double-quoted
   (between " and ")
 
 - No trailling comma in dict or list
 
 - Python dict (keys are case-sensitive)
 
-- Only single table is supported. If you need to write to another 
-  table after form data is saved, you can use additional SQL query 
-  statement(s) (see below). 
+- Only single table is supported. If you need to write to another
+  table after form data is saved, you can use additional SQL query
+  statement(s) (see below).
 
-- Onsave event can be used to execute SQL Query (and use the result) 
-  just before the data is saved. The SQL Query can be very complex and 
+- Onsave event can be used to execute SQL Query (and use the result)
+  just before the data is saved. The SQL Query can be very complex and
   involves nested function calls.
-  
-- Very simple subform is also supported. Subform can be used in one to 
-  many relationship. However, fields in subform is limited, compared to 
-  form (only reference and default are supported; all is required; 
-  none is readonly; column(s) can be selected). When saving data, 
-  transaction is used. 
 
-- Custom result message (based on SQL query result), is also supported.  
-  
-- Optional, additional SQL query statement(s) can be provided, and each 
-  of them will be executed in order, if you need to perform additional 
-  task(s), after the form data is saved (for example, write to another 
-  table). Previously, one might use report if need to write to several 
+- Very simple subform is also supported. Subform can be used in one to
+  many relationship. However, fields in subform is limited, compared to
+  form (only reference and default are supported; all is required;
+  none is readonly; column(s) can be selected). When saving data,
+  transaction is used.
+
+- Custom result message (based on SQL query result), is also supported.
+
+- Optional, additional SQL query statement(s) can be provided, and each
+  of them will be executed in order, if you need to perform additional
+  task(s), after the form data is saved (for example, write to another
+  table). Previously, one might use report if need to write to several
   tables. Last insert rowid value is provided.
 
-- Insert into table can be disabled by setting insert key to zero/negative 
-  value. This is useful if you need to update/delete data in table(s), using 
-  additional SQL query statement(s). By default, form/subform save will 
-  insert new row(s) into table(s). Please note that setting insert key 
-  to zero/negative value will also set last insert rowid/query result 
-  to same value as insert value. 
+- Insert into table can be disabled by setting insert key to zero/negative
+  value. This is useful if you need to update/delete data in table(s), using
+  additional SQL query statement(s). By default, form/subform save will
+  insert new row(s) into table(s). Please note that setting insert key
+  to zero/negative value will also set last insert rowid/query result
+  to same value as insert value.
 
 - Please also read PYTHON HANDLER REFERENCE section
 
@@ -1499,7 +1470,7 @@ Form Code Reference
 |               |                         |               |             |                          |
 |               | (html is allowed)       |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
-| sub           | subform                 | list          | optional    |                          |              
+| sub           | subform                 | list          | optional    |                          |
 |               |                         |               |             |                          |
 |               | - must be list of five  |               |             | - ["table2", "a", [5,3], |
 |               |   members: related      |               |             |   [["b", "Column B",     |
@@ -1626,7 +1597,7 @@ Form Code Reference
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | column        | column                  | str           | required    | "col1"                   |
 +---------------+-------------------------+---------------+-------------+--------------------------+
-| label         | label                   | str           | optional    | "column 1"               | 
+| label         | label                   | str           | optional    | "column 1"               |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | required      | is required;            | int           | optional    | 1                        |
 |               | (0 = not required,      |               |             |                          |
@@ -1785,7 +1756,7 @@ Form Code Reference
 
 - note:
 
-  - if you are using primary key column in form data, 
+  - if you are using primary key column in form data,
     '*' character will be added to column label
 
   - tips: use sqliteboy_as_integer function in constraint
@@ -1796,7 +1767,7 @@ Form Code Reference
 
     {
       "title" : "My Form (Simple)",
-      "info"  : "Form Information", 
+      "info"  : "Form Information",
       "data"  : [
                   {
                     "table"     : "table1",
@@ -1821,21 +1792,21 @@ Form Code Reference
 
     {
       "title" : "My Form 1",
-      "info"  : "Form Information", 
+      "info"  : "Form Information",
       "sub"   : [
-                  "table2", 
-                  "a", 
-                  [5,3], 
+                  "table2",
+                  "a",
+                  [5,3],
                   [
                     ["b", "Column B", [ ["0", "NO"], ["1", "YES"] ], "1"],
                     ["c", "Column C", "select a, b from table1", ""]
                   ],
-                  "My Subform" 
-                ],  
+                  "My Subform"
+                ],
       "sql2"  : [
                   "insert into table3(a, b, c, d, e) values($a, $b, $c, $d, $e)",
                   "insert into table4(x) values($last_insert_rowid)"
-                ],                    
+                ],
       "data"  : [
                   {
                     "table"     : "table1",
@@ -1853,7 +1824,7 @@ Form Code Reference
                   {
                     "table"     : "table1",
                     "column"    : "c",
-                    "default"   : ["sqliteboy_md5", "hello"],  
+                    "default"   : ["sqliteboy_md5", "hello"],
                     "constraint": ["sqliteboy_len", 1, "= 32", ""],
                     "onsave"    : "select sqliteboy_upper($value) as onsave"
                   },
@@ -1888,7 +1859,7 @@ Report Code Reference
 
 - Must be valid JSON syntax (json.org)
 
-- String (including keys below) must be double-quoted 
+- String (including keys below) must be double-quoted
   (between " and ")
 
 - No trailling comma in dict or list
@@ -1897,32 +1868,32 @@ Report Code Reference
 
 - All key (HTML input) in data is required. See Keys (data) below.
 
-- Report also can be used as form/data entry, using insert SQL query. 
+- Report also can be used as form/data entry, using insert SQL query.
   Custom result message (based on SQL query result), is also supported.
   Using free form SQL query, data entry can work with multiple table.
-  
-- Headers and footers are supported. If not defined, a default one will be 
-  created. Plain text, SQL Query, and Image are supported. Headers and
-  footers are rendered as tables (multiple rows/columns; one table for 
-  headers, one table for footers). If there is difference in number of 
-  columns for each row, largest one will be used. 
 
-- Default headers: 
+- Headers and footers are supported. If not defined, a default one will be
+  created. Plain text, SQL Query, and Image are supported. Headers and
+  footers are rendered as tables (multiple rows/columns; one table for
+  headers, one table for footers). If there is difference in number of
+  columns for each row, largest one will be used.
+
+- Default headers:
 
   - First row: first column (report title), second column (report info)
-  
+
   - Next row(s): first column (search key), second column (user input)
 
-- Default footers (SELECT SQL): 
+- Default footers (SELECT SQL):
 
   - First row: first column (number of rows), second column ("row(s)"/translated)
 
-- Default footers (NON-SELECT SQL): 
+- Default footers (NON-SELECT SQL):
 
   - First row: first column (message or ""), second column ("")
-  
-- Printer friendly version of report result is supported in default 
-  output format (HTML) 
+
+- Printer friendly version of report result is supported in default
+  output format (HTML)
 
 - Keys:
 
@@ -2097,7 +2068,7 @@ Report Code Reference
 |               | underscore and          |               |             |                          |
 |               | alphanumeric only       |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
-| label         | label                   | str           | optional    | "column a ="             | 
+| label         | label                   | str           | optional    | "column a ="             |
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | readonly      | is readonly;            | int           | optional    | 0                        |
 |               | (0 = not readonly,      |               |             |                          |
@@ -2253,7 +2224,7 @@ Report Code Reference
 
     {
       "title" : "My Report",
-      "info"  : "Report Information", 
+      "info"  : "Report Information",
       "header": ["column a of table1", "e"],
       "sql"   : "select a.a as 'column a of table1', a.e from table1 a where a.a = $input_a_a and a.e > $a_e",
       "data"  : [
@@ -2279,7 +2250,7 @@ Report Code Reference
 
     {
       "title" : "My Report",
-      "info"  : "Report Information", 
+      "info"  : "Report Information",
       "header": ["column a of table1", "e"],
       "sql"   : "select a.a as 'column a of table1', a.e from table1 a where a.a = $input_a_a and a.e > $a_e",
       "data"  : [
@@ -2320,7 +2291,7 @@ Report Code Reference
                           ["", "Rows", {}],
                           ["sql", "select $result_row_count as a", {}]
                       ]
-                   ],                
+                   ],
       "security" : {
                      "run" : ""
                    }
@@ -2330,7 +2301,7 @@ Report Code Reference
 Page Code Reference
 ========================================================================
 
-- emphasis 
+- emphasis
   ::
 
       ~text~ -> <em>text</em>
@@ -2358,95 +2329,95 @@ Page Code Reference
 Number To Words Reference
 ========================================================================
 - Supported languages:
-  
+
   - id            : Bahasa Indonesia
   - en1           : English (trillion billion million thousand scheme)
-  
-- More languages will be added 
 
-- Please let me know/correct me if there is something wrong in the 
-  implementation 
+- More languages will be added
 
-- Currently, highest supported large number name is trillion (short scale) 
+- Please let me know/correct me if there is something wrong in the
+  implementation
+
+- Currently, highest supported large number name is trillion (short scale)
   or 10**12 or 1,000,000,000,000. And, number supported is ranged
-  from: -999,999,999,999,999,999,999,999,999.99... 
+  from: -999,999,999,999,999,999,999,999,999.99...
   (minus 999.999 999 999 999 999 999 999 999 trillion trillion plus digits after decimal point)
-  to:    999,999,999,999,999,999,999,999,999.99... 
+  to:    999,999,999,999,999,999,999,999,999.99...
   (      999.999 999 999 999 999 999 999 999 trillion trillion plus digits after decimal point)
-  
+
   (This is, however, might be different for each language)
-    
-- Digits after the decimal point is limited only by python float 
+
+- Digits after the decimal point is limited only by python float
   (that is, very very long long number), so this is valid and supported number:
   999999999999999999999999999.999999999999999999999999999999999999999999999999999999
-   
+
 
 Script Code Reference
 ========================================================================
 
-- Script can be used to automate the creation of tables 
+- Script can be used to automate the creation of tables
   (including addition of columns, for existing table),
   forms, reports or user-defined profiles
-  
+
 - Solution can be deployed in form of script, that can be uploaded
-  and run by admin 
-  
+  and run by admin
+
 - Notes on tables:
 
   - Multiple tables support
-  
-  - For each table, script developer must define valid columns 
-  
+
+  - For each table, script developer must define valid columns
+
   - For each column, script developer must define valid name, type and
-    flag 
-    
+    flag
+
   - Valid column type: integer, real, char, varchar, text, blob, null
-  
-  - Valid column flag: 0, 1 (primary key), 2 (only for integer: 
+
+  - Valid column flag: 0, 1 (primary key), 2 (only for integer:
     primary key autoincrement)
-    
-  - Multiple primary key support (column flag 1 for multiple columns; do 
-    not use both flag 1 and 2 in same table) 
-    
+
+  - Multiple primary key support (column flag 1 for multiple columns; do
+    not use both flag 1 and 2 in same table)
+
   - Currently, default value is not supported
-  
-  - For existing table, addition of columns is supported 
-    
-    - Developer could define columns and only non-existing ones will be added 
-    
-    - Existing columns, if defined, will be compared. Error, if there is 
+
+  - For existing table, addition of columns is supported
+
+    - Developer could define columns and only non-existing ones will be added
+
+    - Existing columns, if defined, will be compared. Error, if there is
       mismatch between new column type and existing column type.
-      
+
 - Notes on forms, reports:
-  
+
   - Multiple forms, reports support
-  
-  - Error, if there is existing form or report 
-  
-  - Please read FORM CODE REFERENCE section (forms) or 
+
+  - Error, if there is existing form or report
+
+  - Please read FORM CODE REFERENCE section (forms) or
     REPORT CODE REFERENCE section (reports)
-    
-- Only valid value(s) will be read 
+
+- Only valid value(s) will be read
 
 - Script could not be run if there is error
 
-- If there is exception while the script is running, any newly created 
-  table (if empty) will be explicitly deleted. However, newly added 
-  columns could not be deleted (easily). 
-  
+- If there is exception while the script is running, any newly created
+  table (if empty) will be explicitly deleted. However, newly added
+  columns could not be deleted (easily).
+
 - Script is designed to be run only once
 
 - Must be valid JSON syntax (json.org)
 
 - Must be put in single file
 
-- String (including keys below) must be double-quoted 
+- String (including keys below) must be double-quoted
   (between " and ")
 
 - No trailling comma in dict or list
 
 - Python dict (keys are case-sensitive)
-  
+
 - Keys:
 
 +---------------+-------------------------+---------------+-------------+--------------------------+
@@ -2558,7 +2529,7 @@ Script Code Reference
                             "new_form_1",
                             {
                               "title" : "New Form 1",
-                              "info"  : "Form Information", 
+                              "info"  : "Form Information",
                               "data"  : [
                                           {
                                             "table"     : "new_table_1",
@@ -2572,13 +2543,13 @@ Script Code Reference
                               "security" : {
                                              "run" : ""
                                            }
-                            }                        
+                            }
                         ],
                         [
                             "new_form_2",
                             {
                               "title" : "New Form 2",
-                              "info"  : "Form Information", 
+                              "info"  : "Form Information",
                               "data"  : [
                                           {
                                             "table"     : "new_table_2",
@@ -2592,15 +2563,15 @@ Script Code Reference
                               "security" : {
                                              "run" : ""
                                            }
-                            }                        
-                        ]    
+                            }
+                        ]
                     ],
         "reports": [
                         [
                             "new_report_1",
                             {
                               "title" : "New Report 1",
-                              "info"  : "Report Information", 
+                              "info"  : "Report Information",
                               "header": ["a", "b"],
                               "sql"   : "select a,b from new_table_1 a where a > $input_a or b > $input_b",
                               "data"  : [
@@ -2640,8 +2611,8 @@ Script Code Reference
                          0,
                          ""
                       ]
-                    ]    
-                        
+                    ]
+
     }
 
 
@@ -2661,9 +2632,9 @@ System Profile Reference
 User-defined Profile Reference
 ========================================================================
 
-- Custom field(s) in user profile can be added. This is useful, 
-  for example, in multi-company environment. 
-    
+- Custom field(s) in user profile can be added. This is useful,
+  for example, in multi-company environment.
+
 - System configuration
 
 - Must be valid JSON syntax (json.org)
@@ -2675,22 +2646,22 @@ User-defined Profile Reference
 - Python list
 
 - Each member in list, must be list of 4 members:
-  
+
   - field name (underscore and alphanumeric only)
-  
+
   - field label
-  
+
   - reference (please refer to reference in FORM CODE REFERENCE
     or REPORT CODE REFERENCE)
-    
-  - default or initial value
-  
-- Field(s) in user-defined profile will always be saved as str. 
-  Conversion might be needed. 
 
-- In Form/Report/Query, user-defined profile can be read using 
+  - default or initial value
+
+- Field(s) in user-defined profile will always be saved as str.
+  Conversion might be needed.
+
+- In Form/Report/Query, user-defined profile can be read using
   sqliteboy_x_profile or sqliteboy_x_my function
-  
+
 - Example:
 ::
 
@@ -2719,7 +2690,7 @@ User-defined Profile Reference
 ::
 
     select sqliteboy_x_my('company')
-    
+
     select sqliteboy_x_profile('admin', 'company')
 
     select sqliteboy_as_integer(sqliteboy_x_profile('admin', 'company'))
@@ -2729,75 +2700,75 @@ Python Handler Reference
 ========================================================================
 
 - Python handler eases the integration with external system
-  (for example: ERP system). Python handler also could be useful in, 
-  for example, complex database operation, reading from/writing to 
+  (for example: ERP system). Python handler also could be useful in,
+  for example, complex database operation, reading from/writing to
   external devices, etc.
 
 - Availability:
-  
-  - Form 
-  
+
+  - Form
+
   - Report
-  
-- All handlers must be put in sqliteboy_user.py, in current working 
-  directory. 
-  
+
+- All handlers must be put in sqliteboy_user.py, in current working
+  directory.
+
 - Form:
 
   - Only one handler is allowed for each form. If provided, it will
-    be called, automatically. 
-  
+    be called, automatically.
+
   - function name: form_<form_name>. Please rename this function, if you
-    need to temporarily disable python handler for that form. 
-  
+    need to temporarily disable python handler for that form.
+
   - function arguments:
-  
+
     - user: current user (str)
-    
+
     - db: database connection object (web.py database object)
-    
+
     - parsed: parsed form data (list)
-    
+
     - user_data: list of user input (list)
-    
+
     - data: additional data (helper functions, UDFs, modules, etc) (dict)
-    
-  - Function *must* return an integer. To get this value, developer can use 
+
+  - Function *must* return an integer. To get this value, developer can use
     $python_handler in custom form message. If there is exception, -1 will
-    be assigned to $python_handler. 
-    
-  - Please note that python handler is an additional action, called at 
-    the end. It will not replace the default/built-in form handler. 
-    
+    be assigned to $python_handler.
+
+  - Please note that python handler is an additional action, called at
+    the end. It will not replace the default/built-in form handler.
+
   - Integration with external system, for example, can be done by reading
     user input value from SQLiteBoy, and writing to external system
 
 - Report:
 
   - Only one handler is allowed for each report. If provided, it will
-    be called, automatically. 
-  
+    be called, automatically.
+
   - function name: report_<report_name>. Please rename this function, if you
-    need to temporarily disable python handler for that report. 
-  
+    need to temporarily disable python handler for that report.
+
   - function arguments:
-  
+
     - user: current user (str)
-    
+
     - db: database connection object (web.py database object)
-    
+
     - parsed: parsed report data (list)
-    
+
     - user_data: list of user input (list)
-    
+
     - data: additional data (helper functions, UDFs, modules, etc) (dict)
-    
+
   - Function may return an integer, list of dict or web.py database query
-    result 
-    
+    result
+
   - Please note that python handler is a replacement to the sql query.
     Return value of function will be used as report result.
-    
+
   - Integration with external system, for example, can be done by reading
     from external system
 
