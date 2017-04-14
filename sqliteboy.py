@@ -33,8 +33,8 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.51'
-WSITE = 'http://%s.com' %(NAME)
+VERSION = '1.52'
+WSITE = 'http://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
 CHECK_SAME_THREAD=False
