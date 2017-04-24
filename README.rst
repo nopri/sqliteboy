@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2014, 2017
     License: GPL
-    Version: 1.52
+    Version: 1.53
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -59,7 +59,7 @@ What Is SQLiteBoy
   Scripts, profile (with user-defined profile support)
   and others are available as extended features
 
-  sqliteboy script (simple JSON syntax, single file) can be used to automate
+  SQLiteBoy script (simple JSON syntax, single file) can be used to automate
   the creation of tables (including addition of columns, for existing table),
   forms, reports or user-defined profiles
 
@@ -98,16 +98,13 @@ Links
 Updates
 ========================================================================
 
-- SQLiteBoy is planned to be rewritten in Python version 3,
-  using another libraries and technologies
-
 - Standalone version is no longer provided, but codes for this
   are still in the source code
 
-- Version 1.51 is released to fix a bug, reported in issue #1. In this
-  commit, many lines (both in this file and the source code) have been
-  added/removed. This should be text reformatting only. But, please,
-  let me know if something unrelated is deleted or added.
+- Version 1.51 was released as a bug fix (reported in issue #1). In this
+  commit, many lines (both in this file and the source code) had been
+  added/deleted (due to text reformatting). Please, let me know if
+  something was accidentally added or deleted.
 
 
 Features
@@ -2331,6 +2328,7 @@ Number To Words Reference
 - Supported languages:
 
   - id            : Bahasa Indonesia
+  - en            : English (trillion billion million thousand scheme)
   - en1           : English (trillion billion million thousand scheme)
 
 - More languages will be added

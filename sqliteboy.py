@@ -24,8 +24,6 @@
 # - bare except:
 # - PEP8 violations :)
 #
-# SQLiteBoy is planned to be rewritten in Python version 3,
-# using another libraries and technologies
 #
 
 #----------------------------------------------------------------------#
@@ -33,11 +31,11 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.52'
+VERSION = '1.53'
 WSITE = 'http://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
-CHECK_SAME_THREAD=False
+CHECK_SAME_THREAD = False
 FORM_TBL = '_sqliteboy_'
 FORM_URL_INIT = '/sqliteboy/init'
 FORM_FIELDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
@@ -1662,6 +1660,7 @@ class NumberToWordsEn1(NumberToWords):
 
 
 NUMBER_TO_WORDS['id'] = NumberToWordsId
+NUMBER_TO_WORDS['en'] = NumberToWordsEn1
 NUMBER_TO_WORDS['en1'] = NumberToWordsEn1
 
 
