@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2014, 2017
     License: GPL
-    Version: 1.53
+    Version: 1.54
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -1259,6 +1259,34 @@ User-defined Function
 
       tips        :
          empty s: current date/time (localtime)
+
+- sqliteboy_if(s, a, b)
+  ::
+
+      if s, return a, else return b
+      argument    :
+         s (SQL query, must return column named 'if')
+         a (return this, if 'if' column > 0)
+         b (return this, if 'if' column <= 0)
+
+      return value:
+        a or b, or '' (error)
+
+      example     :
+        sqliteboy_if('select 1 as if' , 'True', 'False')
+        -> 'True'
+
+        sqliteboy_if('select -1 as if' , 'True', 'False')
+        -> 'False'
+
+        sqliteboy_if('select -1 as if' , 1, -1)
+        -> -1
+
+        sqliteboy_if('select 1' , 'True', 'False')
+        -> ''
+
+      tips        :
+         for SQLite built-in command, please use CASE expression
 
 - sqliteboy_http_remote_addr()
   ::

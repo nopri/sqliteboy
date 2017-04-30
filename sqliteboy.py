@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.53'
+VERSION = '1.54'
 WSITE = 'http://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2893,6 +2893,25 @@ def sqliteboy_list_datetime1(s, n, interval, table, column, local):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_list_datetime1', 6, sqliteboy_list_datetime1))
+
+def sqliteboy_if(s, a, b):
+    ret = ''
+    #
+    s = str(s).strip()
+    if not s:
+        return ret
+    #
+    try:
+        r = db.query(s)[0].get('if')
+        if r is not None:
+            if r > 0:
+                ret = a
+            else:
+                ret = b
+    except:
+        pass
+    return ret
+SQLITE_UDF.append(('sqliteboy_if', 3, sqliteboy_if))
 
 def sqliteboy_http_remote_addr():
     return web.ctx.ip
