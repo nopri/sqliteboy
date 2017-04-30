@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2014, 2017
     License: GPL
-    Version: 1.54
+    Version: 1.55
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -1265,9 +1265,9 @@ User-defined Function
 
       if s, return a, else return b
       argument    :
-         s (SQL query, must return column named 'if')
-         a (return this, if 'if' column > 0)
-         b (return this, if 'if' column <= 0)
+         s (SQL query, must return column alias named 'if')
+         a (return this, if 'if' column considered true)
+         b (return this, if 'if' column considered false)
 
       return value:
         a or b, or '' (error)
@@ -1277,10 +1277,19 @@ User-defined Function
         -> 'True'
 
         sqliteboy_if('select -1 as if' , 'True', 'False')
+        -> 'True'
+
+        sqliteboy_if('select 0 as if' , 'True', 'False')
         -> 'False'
 
         sqliteboy_if('select -1 as if' , 1, -1)
-        -> -1
+        -> 1
+
+        sqliteboy_if('select "" as if' , 'True', 'False')
+        -> 'False'
+
+        sqliteboy_if('select "sqliteboy" as if' , 'True', 'False')
+        -> 'True'
 
         sqliteboy_if('select 1' , 'True', 'False')
         -> ''

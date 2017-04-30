@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.54'
+VERSION = '1.55'
 WSITE = 'http://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -2904,7 +2904,7 @@ def sqliteboy_if(s, a, b):
     try:
         r = db.query(s)[0].get('if')
         if r is not None:
-            if r > 0:
+            if r:
                 ret = a
             else:
                 ret = b
