@@ -5,7 +5,7 @@
 # Simple web-based management tool for SQLite database
 # (with form, report, and many other features)
 # (c) Noprianto <nop@noprianto.com>
-# 2012-2014, 2017
+# 2012-2019
 # License: GPL
 #
 # SQLiteBoy is an independent product, developed separately from the
@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.55'
+VERSION = '1.56'
 WSITE = 'http://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
@@ -3878,7 +3878,9 @@ def parseform2(code, table, execute_sql=True):
     #
     return fsub2
 
-def parseform(form, virtual={}, execute_sql=True):
+def parseform(form, virtual=None, execute_sql=True):
+    if virtual is None:
+        virtual = {}
     fo = {}
     #
     if isstr(form):
@@ -8389,7 +8391,7 @@ class login:
                                     ('login', _['cmd_login'], False, '', 'submit'),
                                 ),
                 'input': (
-                            (web.form.Textbox('user'), _['x_user'],),
+                            (web.form.Textbox('user', autofocus='autofocus'), _['x_user'],),
                             (web.form.Password('password'), _['x_password'],),
                         ),
                 'message': smsgq(SK_LOGIN, default=''),

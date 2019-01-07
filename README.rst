@@ -5,9 +5,9 @@
     Simple web-based management tool for SQLite database
     (with form, report, and many other features)
     (c) Noprianto <nop@noprianto.com>
-    2012-2014, 2017
+    2012-2019
     License: GPL
-    Version: 1.55
+    Version: 1.56
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -24,8 +24,9 @@
 What Is SQLiteBoy
 ========================================================================
 
-- Easy to use, python and web.py based, Web SQLite Manager with
-  user-defined function and many extended features (Free/open source)
+- Easy to use, python and web.py based, simple web-based management tool 
+  for SQLite database with user-defined function and many extended features 
+  (Free/open source)
 
 - User-defined functions: number to words (multi language), number format,
   table lookup, hash, base64, random, additional date/time, additional
@@ -431,7 +432,7 @@ Features
   (only for confirmation dialog and toggle select all)
 
 - Table name limitation:
-  could not handle table with whitespace in name
+  cannot handle table with whitespace in name
 
 
 Requirements
