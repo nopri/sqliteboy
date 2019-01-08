@@ -7,11 +7,11 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.56
+    Version: 1.57
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
-    Neither noprianto.com nor SQLite.org take any responsibility for the
+    Neither SQLiteBoy.com nor SQLite.org take any responsibility for the
     work of the other.
 
 
@@ -1617,6 +1617,11 @@ Form Code Reference
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | confirm       | confirmation message    | str           | optional    |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| focus         | autofocus column        | str           | optional    |                          |
+|               |                         |               |             |                          |
+|               | (please see "column"    |               |             |                          |
+|               | key in data)            |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
 
@@ -1882,6 +1887,7 @@ Form Code Reference
                     "column"    : "f"
                   }
                 ],
+      "focus" : "d",
       "message"  : ["unknown result", "zero result", "success: $result"],
       "security" : {
                      "run" : ""
@@ -2093,6 +2099,11 @@ Report Code Reference
 +---------------+-------------------------+---------------+-------------+--------------------------+
 | confirm       | confirmation message    | str           | optional    |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| focus         | autofocus field         | str           | optional    |                          |
+|               |                         |               |             |                          |
+|               | (please see "key" key   |               |             |                          |
+|               | in data)                |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
 
@@ -2301,6 +2312,7 @@ Report Code Reference
                     "constraint": ["sqliteboy_as_integer", 1, "> 0", "e must be integer"]
                   }
                 ],
+      "focus" : "a_e",
       "headers"  : [
                       [
                           ["files.image", "31", {}],

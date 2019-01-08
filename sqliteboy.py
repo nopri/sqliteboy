@@ -10,7 +10,7 @@
 #
 # SQLiteBoy is an independent product, developed separately from the
 # SQLite core library, which is maintained by SQLite.org.
-# Neither noprianto.com nor SQLite.org take any responsibility for the
+# Neither SQLiteBoy.com nor SQLite.org take any responsibility for the
 # work of the other.
 #
 #
@@ -31,8 +31,8 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.56'
-WSITE = 'http://github.com/nopri/sqliteboy'
+VERSION = '1.57'
+WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 DBN = 'sqlite'
 CHECK_SAME_THREAD = False
@@ -175,6 +175,7 @@ FORM_KEY_SQL2 = 'sql2'
 FORM_KEY_SQL0 = 'sql0'
 FORM_KEY_INSERT = 'insert'
 FORM_KEY_CONFIRM = 'confirm'
+FORM_KEY_FOCUS = 'focus'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_X = (2,) #parsed index
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE,
@@ -215,6 +216,7 @@ REPORT_KEY_FOOTERS = 'footers'
 REPORT_KEY_PAPER = 'paper'
 REPORT_KEY_MARGINS = 'margins'
 REPORT_KEY_CONFIRM = 'confirm'
+REPORT_KEY_FOCUS = 'focus'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
@@ -4015,12 +4017,20 @@ def parseform(form, virtual=None, execute_sql=True):
     except:
         fconfirm = ''
     #
+    ffocus = fo.get(FORM_KEY_FOCUS, '')
+    try:
+        if not isstr(ffocus):
+            ffocus = str(ffocus)
+        ffocus = ffocus.strip()
+    except:
+        ffocus = ''
+    #
     sql0 = fo.get(FORM_KEY_SQL0, [])
     if not type(sql0) == type([]):
         sql0 = []
     sql0 = [str(x) for x in sql0 if isstr(x)]
     #
-    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0]
+    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0, ffocus]
 
 def reqreport(report):
     try:
@@ -4244,6 +4254,14 @@ def parsereport(report, execute_sql=True):
     except:
         fconfirm = ''
     #
+    ffocus = fo.get(REPORT_KEY_FOCUS, '')
+    try:
+        if not isstr(ffocus):
+            ffocus = str(ffocus)
+        ffocus = ffocus.strip()
+    except:
+        ffocus = ''
+    #
     aligns = fo.get(REPORT_KEY_ALIGN, [])
     if not isinstance(aligns, list):
         aligns = []
@@ -4262,6 +4280,7 @@ def parsereport(report, execute_sql=True):
             xmargins2,
             fconfirm,
             aligns2,
+            ffocus,
         ]
 
 def nqtype(ftype):
@@ -6534,9 +6553,15 @@ $elif data['command'] == 'form.run':
             $ ro = ' readonly'
 
         $ defv = ''
+        $ autofocus = ''
+        $if data['focus']:
+            $if data['focus'].lower() == i[1].lower():
+                $ autofocus = ' autofocus'
         $if i[5]:
             $if ucontent is not None:
                 $i[5].set_value(ucontent)
+            $if autofocus:
+                $i[5].attrs.update({'autofocus': 'autofocus'})
             $:i[5].render()
         $else:
             $if i[6]:
@@ -6544,11 +6569,11 @@ $elif data['command'] == 'form.run':
             $if ucontent is not None:
                 $ defv = ucontent
             $if i[2] in data['blob_type']:
-                <input type='file' name="$i[1]"$ro>
+                <input type='file' name="$i[1]"$ro$autofocus>
             $elif i[2] in data['text_type']:
-                <textarea name="$i[1]" rows=5 style='width:100%;'$ro>$defv</textarea>
+                <textarea name="$i[1]" rows=5 style='width:100%;'$ro$autofocus>$defv</textarea>
             $else:
-                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>
+                <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro$autofocus>
         </td>
         </tr>
     $if data['sub']:
@@ -6662,18 +6687,24 @@ $elif data['command'] == 'report.run':
         $ ro = ''
         $if i[2]:
             $ ro = ' readonly'
+        $ autofocus = ''
+        $if data['focus']:
+            $if data['focus'].lower() == i[1].lower():
+                $ autofocus = ' autofocus'
 
         $ defv = ''
         $if i[4]:
             $if ucontent is not None:
                 $i[4].set_value(ucontent)
+            $if autofocus:
+                $i[4].attrs.update({'autofocus': 'autofocus'})
             $:i[4].render()
         $else:
             $if i[5]:
                 $ defv = i[5]
             $if ucontent is not None:
                 $ defv = ucontent
-            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro>
+            <input type='text' value='$defv' name="$i[1]" style='width:100%;'$ro$autofocus>
         </td>
         </tr>
     <tr>
@@ -8801,6 +8832,7 @@ class form_run:
         ftitle = ''
         finfo = ''
         fconfirm = ''
+        ffocus = ''
         yconfirm = False
         if not reqform(form):
             input = ()
@@ -8812,6 +8844,7 @@ class form_run:
             try:
                 pform = parseform(form)
                 fconfirm = pform[7]
+                ffocus = pform[9]
                 if fconfirm:
                     yconfirm = True
                 action_button = (
@@ -8841,6 +8874,7 @@ class form_run:
                 'hint': _['h_form_run'],
                 'ftitle': ftitle,
                 'finfo': finfo,
+                'focus': ffocus,
                 'blob_type': BLOB_TYPE,
                 'text_type': TEXT_TYPE,
                 'sub': sub,
@@ -9467,6 +9501,7 @@ class report_run:
         ftitle = ''
         finfo = ''
         fconfirm = ''
+        ffocus = ''
         yconfirm = False
         if not reqreport(report):
             input = ()
@@ -9477,6 +9512,7 @@ class report_run:
             try:
                 preport = parsereport(report)
                 fconfirm = preport[10]
+                ffocus = preport[12]
                 if fconfirm:
                     yconfirm = True
                 #
@@ -9518,6 +9554,7 @@ class report_run:
                 'hint': _['h_report_run'],
                 'ftitle': ftitle,
                 'finfo': finfo,
+                'focus': ffocus,
                 'blob_type': BLOB_TYPE,
                 'text_type': TEXT_TYPE,
                 }
