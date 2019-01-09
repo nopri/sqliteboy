@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.57
+    Version: 1.58
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -25,7 +25,7 @@ What Is SQLiteBoy
 ========================================================================
 
 - Easy to use, python and web.py based, simple web-based management tool 
-  for SQLite database with user-defined function and many extended features 
+  for SQLite database with user-defined functions and many extended features 
   (Free/open source)
 
 - User-defined functions: number to words (multi language), number format,

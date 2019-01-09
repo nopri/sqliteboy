@@ -31,9 +31,10 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.57'
+VERSION = '1.58'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
+TITLE_DEFAULT = NAME
 DBN = 'sqlite'
 CHECK_SAME_THREAD = False
 FORM_TBL = '_sqliteboy_'
@@ -1032,6 +1033,7 @@ URLS = (
     '/admin/scripts', 'admin_scripts',
     '/admin/script/(.*)', 'admin_script',
     '/profile', 'profile',
+    '/info', 'info',
     )
 
 app = None
@@ -1814,6 +1816,7 @@ LANGS = {
             'x_application': 'application',
             'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
             'x_not_avail_pdf': 'not available, PDF output will be disabled',
+            'tt_info': 'info',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
             'tt_column': 'column',
@@ -1879,6 +1882,8 @@ LANGS = {
             'cmd_notes': 'notes',
             'cmd_files': 'files',
             'cmd_pages': 'page',
+            'cmd_info': 'info',
+            'cmd_home': 'home',
             'cmd_calculator': 'calculator',
             'cmd_calculate': 'calculate',
             'cmd_users': 'users',
@@ -3341,9 +3346,13 @@ def log(msg, newline=1, stream=sys.stdout):
 def title(t, link='/'):
     ret = ''
     if not link:
-        ret = '[%s] [%s] %s' %(TITLE, dbfile0, t.strip())
+        ret = '[%s] [%s] %s' %(TITLE_DEFAULT, dbfile0, t.strip())
     else:
-        ret = '<a href="%s">[%s]</a> [%s] %s' %(link, TITLE, dbfile0, t.strip())
+        ret = '<a href="%s">[%s]</a> [%s] %s' %(link, TITLE_DEFAULT, dbfile0, t.strip())
+    return ret
+
+def title_main(t):
+    ret = '<a href="/">[%s]</a> [%s] %s' %(_['cmd_home'], dbfile0, t.strip())
     return ret
 
 def link(href, label):
@@ -5796,7 +5805,7 @@ $if r_app_title:
     $r_app_title
     <br>
     <br>
-$:title(data['title'])
+$:title_main(data['title'])
 </td>
 <td align='right' width='25%'>
 $if user():
@@ -5806,6 +5815,7 @@ $if user():
     <a href='/notes'>$_['cmd_notes']</a>
     <a href='/pages'>$_['cmd_pages']</a>
     <a href='/calculator'>$_['cmd_calculator']</a>
+    <a href='/info'>$_['cmd_info']</a>
     <a href='/logout'>$_['cmd_logout']</a>
 </td>
 <td align='right' width='12%'>$size()</td>
@@ -6311,6 +6321,27 @@ $elif data['command'] == 'create2':
     </table>
     </form>
 $elif data['command'] == 'home':
+    $if not user():
+        <br>
+        $:content[0]
+        <br>
+        <table>
+        $for i in content[1]:
+            <tr>
+            <td width='20%'>$i[0]</td>
+            <td>$:i[1]</td>
+            </tr>
+        </table>
+    $else:
+        <br>
+        <br>
+        $ r_msg_all = r_messages_all()
+        $if r_msg_all:
+            <div class='messages'>
+                <pre>$:r_msg_all
+                </pre>
+            </div>
+$elif data['command'] == 'info':
     <br>
     $:content[0]
     <br>
@@ -7448,6 +7479,7 @@ GLBL = {
     '_'         : _,
     'rt'        : rt,
     'title'     : title,
+    'title_main': title_main,
     'size'      : size,
     'menugen'   : menugen,
     'smsg'      : smsg,
@@ -11527,6 +11559,21 @@ class table_schema:
             raise web.seeother('/table/browse/%s' %(target))
         #
         dflt()
+
+
+class info:
+    def GET(self):
+        start()
+        #
+        info = sysinfo()
+        #
+        stop()
+        data = {'title': _['tt_info'], 'command': 'info'}
+        content = (
+                    '%s %s' %(_['x_welcome2'], NAME),
+                    info,
+                )
+        return T(data, content)
 
 
 #----------------------------------------------------------------------#
