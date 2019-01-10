@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.58'
+VERSION = '1.59'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -340,24 +340,56 @@ REGEX_PAGE = (
                     r'<em>\1</em>',
                     True,
                     '~text~ -> <em>text</em>',
+                    '',
                 ),
                 (
                     r'\*([^\*]+)\*',
                     r'<strong>\1</strong>',
                     True,
                     '*text* -> <strong>text</strong>',
+                    '',
                 ),
                 (
                     r'_([^_]+)_',
                     r'<u>\1</u>',
                     True,
                     '_text_ -> <u>text</u>',
+                    '',
                 ),
                 (
                     r'\[([^\|]+)\|(\S+)\]',
                     r'<a href="\2">\1</a>',
                     True,
                     '[text|url] -> <a href="url">text</a>',
+                    '',
+                ),
+                (
+                    r'\[form:(\S+)\]',
+                    r'<a href="/form/run/\1">\1</a>',
+                    True,
+                    '[form:name] -> link to run form (or empty string if the form is not available)',
+                    'canformrun',
+                ),
+                (
+                    r'\[FORM:(\S+)\]',
+                    r'<a href="/form/run/\1">\1</a><br>',
+                    True,
+                    '[FORM:name] -> link to run form, followed by a line break (or empty string if the form is not available)',
+                    'canformrun',
+                ),
+                (
+                    r'\[report:(\S+)\]',
+                    r'<a href="/report/run/\1">\1</a>',
+                    True,
+                    '[report:name] -> link to run report (or empty string if the report is not available)',
+                    'canreportrun',
+                ),
+                (
+                    r'\[REPORT:(\S+)\]',
+                    r'<a href="/report/run/\1">\1</a><br>',
+                    True,
+                    '[REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)',
+                    'canreportrun',
                 ),
             )
 SAMPLE_PAGE = ', '.join([x[3] for x in REGEX_PAGE])
@@ -3123,6 +3155,14 @@ def canform(key, form, obj='form.code..'):
 def canreport(key, report):
     return canform(key, report, 'report.code..')
 
+def canformrun(form):
+    form = str(form).strip()
+    return form and form in forms() and canform(FORM_KEY_SECURITY_RUN, form)
+
+def canreportrun(report):
+    report = str(report).strip()
+    return report and report in reports() and canreport(REPORT_KEY_SECURITY_RUN, report)
+
 def proc_access(handle):
     allowed = DEFAULT_HOSTS_ALLOWED
     ip = web.ctx.ip
@@ -4514,10 +4554,23 @@ def tr_page(code):
     #
     for r in REGEX_PAGE:
         try:
+            target = r[1]
+            f = r[4]
             if r[2]:
-                s = re.compile(r[0], re.M).sub(r[1], s)
+                p = re.compile(r[0], re.M)
+                search = re.search(r[0], s, re.M)
             else:
-                s = re.compile(r[0]).sub(r[1], s)
+                p = re.compile(r[0])
+                search = re.search(r[0], s)
+            if f:
+                if isinstance(f, str):
+                    c = globals().get(f)
+                    if search:
+                        o = search.group(1)
+                        if callable(c):
+                            if not c(o):
+                                target = ''
+            s = p.sub(target, s)
         except:
             pass
     #
@@ -10440,6 +10493,7 @@ class page:
         #
         stop()
         return T(data, content)
+
 
 class calculator:
     def GET(self):

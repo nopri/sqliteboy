@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.58
+    Version: 1.59
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -2368,9 +2368,23 @@ Page Code Reference
 
       [text|url] -> <a href="url">text</a>
 
+- form
+  ::
+
+      [form:name] -> link to run form (or empty string if the form is not available)
+      [FORM:name] -> link to run form, followed by a line break (or empty string if the form is not available)
+
+- report
+  ::
+
+      [report:name] -> link to run report (or empty string if the report is not available)
+      [REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)
+
 - Note: HTML tags will be stripped on page save
 
 - Note: rendered in <pre></pre> tag
+
+- Note: as of v1.59, page supports form/report
 
 
 Number To Words Reference
