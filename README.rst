@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.59
+    Version: 1.60
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -495,6 +495,8 @@ then, using web browser, visit localhost:11738, or localhost:PORT, if
 PORT is specified
 
 Please use https if SSL support is enabled
+
+(Please also see Server Command Reference)
 
 
 Custom Template
@@ -2833,6 +2835,46 @@ Python Handler Reference
 
   - Integration with external system, for example, can be done by reading
     from external system
+
+
+Server Command Reference
+========================================================================
+
+- Server command (new in v0.81) can be used to do actions related to 
+  server. After running such command, SQLiteBoy will quit. 
+
+- Command is passed as third argument when running SQLiteBoy (after port)
+
+- Command may require additional arguments, which must be concatenated to the command 
+  (separated with a dash, for each argument)
+
+- Command may also require additional files to be present
+
+- Available commands:
+
+  - As of v0.81: generate_favicon: (generates icon file, requires output file)::
+  
+        python sqliteboy.py test.db 11738 generate_favicon-sqliteboy.ico
+  
+  - As of v0.82: generate_pyinstaller: (generates spec file, requires output and icon file)::
+  
+        python sqliteboy.py test.db 11738 generate_pyinstaller-sqliteboy.spec-sqliteboy.ico
+  
+  - As of v0.83: generate_build: (generates version, icon, and spec file)::
+  
+        python sqliteboy.py test.db 11738 generate_build
+  
+  - As of v1.07: generate_version: (generates version file, requires output file)::
+  
+        python sqliteboy.py test.db 11738 generate_version-sqliteboy.version
+  
+  - As of v1.60: enable_extended: (enables extended features)::
+  
+        python sqliteboy.py test.db 11738 enable_extended
+  
+  - As of v1.60: enable_extended_allow_all (enables extended features and allows all hosts)::
+
+        python sqliteboy.py test.db 11738 enable_extended_allow_all
 
 
 

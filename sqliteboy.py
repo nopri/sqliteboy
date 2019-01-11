@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.59'
+VERSION = '1.60'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -339,60 +339,60 @@ REGEX_PAGE = (
                     r'~([^~]+)~',
                     r'<em>\1</em>',
                     True,
-                    '~text~ -> <em>text</em>',
+                    'd_page_emphasis',
                     '',
                 ),
                 (
                     r'\*([^\*]+)\*',
                     r'<strong>\1</strong>',
                     True,
-                    '*text* -> <strong>text</strong>',
+                    'd_page_strong',
                     '',
                 ),
                 (
                     r'_([^_]+)_',
                     r'<u>\1</u>',
                     True,
-                    '_text_ -> <u>text</u>',
+                    'd_page_underline',
                     '',
                 ),
                 (
                     r'\[([^\|]+)\|(\S+)\]',
                     r'<a href="\2">\1</a>',
                     True,
-                    '[text|url] -> <a href="url">text</a>',
+                    'd_page_link',
                     '',
                 ),
                 (
                     r'\[form:(\S+)\]',
                     r'<a href="/form/run/\1">\1</a>',
                     True,
-                    '[form:name] -> link to run form (or empty string if the form is not available)',
+                    'd_page_form',
                     'canformrun',
                 ),
                 (
                     r'\[FORM:(\S+)\]',
                     r'<a href="/form/run/\1">\1</a><br>',
                     True,
-                    '[FORM:name] -> link to run form, followed by a line break (or empty string if the form is not available)',
+                    'd_page_form_new_line',
                     'canformrun',
                 ),
                 (
                     r'\[report:(\S+)\]',
                     r'<a href="/report/run/\1">\1</a>',
                     True,
-                    '[report:name] -> link to run report (or empty string if the report is not available)',
+                    'd_page_report',
                     'canreportrun',
                 ),
                 (
                     r'\[REPORT:(\S+)\]',
                     r'<a href="/report/run/\1">\1</a><br>',
                     True,
-                    '[REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)',
+                    'd_page_report_new_line',
                     'canreportrun',
                 ),
             )
-SAMPLE_PAGE = ', '.join([x[3] for x in REGEX_PAGE])
+SAMPLE_PAGE = [x[3] for x in REGEX_PAGE]
 CALCULATOR_MAX_INPUT = 36
 CALCULATOR_ALLOWED = ''
 PLAIN_CTYPE = 'text/plain'
@@ -449,6 +449,8 @@ SERVER_COMMAND_ALL = {
                         'generate_pyinstaller': 'scmd_pyinstaller',
                         'generate_build': 'scmd_build',
                         'generate_version': 'scmd_version',
+                        'enable_extended': 'scmd_extended',
+                        'enable_extended_allow_all': 'scmd_extended_allow_all',
                     }
 SHORTCUT_TYPE_FORM = 'form'
 SHORTCUT_TYPE_REPORT = 'report'
@@ -856,7 +858,10 @@ RANDOM_SIMPLE_MAX = 100
 import sys
 import os
 if getattr(sys, 'frozen', None):
-    CURDIR = sys._MEIPASS
+    try:
+        CURDIR = sys._MEIPASS
+    except:
+        CURDIR = os.getcwd()        
     CWDIR = os.getcwd()
     SCURDIR = CWDIR
 else:
@@ -1739,6 +1744,7 @@ LANGS = {
     'default':
         {
             'usage': '<database_file> [port]',
+            's_field_simple': '; ',
             'pf_b' : 'B',
             'pf_kb': 'KB',
             'pf_mb': 'MB',
@@ -1944,6 +1950,14 @@ LANGS = {
             'cf_drop': 'confirm drop table',
             'cf_empty': 'confirm empty table',
             'cf_vacuum': 'confirm vacuum database',
+            'd_page_emphasis': '~text~ -> <em>text</em>',
+            'd_page_strong': '*text* -> <strong>text</strong>',
+            'd_page_underline': '_text_ -> <u>text</u>',
+            'd_page_link': '[text|url] -> <a href="url">text</a>',
+            'd_page_form': '[form:name] -> link to run form (or empty string if the form is not available)',
+            'd_page_form_new_line': '[FORM:name] -> link to run form, followed by a line break (or empty string if the form is not available)',
+            'd_page_report': '[report:name] -> link to run report (or empty string if the report is not available)',
+            'd_page_report_new_line': '[REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)',
             'e_db_static': 'ERROR: database file must not be placed in static directory',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
             'e_internalerror': 'ERROR 500: internal server error',
@@ -2030,7 +2044,7 @@ LANGS = {
             'h_report_run': '',
             'h_notes': '',
             'h_files': '',
-            'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: %s' %(URL_README[0], web.htmlquote(SAMPLE_PAGE)),
+            'h_pages': 'hint: HTML tags will be stripped on page save. Please read <a href="%s">README</a> for page code reference. For example: ' %(URL_README[0]),
             'h_calculator': 'hint: valid characters: %s. Maximum length: %s.' %(CALCULATOR_ALLOWED, CALCULATOR_MAX_INPUT),
             'h_scripts': 'hint: script code in JSON format. Please read <a href="%s">README</a> for script code reference.' %(URL_README[0]),
             'h_script': 'hint: only valid value(s) will be read. Script could not be run if there is error. Backup before running a script is recommended.',
@@ -3433,11 +3447,11 @@ def validfname(s):
     #
     return ret
 
-def tables(first_blank=False, exclude=EXCLUDE_TABLE):
+def tables_default(db_object, first_blank=False, exclude=EXCLUDE_TABLE):
     ret = []
     if first_blank == True: ret.append('')
     #
-    r = db.select('sqlite_master',
+    r = db_object.select('sqlite_master',
             where='type="table"',
             what='lower(name) as name',
             order="name asc")
@@ -3447,6 +3461,9 @@ def tables(first_blank=False, exclude=EXCLUDE_TABLE):
             ret.append(i.name)
     #
     return ret
+
+def tables(first_blank=False, exclude=EXCLUDE_TABLE):
+    return tables_default(db, first_blank, exclude)
 
 def columns(table, name_only=False):
     ret = []
@@ -3700,6 +3717,9 @@ def user():
 
 def isnosb():
     return not FORM_TBL in tables()
+
+def isnosb_default(db_object):
+    return not FORM_TBL in tables_default(db_object)
 
 def sysinfo():
     s_a = '%s %s %s %s' %(
@@ -4356,12 +4376,16 @@ def s_init_q(table=FORM_TBL):
     #
     return ret
 
-def s_init():
+def s_init_default(db_object, session=True):
     cmd = s_init_q()
-    db.query(cmd)
-    prepsess()
-    db.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER,
+    db_object.query(cmd)
+    if session:
+        prepsess()
+    db_object.insert(FORM_TBL, a='user', b='account', d=DEFAULT_ADMIN_USER,
         e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), f='1')
+
+def s_init():
+    return s_init_default(db)
 
 def favicon(width=FAVICON_WIDTH, height=FAVICON_HEIGHT, data=None):
     #ref: ico and bmp file format on wikipedia
@@ -4996,7 +5020,7 @@ def scmdx_path(f):
     #
     return ret
 
-def scmd_favicon(data):
+def scmd_favicon(data, dbfilename, server_port):
     ret = ''
     #
     try:
@@ -5018,7 +5042,7 @@ def scmd_favicon(data):
     #
     return ret
 
-def scmd_pyinstaller(data):
+def scmd_pyinstaller(data, dbfilename, server_port):
     #
     import xmlrpclib
     #
@@ -5064,20 +5088,20 @@ def scmd_pyinstaller(data):
     #
     return ret
 
-def scmd_build(data):
+def scmd_build(data, dbfilename, server_port):
     ret = ''
     #
     try:
         cmd = data[0]
         #
         d3 = ['generate_version', DEFAULT_VERSION]
-        r3 = scmd_version(d3)
+        r3 = scmd_version(d3, dbfilename, server_port)
         #
         d1 = ['generate_favicon', DEFAULT_FAVICON]
-        r1 = scmd_favicon(d1)
+        r1 = scmd_favicon(d1, dbfilename, server_port)
         #
         d2 = ['generate_pyinstaller', DEFAULT_SPEC, r1]
-        r2 = scmd_pyinstaller(d2)
+        r2 = scmd_pyinstaller(d2, dbfilename, server_port)
         #
         ret = '%s %s %s' %(r3, r1, r2)
         ret = ret.strip()
@@ -5086,7 +5110,7 @@ def scmd_build(data):
     #
     return ret
 
-def scmd_version(data):
+def scmd_version(data, dbfilename, server_port):
     ret = ''
     #
     try:
@@ -5112,6 +5136,50 @@ def scmd_version(data):
         ret = out
     except:
         return ret
+    #
+    return ret
+
+def scmd_extended(data, dbfilename, server_port):
+    ret = ''
+    #
+    try:
+        dbtest = web.database(
+                dbn=DBN,
+                db=dbfilename,
+            )
+        if isnosb_default(dbtest):
+            s_init_default(dbtest, False)
+            if not isnosb_default(dbtest):
+                ret = _['th_ok']
+            else:
+                ret = _['th_error']
+        else:
+            ret = _['x_enabled']
+    except:
+        return ret
+    #
+    return ret
+
+def scmd_extended_allow_all(data, dbfilename, server_port):
+    ret = ''
+    #
+    try:
+        res = scmd_extended(data, dbfilename, server_port)
+        if res == _['th_error']:
+            raise Exception
+        #
+        dbtest = web.database(
+                dbn=DBN,
+                db=dbfilename,
+            )
+        host = list(dbtest.select(FORM_TBL, where="a='security' and b='hosts'"))
+        if not host:
+            dbtest.insert(FORM_TBL, a='security', b='hosts', d=HOST_ALL, e=json.dumps([]))
+        else:
+            dbtest.update(FORM_TBL, d=HOST_ALL, where="a='security' and b='hosts'")            
+        ret = _['th_ok']
+    except:
+        return ret        
     #
     return ret
 
@@ -10408,6 +10476,7 @@ class pages:
     def GET(self):
         start()
         #
+        samples = _['s_field_simple'].join([web.htmlquote(_[x]) for x in SAMPLE_PAGE])
         data = {
                 'title': _['tt_pages'],
                 'command': 'pages',
@@ -10422,7 +10491,7 @@ class pages:
                         ),
                 'message': smsgq(SK_PAGES),
                 'url': '/page/%s' %(user()),
-                'hint': _['h_pages'],
+                'hint': _['h_pages'] + samples,
             }
         #
         q = 'my.pages.%s.home' %(user())
@@ -11679,7 +11748,7 @@ if __name__ == '__main__':
         log(_['x_server_command_mode'])
         log(_['x_please_wait'])
         log(scmd0)
-        sret = sfunc(scmd)
+        sret = sfunc(scmd, dbfile, port)
         #
         if sret:
             log(sret)
