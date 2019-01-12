@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.60
+    Version: 1.61
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -422,6 +422,8 @@ Features
 
 - Shortcut (form, report) (Extended feature, new in v0.84)
 
+- Logs (Extended feature, new in v1.61)
+
 - Human readable database size (GB, MB, KB, B)
 
 - Load time
@@ -496,7 +498,7 @@ PORT is specified
 
 Please use https if SSL support is enabled
 
-(Please also see Server Command Reference)
+(Please also read SERVER COMMAND REFERENCE)
 
 
 Custom Template
@@ -2841,7 +2843,8 @@ Server Command Reference
 ========================================================================
 
 - Server command (new in v0.81) can be used to do actions related to 
-  server. After running such command, SQLiteBoy will quit. 
+  server, database, development, or advanced usage, at the server side. 
+  After running such command, SQLiteBoy server will quit. 
 
 - Command is passed as third argument when running SQLiteBoy (after port)
 
@@ -2852,29 +2855,81 @@ Server Command Reference
 
 - Available commands:
 
-  - As of v0.81: generate_favicon: (generates icon file, requires output file)::
+  - generate_favicon (generates icon file, requires output file, new in v0.81)::
   
         python sqliteboy.py test.db 11738 generate_favicon-sqliteboy.ico
   
-  - As of v0.82: generate_pyinstaller: (generates spec file, requires output and icon file)::
+  - generate_pyinstaller (generates spec file, requires output and icon file, new in v0.82)::
   
         python sqliteboy.py test.db 11738 generate_pyinstaller-sqliteboy.spec-sqliteboy.ico
   
-  - As of v0.83: generate_build: (generates version, icon, and spec file)::
+  - generate_build (generates version, icon, and spec file, new in v0.83)::
   
         python sqliteboy.py test.db 11738 generate_build
   
-  - As of v1.07: generate_version: (generates version file, requires output file)::
+  - generate_version (generates version file, requires output file, new in v1.07)::
   
         python sqliteboy.py test.db 11738 generate_version-sqliteboy.version
   
-  - As of v1.60: enable_extended: (enables extended features)::
+  - enable_extended (enables extended features, new in v1.60)::
   
         python sqliteboy.py test.db 11738 enable_extended
   
-  - As of v1.60: enable_extended_allow_all (enables extended features and allows all hosts)::
+  - enable_extended_allow_all (enables extended features and allows all hosts, new in v1.60)::
 
         python sqliteboy.py test.db 11738 enable_extended_allow_all
+
+- Note on usage: 
+
+  - generate_favicon, generate_pyinstaller, generate_build, generate_version 
+    are usually used in building standalone SQLiteBoy version
+
+  - enable_extended and enable_extended_allow_all are provided in order 
+    to easily enable extended features and allow connection from 
+    all hosts (without using the web-based user interface). 
+    This way, SQLiteBoy can be installed on a remote server, 
+    connected to a database, and managed/accessed from another hosts. 
+    Before v1.60, these steps must be done manually (because only
+    local connection is allowed by default; probably using text-based 
+    web browser on server without GUI). 
+
+  - These commands are not intended for regular use. In order to run
+    SQLiteBoy, please read HOW TO RUN.
+
+
+Logs
+========================================================================
+
+- Logs (new in v1.61) can be set in System configuration
+
+- Access logs are saved in a SQLite database (table name: sqliteboy_log)
+
+- Columns:
+
+  - rowtime: timestamp in local time
+  
+  - a: REMOTE_ADDR
+  
+  - b: HTTP_X_FORWARDED_FOR
+  
+  - c: HTTP_USER_AGENT
+  
+  - d: user name
+  
+  - e: request method
+  
+  - f: path
+  
+  - g: query
+
+- Note:
+
+  - Use only absolute path and forward slash / for separator
+  
+  - On system configuration save, verification will be performed. 
+    If verification fails, an empty string will be saved and access logs will be disabled.  
+
+  - Please make sure that log database file is writable by current user
 
 
 

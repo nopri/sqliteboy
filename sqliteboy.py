@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.60'
+VERSION = '1.61'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -310,6 +310,15 @@ SYSTEM_CONFIG = (
                         'scripts.max_size..%s' %(SCRIPTS_MAX_SIZE),
                         SCRIPTS_MAX_SIZE,
                         int,
+                        0,
+                    ),
+                    (
+                        'x_log',
+                        'x_log_access',
+                        'log.access.',
+                        'log.access..%s' %(''),
+                        '',
+                        'log_init',
                         0,
                     ),
                     (
@@ -850,6 +859,7 @@ PDF_CTYPE = 'application/pdf'
 PDF_SUFFIX = '.pdf'
 RANDOM_SIMPLE_MIN = 10
 RANDOM_SIMPLE_MAX = 100
+LOG_TABLE = '%s_log' %(NAME)
 
 
 #----------------------------------------------------------------------#
@@ -1854,6 +1864,8 @@ LANGS = {
             'x_application': 'application',
             'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
             'x_not_avail_pdf': 'not available, PDF output will be disabled',
+            'x_log': 'logs',
+            'x_log_access': 'access log path (absolute, forward slash / for separator, will be verified on save or empty string if verification failed)',
             'tt_info': 'info',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -3015,6 +3027,11 @@ def get_value1(values, default):
     #
     return ret
 
+def strs(s, strip=True):
+    if strip:
+        return str(s).strip()
+    return str(s)
+
 def isstr(s, empty_ok=False):
     ret = False
     #
@@ -3278,6 +3295,34 @@ def proc_account_check(handle):
                 e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(),
                 f='1'
             )
+    #
+    return handle()
+
+def proc_log(handle):
+    if not isnosb():
+        log_file = s_select('log.access..')
+        if log_file:
+            try:
+                log_file = log_file[0]['d']
+                dbtest = web.database(
+                        dbn=DBN,
+                        db=log_file,
+                    )
+                #
+                env = web.ctx.env
+                #
+                dbtest.insert(
+                    LOG_TABLE,
+                    a=env.get('REMOTE_ADDR', ''),
+                    b=env.get('HTTP_X_FORWARDED_FOR', ''),
+                    c=env.get('HTTP_USER_AGENT', ''),
+                    d=user(),
+                    e=web.ctx.method,
+                    f=web.ctx.path,
+                    g=web.ctx.query,
+                )
+            except:
+                pass
     #
     return handle()
 
@@ -5819,6 +5864,32 @@ def rpt_pdf(data, content, parsed):
     ret = fout.getvalue()
     #
     return ret
+
+def log_init(log_file):
+    ret = ''
+    #
+    log_file = strs(log_file)
+    #
+    if not os.path.isabs(log_file):
+        return ret
+    #
+    try:
+        dbtest = web.database(
+                dbn=DBN,
+                db=log_file,
+            )        
+        #
+        tables = tables_default(dbtest)
+        if not LOG_TABLE in tables:
+            dbtest.query(s_init_q(table=LOG_TABLE))
+        #
+        tables = tables_default(dbtest)
+        if not LOG_TABLE in tables:
+            raise Exception
+    except:
+        return ret
+    #
+    return log_file
 
 
 #----------------------------------------------------------------------#
@@ -11793,6 +11864,7 @@ if __name__ == '__main__':
     app.add_processor(proc_udf)
     app.add_processor(proc_account_check)
     app.add_processor(proc_misc)
+    app.add_processor(proc_log)
     #
     xupdate_all = [
                         [
