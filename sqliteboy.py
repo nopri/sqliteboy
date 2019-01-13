@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.61'
+VERSION = '1.62'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -1865,7 +1865,7 @@ LANGS = {
             'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
             'x_not_avail_pdf': 'not available, PDF output will be disabled',
             'x_log': 'logs',
-            'x_log_access': 'access log path (absolute, forward slash / for separator, will be verified on save or empty string if verification failed)',
+            'x_log_access': 'access log path (absolute, forward slash / for separator, will be verified on save or empty string if verification failed, use current database might impact the database)',
             'tt_info': 'info',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -3307,6 +3307,7 @@ def proc_log(handle):
                 dbtest = web.database(
                         dbn=DBN,
                         db=log_file,
+                        check_same_thread=CHECK_SAME_THREAD
                     )
                 #
                 env = web.ctx.env
@@ -5191,6 +5192,7 @@ def scmd_extended(data, dbfilename, server_port):
         dbtest = web.database(
                 dbn=DBN,
                 db=dbfilename,
+                check_same_thread=CHECK_SAME_THREAD
             )
         if isnosb_default(dbtest):
             s_init_default(dbtest, False)
@@ -5216,6 +5218,7 @@ def scmd_extended_allow_all(data, dbfilename, server_port):
         dbtest = web.database(
                 dbn=DBN,
                 db=dbfilename,
+                check_same_thread=CHECK_SAME_THREAD
             )
         host = list(dbtest.select(FORM_TBL, where="a='security' and b='hosts'"))
         if not host:
@@ -5877,6 +5880,7 @@ def log_init(log_file):
         dbtest = web.database(
                 dbn=DBN,
                 db=log_file,
+                check_same_thread=CHECK_SAME_THREAD
             )        
         #
         tables = tables_default(dbtest)
@@ -11853,6 +11857,8 @@ if __name__ == '__main__':
     app = web.application(URLS, globals())
     app.notfound = notfound
     app.internalerror = internalerror
+    #
+    web.config.session_parameters['cookie_name'] = '%s_%s' %(NAME, md5(dbfile).hexdigest())
     #
     sess = web.session.Session(app, MemSession(), initializer = sess_init)
     prepsess()

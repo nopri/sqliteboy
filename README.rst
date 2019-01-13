@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.61
+    Version: 1.62
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -111,7 +111,7 @@ Updates
 Features
 ========================================================================
 
-- Work with single SQLite database file
+- Works with single SQLite database per instance
 
 - Single python file
 
@@ -499,6 +499,10 @@ PORT is specified
 Please use https if SSL support is enabled
 
 (Please also read SERVER COMMAND REFERENCE)
+
+As of v1.62, it is possible to run multiple SQLiteBoy instances 
+(single host, different ports / databases), as the HTTP cookie name is 
+set based on database path.
 
 
 Custom Template
@@ -2465,7 +2469,7 @@ Script Code Reference
 
 - Only valid value(s) will be read
 
-- Script could not be run if there is error
+- Script cannot be run if there is an error
 
 - If there is exception while the script is running, any newly created
   table (if empty) will be explicitly deleted. However, newly added
@@ -2902,7 +2906,7 @@ Logs
 
 - Logs (new in v1.61) can be set in System configuration
 
-- Access logs are saved in a SQLite database (table name: sqliteboy_log)
+- Access logs are saved in an SQLite database (table name: sqliteboy_log)
 
 - Columns:
 
@@ -2930,6 +2934,18 @@ Logs
     If verification fails, an empty string will be saved and access logs will be disabled.  
 
   - Please make sure that log database file is writable by current user
+  
+  - It is possible to use current database as log database. However, 
+    because logs are written per database request, it might impact the 
+    database.  
+
+- To view the logs, please use SQLiteBoy 
+
+  - If the logs are stored in external SQLite database, please run another 
+    SQLiteBoy instance to connect to the log database
+
+  - If the logs are stored in the current database, please use table browse
+    (admin) or reports
 
 
 
