@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.62'
+VERSION = '1.63'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -323,7 +323,7 @@ SYSTEM_CONFIG = (
                     ),
                     (
                         'x_users',
-                        'x_user_defined_profile',
+                        'x_user_defined_profile_ref',
                         'users.profile.',
                         'users.profile..%s' %(''),
                         '',
@@ -337,6 +337,15 @@ SYSTEM_CONFIG = (
                         'messages.all..%s' %(''),
                         '',
                         'striphtml',
+                        1,
+                    ),
+                    (
+                        'x_link',
+                        'x_link_login',
+                        'link.login.',
+                        'link.login..%s' %(''),
+                        '',
+                        str,
                         1,
                     ),
                 )
@@ -399,6 +408,13 @@ REGEX_PAGE = (
                     True,
                     'd_page_report_new_line',
                     'canreportrun',
+                ),
+                (
+                    r'\[-\]',
+                    r'<hr>',
+                    True,
+                    'd_page_hr',
+                    '',
                 ),
             )
 SAMPLE_PAGE = [x[3] for x in REGEX_PAGE]
@@ -860,6 +876,8 @@ PDF_SUFFIX = '.pdf'
 RANDOM_SIMPLE_MIN = 10
 RANDOM_SIMPLE_MAX = 100
 LOG_TABLE = '%s_log' %(NAME)
+LINKS_LOGIN_MAIN = 'login.main'
+LINKS_LOGIN_EXTRA = 'login.extra'
 
 
 #----------------------------------------------------------------------#
@@ -1857,15 +1875,18 @@ LANGS = {
             'x_website': 'website',
             'x_session': 'session(s)',
             'x_user_defined_profile': 'user-defined profile',
+            'x_user_defined_profile_ref': 'user-defined profile (please read User-defined Profile Reference)',
             'x_profile': 'profile',
             'x_create_table_schema': 'create table based on this schema',
             'x_messages': 'messages',
-            'x_messages_all': 'for all users',
+            'x_messages_all': 'welcome messages or menu for all users (please read Page Code Reference)',
             'x_application': 'application',
-            'x_application_title': 'title (maximum %s characters)' %(APPLICATION_TITLE_MAX),
+            'x_application_title': 'title (maximum %s characters, please read Title Reference)' %(APPLICATION_TITLE_MAX),
             'x_not_avail_pdf': 'not available, PDF output will be disabled',
             'x_log': 'logs',
             'x_log_access': 'access log path (absolute, forward slash / for separator, will be verified on save or empty string if verification failed, use current database might impact the database)',
+            'x_link': 'links',
+            'x_link_login': 'additional/custom links at login page (please read Link Code Reference)',
             'tt_info': 'info',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -1970,6 +1991,7 @@ LANGS = {
             'd_page_form_new_line': '[FORM:name] -> link to run form, followed by a line break (or empty string if the form is not available)',
             'd_page_report': '[report:name] -> link to run report (or empty string if the report is not available)',
             'd_page_report_new_line': '[REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)',
+            'd_page_hr': '[-] -> <hr>',
             'e_db_static': 'ERROR: database file must not be placed in static directory',
             'e_notfound': 'ERROR 404: the page you are looking for is not found',
             'e_internalerror': 'ERROR 500: internal server error',
@@ -3445,10 +3467,16 @@ def log(msg, newline=1, stream=sys.stdout):
 
 def title(t, link='/'):
     ret = ''
-    if not link:
-        ret = '[%s] [%s] %s' %(TITLE_DEFAULT, dbfile0, t.strip())
+    if user() or isnosb():
+        if not link:
+            ret = '[%s] [%s] %s' %(TITLE_DEFAULT, dbfile0, t.strip())
+        else:
+            ret = '<a href="%s">[%s]</a> [%s] %s' %(link, TITLE_DEFAULT, dbfile0, t.strip())
     else:
-        ret = '<a href="%s">[%s]</a> [%s] %s' %(link, TITLE_DEFAULT, dbfile0, t.strip())
+        if not link:
+            ret = '[%s] %s' %(TITLE_DEFAULT, t.strip())
+        else:
+            ret = '<a href="%s">[%s]</a> %s' %(link, TITLE_DEFAULT, t.strip())        
     return ret
 
 def title_main(t):
@@ -5895,6 +5923,46 @@ def log_init(log_file):
     #
     return log_file
 
+def links_login():
+    ret = {}
+    #
+    if isnosb():
+        return ret
+    #
+    try:
+        res = s_select('link.login..')[0]
+        res = res['d']
+        #
+        ret = json.loads(res)
+        #
+        for i in ret.keys():
+            if not isinstance(i, (str, unicode)):
+                raise Exception
+            #
+            if not i.strip():
+                raise Exception
+        #
+        for i in ret.values():
+            if not isinstance(i, list):
+                raise Exception
+            #
+            for j in i:
+                if not len(j) >= 2:
+                    raise Exception
+                #
+                for k in j:
+                    if not isinstance(k, (str, unicode)):
+                        raise Exception
+                    #
+                    if not k.strip():
+                        raise Exception
+                    #
+    except:
+        ret = {}
+        return ret 
+    #
+    return ret
+
 
 #----------------------------------------------------------------------#
 # SQLITE UDF (2)                                                       #
@@ -5997,11 +6065,18 @@ $ r_app_title = r_application_title()
 <table class='nohover'>
 <tr>
 <td>
-$if r_app_title:
-    $r_app_title
-    <br>
-    <br>
-$:title_main(data['title'])
+$if noextended():
+    $:title_main(data['title'])
+$else:
+    $if r_app_title:
+        $r_app_title
+        <br>
+        <br>
+    $else:
+        $if not user():
+            $:title(data['title'], '')        
+    $if user():
+        $:title_main(data['title'])
 </td>
 <td align='right' width='25%'>
 $if user():
@@ -6013,6 +6088,16 @@ $if user():
     <a href='/calculator'>$_['cmd_calculator']</a>
     <a href='/info'>$_['cmd_info']</a>
     <a href='/logout'>$_['cmd_logout']</a>
+$else:
+    $if not noextended():
+        $ links = links_login()
+        $ links_main = links.get('login.main')
+        $if links_main:
+            $for i in links_main:
+                $if len(i) >= 2:
+                    $ link_target = i[0]
+                    $ link_label = i[1]
+                    <a href="$link_target">$link_label</a> 
 </td>
 <td align='right' width='12%'>$size()</td>
 <td align='right' width='18%'>
@@ -6591,6 +6676,15 @@ $elif data['command'] == 'login':
     </tr>
     </table>
     </form>
+    $ links = links_login()
+    $ links_extra = links.get('login.extra')
+    $if links_extra:
+        <br>
+        $for i in links_extra:
+            $if len(i) >= 2:
+                $ link_target = i[0]
+                $ link_label = i[1]
+                <a href="$link_target">$link_label</a>     
 $elif data['command'] == 'password':
     $if data['message']:
         <div>
@@ -7684,6 +7778,8 @@ GLBL = {
     'isblob'    : isblob,
     'pk_sym'    : PK_SYM,
     'user'      : user,
+    'noextended': isnosb,
+    'links_login': links_login,
     'shortcuts' : r_shortcuts,
     'print_data_key': PRINT_DATA_KEY,
     'print_data_value': PRINT_DATA_VALUE,

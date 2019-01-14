@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.62
+    Version: 1.63
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -96,7 +96,7 @@ Links
 - More: https://github.com/nopri/sqliteboy/wiki/_pages
 
 
-Updates
+Development Notes
 ========================================================================
 
 - Standalone version is no longer provided, but codes for this
@@ -458,9 +458,14 @@ Standalone Version
 Note: Standalone version is no longer provided
 
 
-Default Admin User And Password
+Login
 ========================================================================
-admin
+
+- Default admin user and password: admin
+
+- As of v1.63, additional/custom links at login page are supported. Links
+  may be placed at multiple page sections (please read LINK CODE REFERENCE
+  and TITLE REFERENCE).
 
 
 SSL Support
@@ -2901,6 +2906,118 @@ Server Command Reference
     SQLiteBoy, please read HOW TO RUN.
 
 
+Link Code Reference
+========================================================================
+
+- Must be valid JSON syntax (json.org)
+
+- String (including keys below) must be double-quoted
+  (between " and ")
+
+- No trailling comma in dict or list
+
+- Python dict (keys are case-sensitive)
+
+- Additional/custom links at login page can be set at System configuration
+
+- Keys must be non-empty strings, values must be lists (or empty lists), 
+  and targets/labels must be non-empty strings. 
+  Please note that strict checking is performed on link code. If there is
+  an error, no link will be available.
+
+- Keys:
+
++---------------+-------------------------+---------------+----------------------------------------+
+| Key           | Description             | Type          | Example                                |
++===============+=========================+===============+========================================+
+| login.main    | shown on login page     | list of list  | [["http://sqliteboy.com", "sqliteboy"]]|
+|               | at links section        | of two members|                                        |
+|               |                         |               |                                        |
+|               |                         | [target,label]|                                        |
++---------------+-------------------------+---------------+----------------------------------------+
+| login.extra   | shown on login page     | list of list  | [["http://sqliteboy.com", "sqliteboy"]]|
+|               | after login form        | of two members|                                        |
+|               |                         |               |                                        |
+|               |                         | [target,label]|                                        |
++---------------+-------------------------+---------------+----------------------------------------+
+
+- Example:
+::
+
+{
+  "login.main": [["http://sqliteboy.com", "sqliteboy"]],
+  "login.extra": [["http://sqliteboy.com", "sqliteboy"]]
+}
+
+
+Title Reference
+========================================================================
+
+- If extended feature is enabled:
+
+  - Title bar:
+  
+    - Logged in::
+    
+        [sqliteboy] [<database name>] title 
+        or
+        [sqliteboy] [<database name>]
+    
+    - Not logged in::
+    
+        [sqliteboy] <login translation>
+    
+  - Main title:
+  
+    - Logged in: 
+    
+      - If Application title is set::
+
+            <Application title>
+            
+            [<home translation>] [<database name>] title 
+            or
+            [<home translation>] [<database name>] 
+       
+      - If Application title is not set::
+
+            [<home translation>] [<database name>] title 
+            or
+            [<home translation>] [<database name>] 
+
+    - Not logged in:
+
+      - If Application title is set::
+
+            <Application title>
+
+      - If Application title is not set::
+
+            [sqliteboy] <login translation>
+
+- If extended feature is not enabled:
+
+  - Title bar::
+  
+        [sqliteboy] [<database name>] title 
+        or
+        [sqliteboy] [<database name>]
+  
+  - Main title::
+
+        [<home translation>] [<database name>] title 
+        or
+        [<home translation>] [<database name>] 
+
+- Default: 
+
+  - <home translation> is home
+
+  - <login translation> is login
+
+- As of v1.58, SQLiteBoy version is no longer shown in titles
+
+
 Logs
 ========================================================================
 
@@ -2936,7 +3053,7 @@ Logs
   - Please make sure that log database file is writable by current user
   
   - It is possible to use current database as log database. However, 
-    because logs are written per database request, it might impact the 
+    because logs are written per HTTP request, it might impact the 
     database.  
 
 - To view the logs, please use SQLiteBoy 
