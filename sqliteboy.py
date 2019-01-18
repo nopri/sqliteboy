@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.63'
+VERSION = '1.64'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -44,6 +44,8 @@ FORM_FIELDS_R1 = ['rowid', 'rowtime']
 FORM_FIELD_TYPE = 'text'
 FORM_SPLIT = '.'
 FORM_VALID = None
+URL_VALID = None
+PATH_VALID = None
 PRECISION = 4
 SORT = ('asc', 'desc')
 VSORT = ('&#9650;', '&#9660;')
@@ -60,6 +62,7 @@ DEFAULT_SSL_CERTIFICATE = '%s.cert' %(NAME)
 DEFAULT_SSL_PRIVATE_KEY = '%s.key' %(NAME)
 DEFAULT_PY_FORM = 'form_'
 DEFAULT_PY_REPORT = 'report_'
+DEFAULT_PY_WEB = 'web_'
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
@@ -76,6 +79,9 @@ DEFAULT_VERSION = '%s.version' %(NAME)
 DEFAULT_WEBPY_STATIC = ['static']
 DEFAULT_QUERY_EXPORT = 'query.csv'
 DEFAULT_VAR_MAX = 3
+DEFAULT_INDEX = '/index'
+DEFAULT_HOME = '/'
+DEFAULT_CUSTOM = '/(.*)'
 APPLICATION_TITLE_MAX = 32
 BROWSE_LIMIT_ALL = [10, 25, DEFAULT_LIMIT, 100, 250, 500, 1000]
 SEQUENCE_TABLE = 'sqlite_sequence'
@@ -122,6 +128,7 @@ SK_SCRIPTS = 'scripts'
 SK_SCRIPT = 'script'
 SK_PROFILE = 'profile'
 SK_SCHEMA = 'schema'
+SK_WEBSITE = 'website'
 SKF_CREATE = 'form.create'
 SKF_RUN = 'form.run'
 SKR_CREATE = 'report.create'
@@ -420,6 +427,8 @@ REGEX_PAGE = (
 SAMPLE_PAGE = [x[3] for x in REGEX_PAGE]
 CALCULATOR_MAX_INPUT = 36
 CALCULATOR_ALLOWED = ''
+URL_MAX_INPUT = CALCULATOR_MAX_INPUT
+PATH_MAX_INPUT = 128
 PLAIN_CTYPE = 'text/plain'
 SCRIPT_KEY_NAME = 'name'
 SCRIPT_KEY_INFO = 'info'
@@ -878,6 +887,10 @@ RANDOM_SIMPLE_MAX = 100
 LOG_TABLE = '%s_log' %(NAME)
 LINKS_LOGIN_MAIN = 'login.main'
 LINKS_LOGIN_EXTRA = 'login.extra'
+HEADER_CONTENT = 'Content-Type' 
+DEFAULT_CONTENT = 'text/html'
+PREFIX_REDIR_HTTP = 'http://'
+PREFIX_REDIR_HTTPS = 'https://'
 
 
 #----------------------------------------------------------------------#
@@ -911,6 +924,12 @@ import string
 FORM_VALID = [x for x in string.ascii_lowercase] + [x for x in string.digits]
 FORM_VALID.append('_')
 CALCULATOR_ALLOWED = string.digits + '.-+*/()'
+URL_VALID = [x for x in string.ascii_lowercase]
+PATH_VALID = [x for x in string.ascii_lowercase] + [x for x in string.digits]
+PATH_VALID.append('_')
+PATH_VALID.append('.')
+PATH_VALID.append('/')
+PATH_VALID.append('-')
 
 import socket
 try:
@@ -1053,7 +1072,8 @@ except Exception, e:
 # WEB                                                                  #
 #----------------------------------------------------------------------#
 URLS = (
-    '/', 'index',
+    DEFAULT_HOME, 'home',
+    DEFAULT_INDEX, 'index',
     '/favicon.ico', 'favicon_ico',
     '/table/action', 'table_action',
     '/table/browse/(.*)', 'table_browse',
@@ -1081,6 +1101,7 @@ URLS = (
     '/admin/hosts', 'admin_hosts',
     '/admin/system', 'admin_system',
     '/admin/backup', 'admin_backup',
+    '/admin/website', 'admin_website',
     '/form/action', 'form_action',
     '/form/run/(.*)', 'form_run',
     '/form/shortcut/(.*)', 'form_shortcut',
@@ -1099,7 +1120,15 @@ URLS = (
     '/admin/script/(.*)', 'admin_script',
     '/profile', 'profile',
     '/info', 'info',
+    DEFAULT_CUSTOM, 'website',
     )
+URLS_RESERVED_DEFAULT = (
+    DEFAULT_HOME,
+    DEFAULT_CUSTOM,
+    )
+URLS_RESERVED_REAL = [x for x in URLS if x.startswith('/') and x not in URLS_RESERVED_DEFAULT]
+URLS_RESERVED = [x.replace('/(.*)', '') for x in URLS_RESERVED_REAL]
+URLS_RESERVED.sort()
 
 app = None
 db = None
@@ -1780,6 +1809,7 @@ LANGS = {
             'a_local': 'local',
             'a_all': 'all',
             'a_custom': 'custom',
+            'x_id': 'id',
             'x_welcome': 'welcome',
             'x_welcome2': 'welcome to',
             'x_allow': 'allow',
@@ -1824,6 +1854,9 @@ LANGS = {
             'x_password_new_repeat': 'repeat new password',
             'x_added': 'added',
             'x_deleted': 'deleted',
+            'x_exists': 'exists',
+            'x_invalid': 'invalid',
+            'x_reserved': 'reserved',
             'x_password_changed': 'password changed',
             'x_admin_changed': 'admin changed',
             'x_not_applicable': 'not applicable',
@@ -1887,6 +1920,7 @@ LANGS = {
             'x_log_access': 'access log path (absolute, forward slash / for separator, will be verified on save or empty string if verification failed, use current database might impact the database)',
             'x_link': 'links',
             'x_link_login': 'additional/custom links at login page (please read Link Code Reference)',
+            'x_url': 'url',
             'tt_info': 'info',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -1923,6 +1957,7 @@ LANGS = {
             'tt_vacuum': 'vacuum',
             'tt_profile': 'profile',
             'tt_schema': 'schema',
+            'tt_website': 'website',
             'cmd_browse': 'browse',
             'cmd_insert': 'insert',
             'cmd_column': 'column',
@@ -1947,6 +1982,7 @@ LANGS = {
             'cmd_readme': 'readme',
             'cmd_source': 'source',
             'cmd_website': 'website',
+            'cmd_website_admin': 'website',
             'cmd_login': 'login',
             'cmd_logout': 'logout',
             'cmd_password': 'password',
@@ -2060,6 +2096,7 @@ LANGS = {
             'o_import_csv': 'OK: import csv',
             'o_profile': 'OK: profile updated',
             'o_profile_set': 'OK: profile set',
+            'o_website': 'OK: website updated',
             'h_insert': 'hint: leave blank to use default value (if any)',
             'h_edit': 'hint: for blob field, leave blank = do not update',
             'h_column': 'hint: only add column is supported in SQLite. Primary key/unique is not allowed in column addition. Default value(s) must be constant.',
@@ -2086,6 +2123,7 @@ LANGS = {
             'h_vacuum': 'hint: vacuum command will rebuild the entire database and may reduce the size of database file. Please make sure there is enough free space, at least twice the size of the original database file. This command may change the rowids of rows in any tables that do not have an explicit integer primary key column.',
             'h_import_csv': 'hint: import CSV file (Excel dialect) into table (insert). First row will be read as column(s).',
             'h_profile': '',
+            'h_website': 'hint: Please read <a href="%s">README</a> for Website and custom URL reference. Only valid values are saved (id and url are checked on save). Id must be alphabetic only (maximum length: %s) and will be converted to lowercase. URL must be alphanumeric/underscore/dot/slash/dash (maximum length: %s) and will be converted to lowercase. Please start url with / (but do not end it with /), and use / for home page. Content is interpreted and handled based on value (HTML/template, files, redirect, python handler; as documented). Reserved URLs (%s, subject to change): %s' %(URL_README[0], URL_MAX_INPUT, PATH_MAX_INPUT, len(URLS_RESERVED), ', '.join(URLS_RESERVED)),
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob data]',
             'z_edit_blob_column': 'could not edit this row: blob data in non-blob column',
@@ -3049,6 +3087,17 @@ def get_value1(values, default):
     #
     return ret
 
+def get_values(values, default, separator=' '):
+    ret = default
+    #
+    if not values:
+        values = ()
+    #
+    if values:
+        ret = separator.join(values)
+    #
+    return ret
+
 def strs(s, strip=True):
     if strip:
         return str(s).strip()
@@ -3064,6 +3113,19 @@ def isstr(s, empty_ok=False):
                 ret = True
             else:
                 ret = False
+    #
+    return ret
+
+def isint(s):
+    s = strs(s)
+    #
+    ret = False
+    #
+    try:
+        test = int(s)
+        ret = True
+    except:
+        pass
     #
     return ret
 
@@ -3265,11 +3327,13 @@ def proc_login(handle):
     if not isnosb():
         if not sess.user:
             if path == '/favicon.ico': return handle()
+            if path == '/': return handle()
+            if path in r_urls_path(): return handle()
             if not path == '/login':
                 raise web.seeother('/login')
         else:
             if path == '/login':
-                raise web.seeother('/')
+                raise web.seeother(DEFAULT_INDEX)
     #
     return handle()
 
@@ -3293,7 +3357,7 @@ def proc_nosb(handle):
             path.startswith('/calculator') or \
             path.startswith('/profile') or \
             path.startswith('/admin'):
-                raise web.seeother('/')
+                raise web.seeother(DEFAULT_INDEX)
     #
     return handle()
 
@@ -3411,7 +3475,7 @@ def internalerror():
     return web.internalerror(T(data, content))
 
 def dflt():
-    raise web.seeother('/')
+    raise web.seeother(DEFAULT_INDEX)
 
 def nrfloat(snumber, precision=PRECISION, round=decimal.ROUND_UP):
     le = '0' * precision
@@ -3465,7 +3529,7 @@ def log(msg, newline=1, stream=sys.stdout):
     #
     stream.write('%s%s' %(msg, end) )
 
-def title(t, link='/'):
+def title(t, link=DEFAULT_INDEX):
     ret = ''
     if user() or isnosb():
         if not link:
@@ -3480,7 +3544,7 @@ def title(t, link='/'):
     return ret
 
 def title_main(t):
-    ret = '<a href="/">[%s]</a> [%s] %s' %(_['cmd_home'], dbfile0, t.strip())
+    ret = '<a href="%s">[%s]</a> [%s] %s' %(DEFAULT_INDEX, _['cmd_home'], dbfile0, t.strip())
     return ret
 
 def link(href, label):
@@ -3516,6 +3580,61 @@ def validfname(s):
     ret = True
     for i in s:
         if not i in FORM_VALID:
+            ret = False
+            break
+    #
+    return ret
+
+def validurlid(s):
+    try:
+        if not s.strip():
+            return False
+        if len(s) > URL_MAX_INPUT:
+            return False
+    except:
+        return False
+    #
+    ret = True
+    for i in s:
+        if not i in URL_VALID:
+            ret = False
+            break
+    #
+    return ret
+
+def validurlpath(s):
+    s = strs(s)
+    #
+    if not s:
+        return False
+    #
+    if s == '/':
+        return True
+    #
+    if not s.startswith('/'):
+        return False
+    #
+    if s.endswith('/'):
+        return False
+    #
+    if len(s) > PATH_MAX_INPUT:
+        return False    
+    #
+    parts = [x for x in s.split('/') if x.strip()]
+    sep = s.count('/')
+    if sep >= len(parts):
+        if not sep == 1 and len(parts) == 1:
+            return False
+    #
+    if sep < 1:
+        return False
+    #
+    if s in URLS_RESERVED:
+        return False
+    #
+    ret = True
+    for i in s:
+        if not i in PATH_VALID:
             ret = False
             break
     #
@@ -3814,13 +3933,14 @@ def sysinfo():
     #
     s_adm = _['x_no']
     if isadmin():
-        s_adm = '%s %s %s %s %s %s' %(
+        s_adm = '%s %s %s %s %s %s %s' %(
             _['x_yes'],
             link('/admin/users', _['cmd_users']),
             link('/admin/hosts', _['cmd_hosts']),
             link('/admin/system', _['cmd_system']),
             link('/admin/backup', _['cmd_backup']),
             link('/admin/scripts', _['cmd_scripts']),
+            link('/admin/website', _['cmd_website_admin']),
             )
     if isnosb(): s_adm = _['x_not_applicable']
     #
@@ -4588,6 +4708,93 @@ def r_files(all_=False):
             c['d'] = ''
     #
     return content
+
+def r_urls():
+    q = 'website.url..'
+    #
+    content = s_select(q, what='rowid, a, b, c, d, e, f, g', order='d asc')
+    #
+    ret = []
+    for c in content:
+        cd = strs(c.get('d', '')).strip().lower()
+        ce = strs(c.get('e', '')).strip().lower()
+        #
+        if not cd or not ce:
+            continue
+        #
+        if not validurlid(cd):
+            continue
+        #
+        if not validurlpath(ce):
+            continue
+        #
+        ret.append(c)
+    #
+    return ret
+
+def r_urls_id():
+    ret = []
+    #
+    urls = r_urls()
+    if not urls:
+        return ret
+    #
+    try:
+        ret = [x['d'] for x in urls]
+    except:
+        return ret
+    #
+    return ret
+
+def r_urls_path():
+    ret = []
+    #
+    urls = r_urls()
+    if not urls:
+        return ret
+    #
+    try:
+        ret = [x['e'] for x in urls]
+    except:
+        return ret
+    #
+    return ret
+
+def r_urls_info(url):
+    ret = []
+    #
+    urls = r_urls()
+    if not urls:
+        return ret
+    #
+    for u in urls:
+        e = u.get('e', '')
+        if e:
+            if url == e:
+                d = u.get('d', '')
+                f = u.get('f', '')
+                ret = [d, f]
+                break
+    #
+    return ret
+
+def r_urls_info_r(url_id):
+    ret = []
+    #
+    urls = r_urls()
+    if not urls:
+        return ret
+    #
+    for u in urls:
+        d = u.get('d', '')
+        if d:
+            if url_id == d:
+                e = u.get('e', '')
+                f = u.get('f', '')
+                ret = [e, f]
+                break
+    #
+    return ret
 
 def r_fs_ok(sid):
     if not isstr(sid):
@@ -5611,6 +5818,9 @@ def py_f(name):
 def py_r(name):
     return py_o(name, reports, DEFAULT_PY_REPORT)
 
+def py_w(name):
+    return py_o(name, r_urls_id, DEFAULT_PY_WEB)    
+
 def py_handler(name):
     ret = None
     #
@@ -5962,6 +6172,118 @@ def links_login():
         return ret 
     #
     return ret
+
+def handle_website_default(content):
+    web.header(HEADER_CONTENT, DEFAULT_CONTENT)
+    return content    
+
+def handle_website_py(header, content):
+    if not isinstance(header, list):
+        dflt()
+    #
+    if content is None:
+        dflt()
+    #
+    content = strs(content, False)
+    #
+    if not header:
+        return handle_website_default(content)
+    else:
+        for h in header:
+            if not isinstance(h, list):
+                continue
+            #
+            if not len(h) >= 2:
+                continue
+            web.header(h[0], h[1])
+        return content
+    #
+    dflt()
+
+def handle_website_files(sid):
+    ft = ''
+    fn = ''
+    fc = ''
+    try:
+        fn, ft, fc = r_fs_content(sid)
+    except:
+        dflt()
+    #
+    disposition = 'inline; filename=' + fn
+    #
+    web.header('Content-Type', ft)
+    web.header('Content-Disposition', disposition)
+    return fc
+    
+def handle_website_redir(s):
+    if not isstr(s):
+        dflt()
+    #
+    raise web.seeother(s)
+
+def handle_website_template(url_id, url, content):
+    web.header(HEADER_CONTENT, DEFAULT_CONTENT)
+    #
+    try:
+        t = web.template.Template(content, globals=GLBL_WEB_TEMPLATE, filename=DEFAULT_T_BASE)
+        return t(url_id, url, content)
+    except:
+        pass
+    #
+    return content
+
+def handle_website(url_id, url, content):
+    if not url_id:
+        dflt()
+    #
+    url_id = strs(url_id)
+    url = strs(url)
+    content = strs(content, False)
+    #
+    if not validurlid(url_id):
+        dflt()
+    #
+    if not validurlpath(url):
+        dflt()
+    #1: python handler
+    py_func = py_handler(py_w(url_id))
+    if py_func:
+        try:
+            f_python_handler = py_func(
+                                    user(),
+                                    db,
+                                    url_id,
+                                    url,
+                                    content,
+                                    PY_HANDLER_DATA
+                                )
+            if not isinstance(f_python_handler, list):
+                raise Exception
+            #
+            if not len(f_python_handler) ==  2:
+                raise Exception
+            #
+            return handle_website_py(f_python_handler[0], f_python_handler[1])
+        except:
+            dflt()
+    else:
+        #2: number
+        if isint(content):
+            #files
+            if r_fs_ok(content): 
+                return handle_website_files(content)
+            else:
+                return handle_website_default(content)
+        else:
+            #3: not number
+            #redir
+            if content.startswith(PREFIX_REDIR_HTTP) or content.startswith(PREFIX_REDIR_HTTPS):
+                return handle_website_redir(content)
+            else:
+                #template
+                return handle_website_template(url_id, url, content)
+    #
+    dflt()
 
 
 #----------------------------------------------------------------------#
@@ -7305,6 +7627,77 @@ $elif data['command'] == 'files':
         </tr>
     </table>
     </form>
+$elif data['command'] == 'website':
+    <p>
+    <i>$:data['hint'].capitalize()</i>
+    </p>
+    $if data['message']:
+        <div>
+            $for m in data['message']:
+                $': '.join(m)
+                <br>
+        </div>
+    <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
+    $for b in data['action_button']:
+        $if b[2]:
+            <input type='$b[4]' name='$b[0]' value='$b[1]' onclick='return confirm("$b[3].capitalize()");'>
+        $else:
+            <input type='$b[4]' name='$b[0]' value='$b[1]'>
+        &nbsp;
+    <br>
+    <br>
+    <table>
+    <tr>
+    $for i in data['columns']:
+        <th>
+            $if i == data['select_all']:
+                <input type='checkbox' name="$data['select']_all" onclick='toggle(this, "$data['select']");'> $i
+            $else:
+                $i
+        </th>
+    </tr>
+    $for u in content:
+        <tr>
+        <td width='12%' align='center'>
+            <input type='checkbox' name="$data['select']" value="$u['rowid']">
+            <input type='hidden' name='d_new' value=''>
+            <input type='hidden' name='e_new' value=''>
+            <input type='hidden' name='f_new' value=''>
+        </td>
+        <td width='15%'>
+            <input type='hidden' name='rowid' value="$u['rowid']">
+            <input type='hidden' name='d' value="$u['d']">
+            $u['d']
+        </td>
+        <td width='15%'>
+            <input type='hidden' name='e' value="$u['e']">
+            $u['e']
+        </td>
+        <td>
+            <textarea cols='40' rows='10' name='f'>$u['f']</textarea>
+        </td>
+        </tr>
+    $for u in range(data['max']):
+        <tr>
+        <td width='12%' align='center'>
+            &nbsp;
+        </td>
+        <td>
+            <input type='hidden' name='rowid' value=''>
+            <input type='hidden' name='d' value=''>
+            <input type='hidden' name='e' value=''>
+            <input type='hidden' name='f' value=''>
+            <input type='text' name='d_new'>
+        </td>
+        <td>
+            <input type='text' name='e_new'>
+        </td>
+        <td>
+            <textarea cols='40' rows='10' name='f_new'></textarea>
+        </td>
+        </tr>
+    </table>
+    </form>
 $elif data['command'] == 'pages':
     <p>
     $ hint = data['hint'][0].upper() + data['hint'][1:]
@@ -7790,11 +8183,57 @@ GLBL = {
     'style_align_default': style_align_default,
     }
 T = web.template.Template(T_BASE, globals=GLBL, filename=DEFAULT_T_BASE)
+#
+GLBL_WEB_TEMPLATE = {
+    'size'      : size,
+    'user'      : user,
+    }
 
 
 #----------------------------------------------------------------------#
 # CLASS                                                                #
 #----------------------------------------------------------------------#
+class home:
+    def GET(self):
+        if isnosb():
+            dflt()
+        #
+        urls = r_urls()
+        if not urls:
+            dflt()
+        #
+        f = None
+        d = None
+        e = None
+        #
+        for u in urls:
+            if not hasattr(u, 'get'):
+                continue
+            #
+            e = u.get('e', '')
+            if not e:
+                continue
+            #
+            if e == DEFAULT_HOME:
+                f = u.get('f', None)
+                d = u.get('d', None)
+                break
+        #
+        if f is None or d is None or e is None:
+            dflt()
+        #
+        if not validurlid(d) or not validurlpath(e):
+            dflt()
+        #
+        f = strs(f, False)
+        d = strs(d)
+        e = strs(e)
+        return handle_website(d, e, f)
+        
+    def POST(self):
+        dflt()
+    
+
 class index:
     def GET(self):
         start()
@@ -11868,6 +12307,181 @@ class info:
                     info,
                 )
         return T(data, content)
+
+
+class admin_website:
+    def GET(self):
+        start()
+        #
+        data = {
+                'title': _['tt_website'],
+                'command': 'website',
+                'action_url': '/admin/website',
+                'action_method': 'post',
+                'action_enctype': 'multipart/form-data',
+                'action_button': (
+                                    ('save', _['cmd_save'], False, '', 'submit'),
+                                ),
+                'columns': (
+                            _['x_delete'],
+                            _['x_id'],
+                            _['x_url'],
+                            _['x_content'],
+                        ),
+                'select': 'select',
+                'select_all': _['x_delete'],
+                'max': 3,
+                'message': smsgq(SK_WEBSITE),
+                'hint': _['h_website'],
+            }
+        #
+        content = r_urls()
+        #
+        stop()
+        return T(data, content)
+
+    def POST(self):
+        inp = web.input(select=[], rowid=[], d=[], e=[], f=[], d_new=[], 
+            e_new=[], f_new=[])
+        select = inp.select
+        rowid = inp.rowid
+        d = inp.d
+        e = inp.e
+        f = inp.f
+        d_new = inp.d_new
+        e_new = inp.e_new
+        f_new = inp.f_new
+        #
+        msg = []
+        #
+        updated = 0
+        #
+        #delete
+        allx = r_urls()
+        allid = [x['rowid'] for x in allx]
+        for s in select:
+            if s in allid:
+                try:
+                    db.delete(FORM_TBL,
+                        where='a=$a and b=$b and rowid=$ri',
+                        vars={
+                            'a': 'website',
+                            'b': 'url',
+                            'ri': s
+                        }
+                    )
+                    sev = ()
+                    for a in allx:
+                        if a['rowid'] == s:
+                            sev = [
+                                        a['d'].strip(),
+                                        a['e'].strip(),
+                                    ]
+                            break
+                    se = get_values(sev, s)
+                    m = (_['x_deleted'], se)
+                    msg.append(m)
+                except:
+                    pass
+        #update
+        allx = r_urls()
+        alld = [strs(x['d']).lower() for x in allx]
+        alle = [strs(x['e']).lower() for x in allx]
+        allid = [x['rowid'] for x in allx]
+        for i in range(len(rowid)):
+            ri = rowid[i]
+            di = strs(d[i]).lower()
+            ei = strs(e[i]).lower()
+            fi = strs(f[i])
+            #
+            if not di or not ei:
+                continue
+            #
+            if (ri in allid) and (not ri in select) \
+                and (di in alld) and (ei in alle) \
+                and validurlid(di) and validurlpath(ei):
+                try:
+                    db.update(FORM_TBL, where='a=$a and b=$b and d=$d and e=$e and rowid=$ri',
+                        f=fi,
+                        vars = {
+                            'a': 'website',
+                            'b': 'url',
+                            'd': di,
+                            'e': ei,
+                            'ri': ri
+                        }
+                    )
+                    updated += 1
+                except:
+                    pass
+        #new
+        allx = r_urls()
+        alld = [strs(x['d']).lower() for x in allx]
+        alle = [strs(x['e']).lower() for x in allx]
+        for i in range(len(d_new)):
+            ri = rowid[i]
+            if ri:
+                continue
+            #
+            di = strs(d_new[i]).lower()
+            ei = strs(e_new[i]).lower()
+            fi = strs(f_new[i])
+            #
+            if not di or not ei:
+                continue
+            #
+            if di in alld or ei in alle:
+                ex = get_values([di, ei], '')
+                m = (_['x_exists'], ex)
+                msg.append(m)                
+                continue
+            #
+            if validurlid(di) and validurlpath(ei):
+                try:
+                    db.insert(FORM_TBL, a='website', b='url', d=di,
+                        e=ei, f=fi
+                    )
+                    ex = get_values([di, ei], '')
+                    m = (_['x_added'], ex)
+                    msg.append(m)
+                except:
+                    pass
+            else:
+                if ei in URLS_RESERVED:
+                    ex = get_values([di, ei], '')
+                    m = (_['x_reserved'], ex)
+                    msg.append(m)                
+                else:
+                    ex = get_values([di, ei], '')
+                    m = (_['x_invalid'], ex)
+                    msg.append(m)                
+        #
+        if updated:
+            m = (_['o_website'],)
+            msg.append(m)
+        #
+        sess[SK_WEBSITE] = msg
+        raise web.seeother('/admin/website')
+
+
+class website:
+    def GET(self, url):
+        if isnosb():
+            dflt()
+        #
+        url = '%s%s' %(DEFAULT_HOME, url)
+        #
+        if not url in r_urls_path():
+            dflt()
+        #
+        info = r_urls_info(url)
+        if info:
+            try:
+                return handle_website(info[0], url, info[1])
+            except:
+                dflt()
+        #
+        dflt()
 
 
 #----------------------------------------------------------------------#

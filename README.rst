@@ -3,11 +3,11 @@
 
     SQLiteBoy
     Simple web-based management tool for SQLite database
-    (with form, report, and many other features)
+    (with form, report, website, and many other features)
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.63
+    Version: 1.64
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -63,6 +63,10 @@ What Is SQLiteBoy
   SQLiteBoy script (simple JSON syntax, single file) can be used to automate
   the creation of tables (including addition of columns, for existing table),
   forms, reports or user-defined profiles
+  
+  It is also possible to use SQLiteBoy to serve a website with custom URLs.
+  URL can be handled by a python function, redirect, Files, HTML with
+  template, or plain HTML.
 
 
 Links
@@ -106,6 +110,9 @@ Development Notes
   commit, many lines (both in this file and the source code) had been
   added/deleted (due to text reformatting). Please, let me know if
   something was accidentally added or deleted.
+
+- As of v1.64, index URL was changed to /index because / is used for 
+  public home page (new in v1.64, please read WEBSITE AND CUSTOM URL REFERENCE)  
 
 
 Features
@@ -297,6 +304,15 @@ Features
       (as in form or report, is also supported)
 
     - Please read USER-DEFINED PROFILE REFERENCE section (below)
+
+- Website (Extended feature, new in v1.64)
+
+  - Custom URLs
+  
+  - URL can be handled by a python function, redirect, Files, HTML with
+    template, or plain HTML
+
+  - Please read WEBSITE AND CUSTOM URL REFERENCE
 
 - Browse table
 
@@ -518,6 +534,121 @@ Custom Template
 - For template example: T_BASE variable
 
 - Please do not put '$def with (data, content)' line in template
+
+
+Website and Custom URL Reference
+========================================================================
+
+- To manage a website, please visit /admin/website (as admin), or visit
+  info -> website
+  
+- Custom URLs, as long as the URLs are not used by SQLiteBoy (reserved).
+  List of reserved URLs is shown in website management screen.
+  
+- URL can be handled by a python function, redirect, Files, HTML with
+  template, or plain HTML
+
+- Each URL is specified by:
+
+  - id: must be alphabetic only (maximum length: 36), converted to 
+    lowercase on save. This id is used in python handler.
+    
+  - url: must be alphanumeric/underscore/dot/slash/dash (maximum length: 128),
+    converted to lowercase on save. This is the URL. Please read the 
+    additional rules below.
+    
+  - content: content, interpreted. 
+  
+- Additional URL rules:
+
+  - Please use / for home page. Without this URL, / will be redirected
+    to /index (and then /login if the user is not logged in) 
+  
+  - Please start url with / (but do not end it with /)
+
+- Only valid values are saved (id and url are checked on save)
+
+- Content interpretation:
+
+  - If there is a python function named web_<id> (in sqliteboy_user.py,
+    please also read PYTHON HANDLER REFERENCE):
+  
+    - It will be called and the return value is used as dynamic contents 
+      (with custom HTTP headers)
+      
+    - If there is an exception, redirection to /index will be performed.
+      Please make sure that the python function is valid.
+    
+  - If python handler for that URL is NOT available:
+  
+    - If the content looks like a number:
+    
+      - If the number is a valid file id:
+      
+        - Contents of the file will be returned (along with saved headers) 
+    
+      - If the number is NOT a valid file id:
+      
+        - Content will be returned 
+    
+    - If it is NOT a number:
+    
+      - If the content starts with http:// or https://, redirection is
+        performed
+      
+      - Otherwise, the content is interpreted as HTML with template
+
+- HTML template interpretation:
+
+  - If there is an exception (or simply plain HTML), content will be displayed as is
+  
+  - If this meant to be a template, please start the content with
+    :: 
+    
+        $def with (id, url, content)
+
+  - The following globals are available to template:
+  
+    - size: a function, requires no argument, returns database size as string
+    
+    - user: a function, requires no argument, returns logged in user name 
+      as string (or an empty string)
+
+  - Please read web.py template for more information
+  
+- Python handler:
+
+  - Required arguments:
+  
+    - user: current user (str)
+
+    - db: database connection object (web.py database object)
+
+    - url_id: url id (str)
+
+    - url: url (str)
+
+    - content: content (str)
+
+    - data: additional data (helper functions, UDFs, modules, etc) (dict)
+
+  - Function *must* return a list of two members:
+  
+    - headers, empty list OR list of [HTTP header name, HTTP header value]
+    
+    - content (str)
+    
+  - Example (url id: test, url: /test):
+    ::
+
+        def web_test(user, db, url_id, url, content, data):
+            headers = [
+                            ['Content-Type', 'text/plain'],
+                        ]
+            content = 'hello, world'
+            return [headers, content]
+
+- Note: it is probably wise to consider/use a reverse proxy 
 
 
 User-defined Function
@@ -2393,6 +2524,11 @@ Page Code Reference
       [report:name] -> link to run report (or empty string if the report is not available)
       [REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)
 
+- hr
+  ::
+  
+      [-] -> <hr>
+
 - Note: HTML tags will be stripped on page save
 
 - Note: rendered in <pre></pre> tag
@@ -2785,6 +2921,8 @@ Python Handler Reference
 
   - Report
 
+  - Website
+
 - All handlers must be put in sqliteboy_user.py, in current working
   directory.
 
@@ -2846,6 +2984,8 @@ Python Handler Reference
 
   - Integration with external system, for example, can be done by reading
     from external system
+
+- Website: please read WEBSITE AND CUSTOM URL REFERENCE
 
 
 Server Command Reference
@@ -2944,10 +3084,10 @@ Link Code Reference
 - Example:
 ::
 
-{
-  "login.main": [["http://sqliteboy.com", "sqliteboy"]],
-  "login.extra": [["http://sqliteboy.com", "sqliteboy"]]
-}
+    {
+      "login.main": [["http://sqliteboy.com", "sqliteboy"]],
+      "login.extra": [["http://sqliteboy.com", "sqliteboy"]]
+    }
 
 
 Title Reference
