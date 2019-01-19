@@ -30,8 +30,8 @@
 # APPLICATION                                                          #
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
-APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, and many other features)'
-VERSION = '1.64'
+APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
+VERSION = '1.65'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -472,6 +472,11 @@ EMPTY_EXCLUDE = [
                     SEQUENCE_TABLE,
             ]
 IMPORT_EXCLUDE = [
+                    FORM_TBL,
+                    DEFAULT_TABLE,
+                    SEQUENCE_TABLE,
+            ]
+TEMPLATE_SELECT_EXCLUDE = [
                     FORM_TBL,
                     DEFAULT_TABLE,
                     SEQUENCE_TABLE,
@@ -6350,6 +6355,33 @@ PY_HANDLER_DATA = {
 
 
 #----------------------------------------------------------------------#
+# FUNCTION (TEMPLATE, WEBSITE)                                         #
+#----------------------------------------------------------------------#
+def template_table_browse(table, what='*', where=None, order=None, 
+    group=None, limit=None, offset=None):
+    ret = None
+    #
+    if table is None:
+        return ret
+    #
+    if not isstr(table):
+        return None
+    #
+    table = strs(table).lower()
+    #
+    if table in TEMPLATE_SELECT_EXCLUDE:
+        return None
+    #
+    try:
+        ret = db.select(table, what=what, where=where, order=order,
+                group=group, limit=limit, offset=offset)
+    except:
+        return None
+    #
+    return ret
+
+
+#----------------------------------------------------------------------#
 # TEMPLATE                                                             #
 #----------------------------------------------------------------------#
 T_BASE = DEFAULT_T_BASE_HEADER + '''
@@ -8187,6 +8219,7 @@ T = web.template.Template(T_BASE, globals=GLBL, filename=DEFAULT_T_BASE)
 GLBL_WEB_TEMPLATE = {
     'size'      : size,
     'user'      : user,
+    'table_browse': template_table_browse,
     }
 
 

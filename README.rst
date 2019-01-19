@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.64
+    Version: 1.65
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -613,8 +613,34 @@ Website and Custom URL Reference
     
     - user: a function, requires no argument, returns logged in user name 
       as string (or an empty string)
+      
+    - table_browse: a function, to browse a table 
+      (excluding _sqliteboy_, sqlite_sequence, sqlite_master)
+      ::
+      
+        table_browse(table, what='*', where=None, order=None, group=None, limit=None, offset=None) 
 
   - Please read web.py template for more information
+
+  - Example:
+    ::
+
+        $def with (id, url, content)
+        <!DOCTYPE html>
+        <html>
+        <head>
+        </head>
+        <body>
+        $ u = user()
+        $if u:
+          Hello, $u
+          <br>
+        $ data = table_browse('A', order='name')
+        $if data:
+          $for d in data:
+            $d['name']
+        </body>
+        </html>    
   
 - Python handler:
 
@@ -2524,7 +2550,7 @@ Page Code Reference
       [report:name] -> link to run report (or empty string if the report is not available)
       [REPORT:name] -> link to run report, followed by a line break (or empty string if the report is not available)
 
-- hr
+- horizontal rule
   ::
   
       [-] -> <hr>
