@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.66
+    Version: 1.67
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -66,6 +66,7 @@ What Is SQLiteBoy
   
   It is also possible to use SQLiteBoy to serve a website with custom URLs.
   URL can be handled by a python function, redirect, Files, template, or HTML.
+  POST method is also supported and can be handled by python function.
 
 
 Links
@@ -309,6 +310,8 @@ Features
   - Custom URLs
   
   - URL can be handled by a python function, redirect, Files, template, or HTML
+  
+  - As of v1.67, POST method handler is supported, using python function
 
   - Please read WEBSITE AND CUSTOM URL REFERENCE
 
@@ -685,6 +688,39 @@ Website and Custom URL Reference
                         ]
             content = 'hello %s' %(param.get('hello', ''))
             return [headers, content]
+
+- POST method:
+
+  - Can only be handled by a python function named post_<id> (in sqliteboy_user.py,
+    please also read PYTHON HANDLER REFERENCE)
+    
+  - If there is an exception, or handler is not available, an empty string
+    is returned
+    
+  - Example (url id: form, url: /form):
+    ::
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+        </head>
+        <body>
+        <form action="/form" method="post">
+        Hello <input type="text" name="name">
+        <input type="submit">
+        </form>
+        </body>
+        </html>
+        
+  - POST method handler:
+    ::
+    
+        def post_form(user, db, url_id, url, content, param, data):
+            headers = [
+                            ['Content-Type', 'text/plain'],
+                        ]
+            content = 'POST: hello %s' %(param.get('name', ''))
+            return [headers, content]      
 
 - Note: it is probably a good idea to consider/use a reverse proxy 
 

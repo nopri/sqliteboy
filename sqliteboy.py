@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.66'
+VERSION = '1.67'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -63,6 +63,8 @@ DEFAULT_SSL_PRIVATE_KEY = '%s.key' %(NAME)
 DEFAULT_PY_FORM = 'form_'
 DEFAULT_PY_REPORT = 'report_'
 DEFAULT_PY_WEB = 'web_'
+DEFAULT_PY_WEB_POST = 'post_'
+DEFAULT_WEBSITE_POST = ''
 DEFAULT_ADMIN_USER = 'admin'
 DEFAULT_ADMIN_PASSWORD = DEFAULT_ADMIN_USER
 DEFAULT_HOSTS_ALLOWED = ['127.0.0.1']
@@ -5832,6 +5834,9 @@ def py_r(name):
 def py_w(name):
     return py_o(name, r_urls_id, DEFAULT_PY_WEB)    
 
+def py_w_post(name):
+    return py_o(name, r_urls_id, DEFAULT_PY_WEB_POST)    
+
 def py_handler(name):
     ret = None
     #
@@ -6305,6 +6310,45 @@ def handle_website(url_id, url, content, param):
                 return handle_website_template(url_id, url, content, param)
     #
     dflt()
+
+
+def handle_website_post(url_id, url, content, param):
+    if not url_id:
+        dflt()
+    #
+    url_id = strs(url_id)
+    url = strs(url)
+    content = strs(content, False)
+    #
+    if not validurlid(url_id):
+        dflt()
+    #
+    if not validurlpath(url):
+        dflt()
+    #python handler
+    py_func = py_handler(py_w_post(url_id))
+    if py_func:
+        try:
+            f_python_handler = py_func(
+                                    user(),
+                                    db,
+                                    url_id,
+                                    url,
+                                    content,
+                                    param,
+                                    PY_HANDLER_DATA
+                                )
+            if not isinstance(f_python_handler, list):
+                raise Exception
+            #
+            if not len(f_python_handler) ==  2:
+                raise Exception
+            #
+            return handle_website_py(f_python_handler[0], f_python_handler[1])
+        except:
+            return DEFAULT_WEBSITE_POST
+    #
+    return DEFAULT_WEBSITE_POST
 
 
 #----------------------------------------------------------------------#
@@ -12538,6 +12582,23 @@ class website:
                     return handle_website(info[0], url, info[1], web.input())
         #
         dflt()
+
+    def POST(self, url):
+        if isnosb():
+            dflt()
+        #
+        url = '%s%s' %(DEFAULT_HOME, url)
+        #
+        if not url in r_urls_path():
+            return DEFAULT_WEBSITE_POST
+        #
+        info = r_urls_info(url)
+        if info:
+            if isinstance(info, list):
+                if len(info) >= 2:
+                    return handle_website_post(info[0], url, info[1], web.input())
+        #
+        return DEFAULT_WEBSITE_POST
 
 
 #----------------------------------------------------------------------#
