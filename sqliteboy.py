@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.65'
+VERSION = '1.66'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -2128,7 +2128,7 @@ LANGS = {
             'h_vacuum': 'hint: vacuum command will rebuild the entire database and may reduce the size of database file. Please make sure there is enough free space, at least twice the size of the original database file. This command may change the rowids of rows in any tables that do not have an explicit integer primary key column.',
             'h_import_csv': 'hint: import CSV file (Excel dialect) into table (insert). First row will be read as column(s).',
             'h_profile': '',
-            'h_website': 'hint: Please read <a href="%s">README</a> for Website and custom URL reference. Only valid values are saved (id and url are checked on save). Id must be alphabetic only (maximum length: %s) and will be converted to lowercase. URL must be alphanumeric/underscore/dot/slash/dash (maximum length: %s) and will be converted to lowercase. Please start url with / (but do not end it with /), and use / for home page. Content is interpreted and handled based on value (HTML/template, files, redirect, python handler; as documented). Reserved URLs (%s, subject to change): %s' %(URL_README[0], URL_MAX_INPUT, PATH_MAX_INPUT, len(URLS_RESERVED), ', '.join(URLS_RESERVED)),
+            'h_website': 'hint: Please read <a href="%s">README</a> for Website and custom URL reference. Only valid values are saved (id and url are checked on save). Id must be alphabetic only (maximum length: %s) and will be converted to lowercase. URL must be alphanumeric/underscore/dot/slash/dash (maximum length: %s) and will be converted to lowercase. Please start url with / (but do not end it with /), and use / for home page. Content is interpreted and handled based on value (HTML, template, files, redirect, python handler; as documented). Reserved URLs (%s, subject to change): %s' %(URL_README[0], URL_MAX_INPUT, PATH_MAX_INPUT, len(URLS_RESERVED), ', '.join(URLS_RESERVED)),
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob data]',
             'z_edit_blob_column': 'could not edit this row: blob data in non-blob column',
@@ -3327,7 +3327,7 @@ def proc_admin_check(handle):
     return handle()
 
 def proc_login(handle):
-    path = web.ctx.fullpath.lower()
+    path = web.ctx.path.lower()
     #
     if not isnosb():
         if not sess.user:
@@ -3481,6 +3481,12 @@ def internalerror():
 
 def dflt():
     raise web.seeother(DEFAULT_INDEX)
+
+def dflt_r(r):
+    if validurlpath(r):
+        raise web.seeother(r)
+    else:
+        raise web.seeother(DEFAULT_INDEX)
 
 def nrfloat(snumber, precision=PRECISION, round=decimal.ROUND_UP):
     le = '0' * precision
@@ -6205,7 +6211,7 @@ def handle_website_py(header, content):
     #
     dflt()
 
-def handle_website_files(sid):
+def handle_website_files(sid, param):
     ft = ''
     fn = ''
     fc = ''
@@ -6214,7 +6220,16 @@ def handle_website_files(sid):
     except:
         dflt()
     #
-    disposition = 'inline; filename=' + fn
+    download = False
+    try:
+        download = param.get('download', False)
+    except:
+        pass
+    #
+    if download:
+        disposition = 'attachment; filename=' + fn
+    else:
+        disposition = 'inline; filename=' + fn
     #
     web.header('Content-Type', ft)
     web.header('Content-Disposition', disposition)
@@ -6226,18 +6241,18 @@ def handle_website_redir(s):
     #
     raise web.seeother(s)
 
-def handle_website_template(url_id, url, content):
+def handle_website_template(url_id, url, content, param):
     web.header(HEADER_CONTENT, DEFAULT_CONTENT)
     #
     try:
         t = web.template.Template(content, globals=GLBL_WEB_TEMPLATE, filename=DEFAULT_T_BASE)
-        return t(url_id, url, content)
+        return t(url_id, url, content, param)
     except:
         pass
     #
     return content
 
-def handle_website(url_id, url, content):
+def handle_website(url_id, url, content, param):
     if not url_id:
         dflt()
     #
@@ -6260,6 +6275,7 @@ def handle_website(url_id, url, content):
                                     url_id,
                                     url,
                                     content,
+                                    param,
                                     PY_HANDLER_DATA
                                 )
             if not isinstance(f_python_handler, list):
@@ -6276,7 +6292,7 @@ def handle_website(url_id, url, content):
         if isint(content):
             #files
             if r_fs_ok(content): 
-                return handle_website_files(content)
+                return handle_website_files(content, param)
             else:
                 return handle_website_default(content)
         else:
@@ -6286,7 +6302,7 @@ def handle_website(url_id, url, content):
                 return handle_website_redir(content)
             else:
                 #template
-                return handle_website_template(url_id, url, content)
+                return handle_website_template(url_id, url, content, param)
     #
     dflt()
 
@@ -9209,6 +9225,11 @@ class login:
     def GET(self):
         start()
         #
+        inp = web.input(to='')
+        to = inp.to.strip()        
+        if not validurlpath(to):
+            to = ''
+        #
         data = {
                 'title': _['tt_login'],
                 'command': 'login',
@@ -9220,6 +9241,7 @@ class login:
                 'input': (
                             (web.form.Textbox('user', autofocus='autofocus'), _['x_user'],),
                             (web.form.Password('password'), _['x_password'],),
+                            (web.form.Hidden(name='to', value=to), ''),
                         ),
                 'message': smsgq(SK_LOGIN, default=''),
             }
@@ -9229,7 +9251,7 @@ class login:
         return T(data, content)
 
     def POST(self):
-        input = web.input(user='', password='')
+        input = web.input(user='', password='', to='')
         user = input.user.strip()
         password = input.password.strip()
         if not user or not password:
@@ -9246,7 +9268,9 @@ class login:
             sess[SK_LOGIN] = _['e_login']
             raise web.seeother('/login')
         #
-        dflt()
+        to = input.to.strip()        
+        #
+        dflt_r(to)
 
 
 class logout:
@@ -12509,10 +12533,9 @@ class website:
         #
         info = r_urls_info(url)
         if info:
-            try:
-                return handle_website(info[0], url, info[1])
-            except:
-                dflt()
+            if isinstance(info, list):
+                if len(info) >= 2:
+                    return handle_website(info[0], url, info[1], web.input())
         #
         dflt()
 

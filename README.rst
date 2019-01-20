@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.65
+    Version: 1.66
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -65,8 +65,7 @@ What Is SQLiteBoy
   forms, reports or user-defined profiles
   
   It is also possible to use SQLiteBoy to serve a website with custom URLs.
-  URL can be handled by a python function, redirect, Files, HTML with
-  template, or plain HTML.
+  URL can be handled by a python function, redirect, Files, template, or HTML.
 
 
 Links
@@ -309,8 +308,7 @@ Features
 
   - Custom URLs
   
-  - URL can be handled by a python function, redirect, Files, HTML with
-    template, or plain HTML
+  - URL can be handled by a python function, redirect, Files, template, or HTML
 
   - Please read WEBSITE AND CUSTOM URL REFERENCE
 
@@ -482,6 +480,10 @@ Login
 - As of v1.63, additional/custom links at login page are supported. Links
   may be placed at multiple page sections (please read LINK CODE REFERENCE
   and TITLE REFERENCE).
+  
+- As of v1.66, it is possible to define redirect URL after logged in, 
+  using to=<URL> parameter. However, only valid URL is allowed, according
+  to WEBSITE AND CUSTOM URL REFERENCE.
 
 
 SSL Support
@@ -545,8 +547,7 @@ Website and Custom URL Reference
 - Custom URLs, as long as the URLs are not used by SQLiteBoy (reserved).
   List of reserved URLs is shown in website management screen.
   
-- URL can be handled by a python function, redirect, Files, HTML with
-  template, or plain HTML
+- URL can be handled by a python function, redirect, Files, template, or HTML
 
 - Each URL is specified by:
 
@@ -586,7 +587,12 @@ Website and Custom URL Reference
       - If the number is a valid file id:
       
         - Contents of the file will be returned (along with saved headers) 
-    
+
+        - To set Content-Disposition as attachment, please set download parameter
+          (for example: ?download=download or ?download=true)
+        
+        - Default Content-Disposition is inline
+
       - If the number is NOT a valid file id:
       
         - Content will be returned 
@@ -600,12 +606,12 @@ Website and Custom URL Reference
 
 - HTML template interpretation:
 
-  - If there is an exception (or simply plain HTML), content will be displayed as is
+  - If there is an exception (or content is HTML), content will be returned as is
   
   - If this meant to be a template, please start the content with
     :: 
     
-        $def with (id, url, content)
+        $def with (id, url, content, param)
 
   - The following globals are available to template:
   
@@ -622,10 +628,10 @@ Website and Custom URL Reference
 
   - Please read web.py template for more information
 
-  - Example:
+  - Example (custom URL:/test, /test?hello=world):
     ::
 
-        $def with (id, url, content)
+        $def with (id, url, content, param)
         <!DOCTYPE html>
         <html>
         <head>
@@ -639,8 +645,12 @@ Website and Custom URL Reference
         $if data:
           $for d in data:
             $d['name']
+        <br>
+        URL: $url
+        <br>
+        Hello: $param.get('hello', '')
         </body>
-        </html>    
+        </html>
   
 - Python handler:
 
@@ -656,6 +666,8 @@ Website and Custom URL Reference
 
     - content: content (str)
 
+    - param: parameter (web.input())
+
     - data: additional data (helper functions, UDFs, modules, etc) (dict)
 
   - Function *must* return a list of two members:
@@ -664,17 +676,17 @@ Website and Custom URL Reference
     
     - content (str)
     
-  - Example (url id: test, url: /test):
+  - Example (url id: test, url: /test, url: test?hello=world):
     ::
 
-        def web_test(user, db, url_id, url, content, data):
+        def web_test(user, db, url_id, url, content, param, data):
             headers = [
                             ['Content-Type', 'text/plain'],
                         ]
-            content = 'hello, world'
+            content = 'hello %s' %(param.get('hello', ''))
             return [headers, content]
 
-- Note: it is probably wise to consider/use a reverse proxy 
+- Note: it is probably a good idea to consider/use a reverse proxy 
 
 
 User-defined Function
