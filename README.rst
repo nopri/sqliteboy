@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.67
+    Version: 1.68
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -313,6 +313,8 @@ Features
   
   - As of v1.67, POST method handler is supported, using python function
 
+  - As of v1.68, custom not found URL is supported
+  
   - Please read WEBSITE AND CUSTOM URL REFERENCE
 
 - Browse table
@@ -721,6 +723,14 @@ Website and Custom URL Reference
                         ]
             content = 'POST: hello %s' %(param.get('name', ''))
             return [headers, content]      
+
+- Custom not found URL:
+
+  - Can be set at System configuration
+
+  - Only applicable when not logged in
+  
+  - Please set to existing custom URL
 
 - Note: it is probably a good idea to consider/use a reverse proxy 
 

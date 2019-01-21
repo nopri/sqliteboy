@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.67'
+VERSION = '1.68'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -356,6 +356,15 @@ SYSTEM_CONFIG = (
                         '',
                         str,
                         1,
+                    ),
+                    (
+                        'x_website',
+                        'x_website_notfound',
+                        'website.notfound.',
+                        'website.notfound..%s' %(''),
+                        '',
+                        'notfound_url_check',
+                        0,
                     ),
                 )
 NOTFOUND_CHECK = [
@@ -1913,6 +1922,7 @@ LANGS = {
             'x_last_name': 'last name',
             'x_email': 'email',
             'x_website': 'website',
+            'x_website_notfound': 'custom not found URL (not logged in only, valid URL according to Website and Custom URL Reference)',
             'x_session': 'session(s)',
             'x_user_defined_profile': 'user-defined profile',
             'x_user_defined_profile_ref': 'user-defined profile (please read User-defined Profile Reference)',
@@ -2130,7 +2140,7 @@ LANGS = {
             'h_vacuum': 'hint: vacuum command will rebuild the entire database and may reduce the size of database file. Please make sure there is enough free space, at least twice the size of the original database file. This command may change the rowids of rows in any tables that do not have an explicit integer primary key column.',
             'h_import_csv': 'hint: import CSV file (Excel dialect) into table (insert). First row will be read as column(s).',
             'h_profile': '',
-            'h_website': 'hint: Please read <a href="%s">README</a> for Website and custom URL reference. Only valid values are saved (id and url are checked on save). Id must be alphabetic only (maximum length: %s) and will be converted to lowercase. URL must be alphanumeric/underscore/dot/slash/dash (maximum length: %s) and will be converted to lowercase. Please start url with / (but do not end it with /), and use / for home page. Content is interpreted and handled based on value (HTML, template, files, redirect, python handler; as documented). Reserved URLs (%s, subject to change): %s' %(URL_README[0], URL_MAX_INPUT, PATH_MAX_INPUT, len(URLS_RESERVED), ', '.join(URLS_RESERVED)),
+            'h_website': 'hint: Please read <a href="%s">README</a> for Website and custom URL reference. Only valid values are saved (id and url are checked on save). Id must be alphabetic only (maximum length: %s) and will be converted to lowercase. URL must be alphanumeric/underscore/dot/slash/dash (maximum length: %s) and will be converted to lowercase. Please start url with / (but do not end it with /), and use / for home page. Content is interpreted and handled based on value (HTML, template, files, redirect, python handler; as documented). Custom not found URL can be set at <a href="/admin/system">system configuration</a>. Reserved URLs (%s, subject to change): %s' %(URL_README[0], URL_MAX_INPUT, PATH_MAX_INPUT, len(URLS_RESERVED), ', '.join(URLS_RESERVED)),
             'z_table_whitespace': 'could not handle table with whitespace in name',
             'z_view_blob': '[blob data]',
             'z_edit_blob_column': 'could not edit this row: blob data in non-blob column',
@@ -3337,6 +3347,21 @@ def proc_login(handle):
             if path == '/': return handle()
             if path in r_urls_path(): return handle()
             if not path == '/login':
+                notfound = s_select('website.notfound..')
+                if notfound:
+                    try:
+                        notfound = notfound[0]['d']
+                    except:
+                        notfound = None
+                    #
+                    if validurlpath(notfound):
+                        if notfound in r_urls_path():
+                            info = r_urls_info(notfound)
+                            if info:                                
+                                if isinstance(info, list):
+                                    if len(info) >= 2:
+                                        raise web.seeother(notfound)
+                #                
                 raise web.seeother('/login')
         else:
             if path == '/login':
@@ -3616,6 +3641,9 @@ def validurlid(s):
     return ret
 
 def validurlpath(s):
+    if s is None:
+        return False
+    #
     s = strs(s)
     #
     if not s:
@@ -6189,6 +6217,19 @@ def links_login():
     #
     return ret
 
+def notfound_url_check(url):
+    ret = ''
+    #
+    if url is None:
+        return ret
+    #
+    url = strs(url)
+    #
+    if not validurlpath(url):
+        return ret
+    #
+    return url
+
 def handle_website_default(content):
     web.header(HEADER_CONTENT, DEFAULT_CONTENT)
     return content    
@@ -8321,7 +8362,7 @@ class home:
         f = strs(f, False)
         d = strs(d)
         e = strs(e)
-        return handle_website(d, e, f)
+        return handle_website(d, e, f, web.input())
         
     def POST(self):
         dflt()
