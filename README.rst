@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.68
+    Version: 1.69
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -489,6 +489,8 @@ Login
 - As of v1.66, it is possible to define redirect URL after logged in, 
   using to=<URL> parameter. However, only valid URL is allowed, according
   to WEBSITE AND CUSTOM URL REFERENCE.
+
+- As of v1.69, logout uses redirect URL set in login 
 
 
 SSL Support
@@ -3112,6 +3114,10 @@ Server Command Reference
 
         python sqliteboy.py test.db 11738 enable_extended_allow_all
 
+  - reset_admin_password (reset admin password to default password, new in v1.69)::
+  
+        python sqliteboy.py test.db 11738 reset_admin_password
+  
 - Note on usage: 
 
   - generate_favicon, generate_pyinstaller, generate_build, generate_version 

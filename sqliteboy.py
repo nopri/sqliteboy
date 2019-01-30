@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.68'
+VERSION = '1.69'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -501,6 +501,7 @@ SERVER_COMMAND_ALL = {
                         'generate_version': 'scmd_version',
                         'enable_extended': 'scmd_extended',
                         'enable_extended_allow_all': 'scmd_extended_allow_all',
+                        'reset_admin_password': 'scmd_reset_admin_password',
                     }
 SHORTCUT_TYPE_FORM = 'form'
 SHORTCUT_TYPE_REPORT = 'report'
@@ -1165,6 +1166,7 @@ sess_init = {
         'table': {},
         'user': '',
         'admin': 0,
+        'login_redirect': '',
     }
 #
 style_align_default = {
@@ -5507,6 +5509,27 @@ def scmd_extended_allow_all(data, dbfilename, server_port):
     #
     return ret
 
+def scmd_reset_admin_password(data, dbfilename, server_port):
+    ret = ''
+    #
+    try:
+        dbtest = web.database(
+                dbn=DBN,
+                db=dbfilename,
+                check_same_thread=CHECK_SAME_THREAD
+            )
+        if not isnosb_default(dbtest):
+            r = list(dbtest.select(FORM_TBL, where="a='user' and b='account' and d='admin'"))
+            if r:
+                dbtest.update(FORM_TBL, 
+                    e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), 
+                    where="a='user' and b='account' and d='admin'")            
+                ret = _['th_ok']
+    except:
+        return ret
+    #
+    return ret
+
 def shortcut(t, name):
     ret = False
     #
@@ -9354,16 +9377,21 @@ class login:
             raise web.seeother('/login')
         #
         to = input.to.strip()        
+        sess.login_redirect = to
         #
         dflt_r(to)
 
 
 class logout:
     def GET(self):
+        to = sess.login_redirect
+        #
         sess.var = {}
         sess.user = ''
         sess.admin = 0
-        dflt()
+        sess.login_redirect = ''
+        #
+        dflt_r(to)
 
 
 class password:
@@ -10209,7 +10237,7 @@ class form_edit:
                         name, urllib.quote(ocode), form))
         #
         if xform:
-            raise web.seeother('/?form=%s' %(xform))
+            raise web.seeother('/index?form=%s' %(xform))
         #
         dflt()
 
@@ -10382,7 +10410,7 @@ class report_edit:
                         name, urllib.quote(ocode), report))
         #
         if xreport:
-            raise web.seeother('/?report=%s' %(xreport))
+            raise web.seeother('/index?report=%s' %(xreport))
         #
         dflt()
 
@@ -12128,7 +12156,7 @@ class form_shortcut:
         if not res:
             dflt()
         else:
-            raise web.seeother('/?form=%s' %(form))
+            raise web.seeother('/index?form=%s' %(form))
 
 
 class report_shortcut:
@@ -12156,7 +12184,7 @@ class report_shortcut:
         if not res:
             dflt()
         else:
-            raise web.seeother('/?report=%s' %(report))
+            raise web.seeother('/index?report=%s' %(report))
 
 
 class table_import_csv:
