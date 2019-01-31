@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.69'
+VERSION = '1.70'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -502,6 +502,8 @@ SERVER_COMMAND_ALL = {
                         'enable_extended': 'scmd_extended',
                         'enable_extended_allow_all': 'scmd_extended_allow_all',
                         'reset_admin_password': 'scmd_reset_admin_password',
+                        'disable_log': 'scmd_disable_log',
+                        'restore_log': 'scmd_restore_log',
                     }
 SHORTCUT_TYPE_FORM = 'form'
 SHORTCUT_TYPE_REPORT = 'report'
@@ -3424,6 +3426,8 @@ def proc_log(handle):
         if log_file:
             try:
                 log_file = log_file[0]['d']
+                if not log_file:
+                    raise Exception
                 dbtest = web.database(
                         dbn=DBN,
                         db=log_file,
@@ -5525,6 +5529,57 @@ def scmd_reset_admin_password(data, dbfilename, server_port):
                     e=md5(DEFAULT_ADMIN_PASSWORD).hexdigest(), 
                     where="a='user' and b='account' and d='admin'")            
                 ret = _['th_ok']
+    except:
+        return ret
+    #
+    return ret
+
+def scmd_disable_log(data, dbfilename, server_port):
+    ret = ''
+    #
+    try:
+        dbtest = web.database(
+                dbn=DBN,
+                db=dbfilename,
+                check_same_thread=CHECK_SAME_THREAD
+            )
+        if not isnosb_default(dbtest):
+            r = list(dbtest.select(FORM_TBL, where="a='log' and b='access'"))
+            if r:
+                r = r[0]
+                log_file = r['d']
+                if log_file:
+                    dbtest.update(FORM_TBL, 
+                        e=log_file,
+                        d='', 
+                        where="a='log' and b='access'")            
+                    ret = _['th_ok']
+    except:
+        return ret
+    #
+    return ret
+
+def scmd_restore_log(data, dbfilename, server_port):
+    ret = ''
+    #
+    try:
+        dbtest = web.database(
+                dbn=DBN,
+                db=dbfilename,
+                check_same_thread=CHECK_SAME_THREAD
+            )
+        if not isnosb_default(dbtest):
+            r = list(dbtest.select(FORM_TBL, where="a='log' and b='access'"))
+            if r:
+                r = r[0]
+                log_file = r['d']
+                save_file = r['e']
+                if not log_file and save_file:
+                    dbtest.update(FORM_TBL, 
+                        d=save_file,
+                        e='', 
+                        where="a='log' and b='access'")            
+                    ret = _['th_ok']
     except:
         return ret
     #

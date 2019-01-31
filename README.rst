@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.69
+    Version: 1.70
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -599,6 +599,16 @@ Website and Custom URL Reference
           (for example: ?download=download or ?download=true)
         
         - Default Content-Disposition is inline
+
+        - Valid file id:
+
+          - Exists in Files 
+
+          - If user is logged in:
+
+            - File sharing status is checked. If a file is not shared
+              (and logged in user is not the owner), it is considered 
+              invalid. This applies for all users, including admin users.
 
       - If the number is NOT a valid file id:
       
@@ -3114,9 +3124,17 @@ Server Command Reference
 
         python sqliteboy.py test.db 11738 enable_extended_allow_all
 
-  - reset_admin_password (reset admin password to default password, new in v1.69)::
+  - reset_admin_password (resets admin password to default password, new in v1.69)::
   
         python sqliteboy.py test.db 11738 reset_admin_password
+  
+  - disable_log (temporarily disables log, new in v1.70)::
+  
+        python sqliteboy.py test.db 11738 disable_log
+  
+  - restore_log (restores log, new in v1.70)::
+  
+        python sqliteboy.py test.db 11738 restore_log
   
 - Note on usage: 
 
