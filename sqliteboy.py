@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.70'
+VERSION = '1.71'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -329,6 +329,15 @@ SYSTEM_CONFIG = (
                         '',
                         'log_init',
                         0,
+                    ),
+                    (
+                        'x_log',
+                        'x_log_override',
+                        'log.override.',
+                        'log.override..%s' %(''),
+                        '',
+                        str,
+                        1,
                     ),
                     (
                         'x_users',
@@ -1939,6 +1948,7 @@ LANGS = {
             'x_not_avail_pdf': 'not available, PDF output will be disabled',
             'x_log': 'logs',
             'x_log_access': 'access log path (absolute, forward slash / for separator, will be verified on save or empty string if verification failed, use current database might impact the database)',
+            'x_log_override': 'log only specific URLs (please start each URL with /, separate URLs with whitespace, will discard everything else)',
             'x_link': 'links',
             'x_link_login': 'additional/custom links at login page (please read Link Code Reference)',
             'x_url': 'url',
@@ -3436,16 +3446,30 @@ def proc_log(handle):
                 #
                 env = web.ctx.env
                 #
-                dbtest.insert(
-                    LOG_TABLE,
-                    a=env.get('REMOTE_ADDR', ''),
-                    b=env.get('HTTP_X_FORWARDED_FOR', ''),
-                    c=env.get('HTTP_USER_AGENT', ''),
-                    d=user(),
-                    e=web.ctx.method,
-                    f=web.ctx.path,
-                    g=web.ctx.query,
-                )
+                save = True
+                path = web.ctx.path
+                #
+                override = s_select('log.override..')
+                if override:
+                    override = override[0]['d'].split()
+                    if override:
+                        override = [x.strip() for x in override if x.strip()]
+                        if override:
+                            save = False
+                            if path in override:
+                                save = True
+                #
+                if save:
+                    dbtest.insert(
+                        LOG_TABLE,
+                        a=env.get('REMOTE_ADDR', ''),
+                        b=env.get('HTTP_X_FORWARDED_FOR', ''),
+                        c=env.get('HTTP_USER_AGENT', ''),
+                        d=user(),
+                        e=web.ctx.method,
+                        f=path,
+                        g=web.ctx.query,
+                    )
             except:
                 pass
     #

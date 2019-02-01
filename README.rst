@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.70
+    Version: 1.71
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -3311,6 +3311,10 @@ Logs
 
   - If the logs are stored in the current database, please use table browse
     (admin) or reports
+
+- To log only specific URLs (and discard everything else), please set in
+  System configuration (new in v1.71). Please start each URL with / and 
+  separate URLs with whitespace.
 
 
 
