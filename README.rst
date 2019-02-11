@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.71
+    Version: 1.72
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -197,6 +197,8 @@ Features
   - As of v1.33, optional, (run before) additional SQL query statement(s)
     can be provided.
 
+  - As of v1.72, links can be added to form
+
 - Report Support (Extended feature, new in v0.16)
 
   - Simple reporting (and data entry)
@@ -245,6 +247,8 @@ Features
 
   - As of v1.36, text align is supported (HTML and PDF only)
 
+  - As of v1.72, links can be added to report
+  
 - Files (Extended feature, new in v0.47)
 
   - System configuration: maximum number of files per user (admin: unlimited)
@@ -467,7 +471,7 @@ Requirements
 
 - JSON module (included as json, in python 2.6+)
 
-- Optional: ReportLab / PIL (PDF output)
+- Optional: ReportLab (PDF output)
 
 - Optional: pyOpenSSL (SSL support)
 
@@ -1862,6 +1866,11 @@ Form Code Reference
 |               | (please see "column"    |               |             |                          |
 |               | key in data)            |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| link          | links                   | list of list  | optional    | [["http://sqliteboy.com",|
+|               |                         | of two members|             |  "sqliteboy"]]           |
+|               |                         |               |             |                          |
+|               |                         | [target,label]|             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
 
@@ -2128,6 +2137,7 @@ Form Code Reference
                   }
                 ],
       "focus" : "d",
+      "link" : [["http://sqliteboy.com","sqliteboy"]],
       "message"  : ["unknown result", "zero result", "success: $result"],
       "security" : {
                      "run" : ""
@@ -2344,6 +2354,11 @@ Report Code Reference
 |               | (please see "key" key   |               |             |                          |
 |               | in data)                |               |             |                          |
 +---------------+-------------------------+---------------+-------------+--------------------------+
+| link          | links                   | list of list  | optional    | [["http://sqliteboy.com",|
+|               |                         | of two members|             |  "sqliteboy"]]           |
+|               |                         |               |             |                          |
+|               |                         | [target,label]|             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
 
 - Keys (data):
 
@@ -2553,6 +2568,7 @@ Report Code Reference
                   }
                 ],
       "focus" : "a_e",
+      "link" : [["http://sqliteboy.com","sqliteboy"]],
       "headers"  : [
                       [
                           ["files.image", "31", {}],

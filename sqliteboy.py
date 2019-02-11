@@ -3,7 +3,7 @@
 #
 # sqliteboy.py
 # Simple web-based management tool for SQLite database
-# (with form, report, and many other features)
+# (with form, report, website, and many other features)
 # (c) Noprianto <nop@noprianto.com>
 # 2012-2019
 # License: GPL
@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.71'
+VERSION = '1.72'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -186,6 +186,7 @@ FORM_KEY_SQL0 = 'sql0'
 FORM_KEY_INSERT = 'insert'
 FORM_KEY_CONFIRM = 'confirm'
 FORM_KEY_FOCUS = 'focus'
+FORM_KEY_LINK = 'link'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_X = (2,) #parsed index
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE,
@@ -227,6 +228,7 @@ REPORT_KEY_PAPER = 'paper'
 REPORT_KEY_MARGINS = 'margins'
 REPORT_KEY_CONFIRM = 'confirm'
 REPORT_KEY_FOCUS = 'focus'
+REPORT_KEY_LINK = 'link'
 REPORT_REQ = (REPORT_KEY_DATA,
                 REPORT_KEY_SQL,
             )
@@ -4214,6 +4216,29 @@ def parseform2(code, table, execute_sql=True):
     #
     return fsub2
 
+def fgetlinks(links):
+    ret = []
+    #
+    if not isinstance(links, list): 
+        return ret
+    #
+    for link in links:
+        if not isinstance(link, list):
+            continue
+        #
+        if not len(link) >= 2:
+            continue
+        #
+        for item in link:
+            if not isinstance(item, (str, unicode)):
+                continue
+            if not item.strip():
+                continue
+        #
+        ret.append(link)
+    #
+    return ret
+
 def parseform(form, virtual=None, execute_sql=True):
     if virtual is None:
         virtual = {}
@@ -4359,12 +4384,15 @@ def parseform(form, virtual=None, execute_sql=True):
     except:
         ffocus = ''
     #
+    flinks = fo.get(FORM_KEY_LINK, [])
+    flinks = fgetlinks(flinks)
+    #
     sql0 = fo.get(FORM_KEY_SQL0, [])
     if not type(sql0) == type([]):
         sql0 = []
     sql0 = [str(x) for x in sql0 if isstr(x)]
     #
-    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0, ffocus]
+    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0, ffocus, flinks]
 
 def reqreport(report):
     try:
@@ -4596,6 +4624,9 @@ def parsereport(report, execute_sql=True):
     except:
         ffocus = ''
     #
+    flinks = fo.get(REPORT_KEY_LINK, [])
+    flinks = fgetlinks(flinks)
+    #
     aligns = fo.get(REPORT_KEY_ALIGN, [])
     if not isinstance(aligns, list):
         aligns = []
@@ -4615,6 +4646,7 @@ def parsereport(report, execute_sql=True):
             fconfirm,
             aligns2,
             ffocus,
+            flinks,
         ]
 
 def nqtype(ftype):
@@ -7414,6 +7446,16 @@ $elif data['command'] == 'form.run':
         <div>
             $:data['finfo']
         </div>
+    $if data['link']:
+        <br>
+        <div>
+            $for i in data['link']:
+                $if len(i) >= 2:
+                    $ link_target = i[0]
+                    $ link_label = i[1]
+                    <a href="$link_target">$link_label</a>     
+        </div>
+        <br>
     <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
     $for h in data['hidden']:
         <input type='hidden' name='$h[0]' value='$h[1]'>
@@ -7550,6 +7592,16 @@ $elif data['command'] == 'report.run':
         <div>
             $:data['finfo']
         </div>
+    $if data['link']:
+        <br>
+        <div>
+            $for i in data['link']:
+                $if len(i) >= 2:
+                    $ link_target = i[0]
+                    $ link_label = i[1]
+                    <a href="$link_target">$link_label</a>     
+        </div>
+        <br>
     <form action="$data['action_url']" method="$data['action_method']" enctype="$data['action_enctype']">
     $for h in data['hidden']:
         <input type='hidden' name='$h[0]' value='$h[1]'>
@@ -9441,8 +9493,14 @@ class login:
         input = web.input(user='', password='', to='')
         user = input.user.strip()
         password = input.password.strip()
+        to = input.to.strip()        
+        #
+        redir = '/login'
+        if validurlpath(to):
+            redir = '/login?to=%s' %(to)
+        #
         if not user or not password:
-            raise web.seeother('/login')
+            raise web.seeother(redir)
         #
         all = s_select('user.account')
         for a in all:
@@ -9453,9 +9511,8 @@ class login:
         #
         if not sess.user:
             sess[SK_LOGIN] = _['e_login']
-            raise web.seeother('/login')
+            raise web.seeother(redir)
         #
-        to = input.to.strip()        
         sess.login_redirect = to
         #
         dflt_r(to)
@@ -9845,6 +9902,7 @@ class form_run:
         finfo = ''
         fconfirm = ''
         ffocus = ''
+        flinks = []
         yconfirm = False
         if not reqform(form):
             input = ()
@@ -9857,6 +9915,7 @@ class form_run:
                 pform = parseform(form)
                 fconfirm = pform[7]
                 ffocus = pform[9]
+                flinks = pform[10]
                 if fconfirm:
                     yconfirm = True
                 action_button = (
@@ -9887,6 +9946,7 @@ class form_run:
                 'ftitle': ftitle,
                 'finfo': finfo,
                 'focus': ffocus,
+                'link': flinks,
                 'blob_type': BLOB_TYPE,
                 'text_type': TEXT_TYPE,
                 'sub': sub,
@@ -10514,6 +10574,7 @@ class report_run:
         finfo = ''
         fconfirm = ''
         ffocus = ''
+        flinks = []
         yconfirm = False
         if not reqreport(report):
             input = ()
@@ -10525,6 +10586,7 @@ class report_run:
                 preport = parsereport(report)
                 fconfirm = preport[10]
                 ffocus = preport[12]
+                flinks = preport[13]
                 if fconfirm:
                     yconfirm = True
                 #
@@ -10567,6 +10629,7 @@ class report_run:
                 'ftitle': ftitle,
                 'finfo': finfo,
                 'focus': ffocus,
+                'link': flinks,
                 'blob_type': BLOB_TYPE,
                 'text_type': TEXT_TYPE,
                 }
