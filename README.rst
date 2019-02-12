@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.72
+    Version: 1.73
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -171,7 +171,7 @@ Features
     can be very complex and involves nested function calls.
 
   - As of v0.26, very simple subform is also supported. Subform can be
-    used in one to many relationship. However, fields in subform is
+    used in one to many relationship. However, field in subform is
     limited, compared to form.
 
   - As of v0.27, custom result message (based on SQL query result),
@@ -198,6 +198,13 @@ Features
     can be provided.
 
   - As of v1.72, links can be added to form
+
+  - As of v1.73, form supports extended result message. This extends 
+    custom result message introduced in v0.27. Using extended result, 
+    it is possible to perform operations on form fields, and use the result.
+    Like custom result message, it is based on SQL query result.
+    But unlike custom result message, the result is not limited to integer
+    (can be string or another types; probably returned from function call). 
 
 - Report Support (Extended feature, new in v0.16)
 
@@ -1718,6 +1725,13 @@ Form Code Reference
   transaction is used.
 
 - Custom result message (based on SQL query result), is also supported.
+  
+- Extended result message is supported, as an alternative to custom result
+  message. Using extended result, it is possible to perform operations on 
+  form fields, and use the result. Like custom result message, it is based 
+  on SQL query result. But unlike custom result message, the result is 
+  not limited to integer (can be string or another types; probably returned 
+  from function call). 
 
 - Optional, additional SQL query statement(s) can be provided, and each
   of them will be executed in order, if you need to perform additional
@@ -1791,6 +1805,43 @@ Form Code Reference
 |               |   "message res > 0"]    |               |             |                          |
 |               |                         |               |             |                          |
 |               | - $result (in message)  |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   actual SQL Query      |               |             |                          |
+|               |   result                |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $<column> will be     |               |             |                          |
+|               |   replaced by user input|               |             |                          |
+|               |   value for that column |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $last_insert_rowid    |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   last_insert_rowid()   |               |             |                          |
+|               |   function call result  |               |             |                          |
+|               |   (after insert to main |               |             |                          |
+|               |   table)                |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $python_handler       |               |             |                          |
+|               |   will be replaced by   |               |             |                          |
+|               |   return value of python|               |             |                          |
+|               |   handler (if provided, |               |             |                          |
+|               |   default: -1)          |               |             |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             |                          |
+|               | (html is allowed)       |               |             |                          |
++---------------+-------------------------+---------------+-------------+--------------------------+
+| result        | extended result message | list          | optional    |                          |
+|               |                         |               |             |                          |
+|               |                         |               |             | [                        |
+|               | - not applicable to     |               |             |  "$a + $b = $result",    |
+|               |   subform               |               |             |  "select $a+$b as result"|
+|               |                         |               |             | ]                        |
+|               | - must be list of two   |               |             |                          |
+|               |   members (str)         |               |             | (Example 3)              |
+|               |                         |               |             |                          |
+|               |   ["template",          |               |             |                          |
+|               |   "sql query"]          |               |             |                          |
+|               |                         |               |             |                          |
+|               | - $result (in template) |               |             |                          |
 |               |   will be replaced by   |               |             |                          |
 |               |   actual SQL Query      |               |             |                          |
 |               |   result                |               |             |                          |
@@ -2142,6 +2193,28 @@ Form Code Reference
       "security" : {
                      "run" : ""
                    }
+    }
+
+- Example 3:
+::
+
+    {
+          "title" : "Addition",
+          "data"  : [
+                      {
+                        "table"     : "table1",
+                        "column"    : "a"
+                      },
+                      {
+                        "table"     : "table1",
+                        "column"    : "b"
+                      }
+                    ],
+          "insert" : 0,
+          "result" : ["$a + $b = $result", "select $a+$b as result"],
+          "security" : {
+                         "run" : ""
+                       }
     }
 
 

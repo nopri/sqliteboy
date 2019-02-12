@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.72'
+VERSION = '1.73'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -187,6 +187,7 @@ FORM_KEY_INSERT = 'insert'
 FORM_KEY_CONFIRM = 'confirm'
 FORM_KEY_FOCUS = 'focus'
 FORM_KEY_LINK = 'link'
+FORM_KEY_RESULT = 'result'
 FORM_REQ = (FORM_KEY_DATA,)
 FORM_REQ_X = (2,) #parsed index
 FORM_REQ_DATA = (FORM_KEY_DATA_TABLE,
@@ -200,6 +201,7 @@ FORM_SUB_ROWS_DEFAULT = [5, 1]#rows, required rows
 FORM_MESSAGE_LEN = 3
 FORM_MESSAGE_VAR_RESULT = 'result'
 FORM_MESSAGE_VAR_PYTHON_HANDLER = 'python_handler'
+FORM_MESSAGE_RESULT_LEN = 2
 FORM_INSERT_DEFAULT = 1
 FORM_DEFAULT_SQL_RET = 'a'
 #
@@ -4145,6 +4147,43 @@ def fsqlx(db, sql, data):
                 if fsql.strip():
                     db.query(fsql, vars=ocols)
 
+def fsqlresult(db, sql, data, f_python_handler):
+    ret = ''
+    #
+    if not isinstance(sql, list):
+        return ret
+    #
+    if len(sql) != FORM_MESSAGE_RESULT_LEN:
+        return ret
+    #
+    sql0 = sql[0]
+    sql1 = sql[1]
+    #
+    if not isstr(sql0) or not isstr(sql1):
+        return ret
+    #
+    sql0 = sql0.strip()
+    sql1 = sql1.strip()
+    if not sql0 or not sql1:
+        return ret
+    #
+    res = list(db.query(sql1, vars=data))
+    #
+    if res:
+        res = res[0]
+        test = res.get(FORM_MESSAGE_VAR_RESULT)
+        #
+        result = ''
+        if test:
+            result = test
+        #
+        ret = string.Template(sql0)
+        data[FORM_MESSAGE_VAR_RESULT] = result
+        data[FORM_MESSAGE_VAR_PYTHON_HANDLER] = str(f_python_handler)
+        ret = ret.safe_substitute(data)
+    #
+    return ret
+
 def parseform2(code, table, execute_sql=True):
     fsub = code
     if not type(fsub) == type([]):
@@ -4387,12 +4426,14 @@ def parseform(form, virtual=None, execute_sql=True):
     flinks = fo.get(FORM_KEY_LINK, [])
     flinks = fgetlinks(flinks)
     #
+    fresult = fo.get(FORM_KEY_RESULT, [])
+    #
     sql0 = fo.get(FORM_KEY_SQL0, [])
     if not type(sql0) == type([]):
         sql0 = []
     sql0 = [str(x) for x in sql0 if isstr(x)]
     #
-    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0, ffocus, flinks]
+    return [ftitle, finfo, input, fsub2, message2, sql2, finsert, fconfirm, sql0, ffocus, flinks, fresult]
 
 def reqreport(report):
     try:
@@ -9974,6 +10015,7 @@ class form_run:
         fsql2 = None
         fsql0 = None
         finsert = FORM_INSERT_DEFAULT
+        fresult = []
         try:
             pform = parseform(form)
             finput = pform[2]
@@ -9982,6 +10024,7 @@ class form_run:
             fsql2 = pform[5]
             fsql0 = pform[8]
             finsert = pform[6]
+            fresult = pform[11]
         except:
             pform = None
             fsub = None
@@ -10216,6 +10259,10 @@ class form_run:
                     ocols[FORM_MESSAGE_VAR_RESULT] = str(form_res)
                     ocols[FORM_MESSAGE_VAR_PYTHON_HANDLER] = str(f_python_handler)
                     message3 = message2b.safe_substitute(ocols)
+                #
+                fresult_res = fsqlresult(db, fresult, ocols, f_python_handler)
+                if fresult_res:
+                    message3 = fresult_res
                 #
                 sess[SKF_RUN] = [ [message3] ]
             except Exception, e:
