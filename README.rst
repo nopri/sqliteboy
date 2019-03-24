@@ -7,7 +7,7 @@
     (c) Noprianto <nop@noprianto.com>
     2012-2019
     License: GPL
-    Version: 1.73
+    Version: 1.74
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.

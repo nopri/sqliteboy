@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.73'
+VERSION = '1.74'
 WSITE = 'http://sqliteboy.com'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -923,6 +923,8 @@ HEADER_CONTENT = 'Content-Type'
 DEFAULT_CONTENT = 'text/html'
 PREFIX_REDIR_HTTP = 'http://'
 PREFIX_REDIR_HTTPS = 'https://'
+PREFIX_BLOG = 'blog:'
+BLOG_SEPARATOR = ':'
 
 
 #----------------------------------------------------------------------#
@@ -1794,6 +1796,297 @@ NUMBER_TO_WORDS['id'] = NumberToWordsId
 NUMBER_TO_WORDS['en'] = NumberToWordsEn1
 NUMBER_TO_WORDS['en1'] = NumberToWordsEn1
 
+
+#----------------------------------------------------------------------#
+# PANGSIT DOMAIN-SPECIFIC PROGRAMMING LANGUAGE                         #
+# * in development *                                                   #
+#----------------------------------------------------------------------#
+def pangsit(url_id, url, content, param, file_id, 
+    file_name, file_type, file_content, detail):
+    
+    def get_allowed_db_operation():
+        return ['select', 'insert', 'update', 'delete']
+
+    def get_height(user_interface):
+        temp = []
+        total = 0
+        #
+        for u in user_interface:
+            symbol = u[0]
+            extra = u[1]
+            #
+            if not symbol in temp:
+                temp.append(symbol)
+                total += extra
+        #
+        ret = 100 / total
+        return ret
+
+    def get_height_percent(height, n):
+        return n * height
+
+    def read_file():
+        lines = []
+        #
+        try:
+            f = cStringIO.StringIO(file_content)
+            #
+            reader = csv.reader(f)
+            for row in reader:
+                lines.append(row)
+        except:
+            pass
+        return lines
+
+    def get_user_interface_size(lines, start=0):
+        ret = [0, 0]
+        #
+        r = 0
+        for row in lines:
+            r += 1
+            if r <= start:
+                continue
+            #
+            c = 0
+            for col in row:
+                c += 1
+                if col.strip() == '.':
+                    return [r - 1, c - 1]
+        #
+        return ret
+        
+    def clean_up_user_interface(lines, width, height):
+        ret = []
+        #
+        for row in lines[:height]:
+            symbol = ''
+            for col in row[:width]:
+                if col.strip():
+                    symbol = col
+                    break
+            ret.append(symbol)
+        #
+        return ret
+
+    def get_user_interface_merge(lines, height):
+        ret = []
+        #
+        pos = []
+        c = 0
+        for symbol in lines:
+            if symbol.strip():
+                pos.append(c)
+            c += 1
+        #
+        length = len(pos)
+        for i in range(length):
+            p = pos[i]
+            #
+            temp = []
+            temp.append(lines[p])
+            #
+            if i < length - 1:
+                extra = pos[i+1] - p
+            else:
+                extra = height - p
+            temp.append(extra)
+            #
+            ret.append(temp)
+        #
+        return ret
+    
+    def read_action(symbol, lines, row, column):
+        ret = []
+        #
+        for c in lines[row]:
+            if c:
+                ret.append(c)
+        #
+        if len(ret) > 1:
+            ret = ret[1:]
+        #
+        return ret
+
+    def read_symbol(symbol, lines, width, height):
+        ret = None
+        #
+        for r in range(len(lines)):
+            row = lines[r]
+            for c in range(len(row)):
+                if r > height or c > width:
+                    col = row[c]
+                    if col.lower() == symbol.lower():
+                        ret = read_action(symbol, lines, r, c)
+                        break
+        #
+        return ret
+
+    def get_symbols(lines, user_interface, width, height):
+        ret = {}
+        #
+        for temp in user_interface:
+            symbol = temp[0]
+            if not ret.has_key(symbol):
+                ret[symbol] = read_symbol(symbol, lines, width, height)
+        #
+        return ret
+
+    def interpret_var(symbol, value, symbols):
+        ret = value[0]
+        #
+        return ret
+
+    def interpret_if(symbol, value, symbols):
+        ret = ''
+        #
+        param1 = value[0]
+        param2 = value[1]
+        #
+        return ret
+
+    def interpret_command(symbol, value, symbols):
+        ret = ''
+        #
+        param1 = value[0]
+        param2 = value[1]
+        param3 = value[2]
+        #
+        if param2 == '1': #HTML: img
+            ret = '<img src="%s" alt="%s">' %(param1, param1)
+        elif param2 == '21': #HTML: h1
+            ret = '<h1>%s</h1>' %(param1)
+        elif param2 == '22': #HTML: h2
+            ret = '<h2>%s</h2>' %(param1)
+        elif param2 == '23': #HTML: h3
+            ret = '<h3>%s</h3>' %(param1)
+        #
+        return ret
+
+    def interpret_loop(symbol, value, symbols):
+        ret = ''
+        #
+        param1 = value[0]
+        param2 = value[1]
+        param3 = value[2]
+        param4 = value[3]
+        #
+        return ret
+
+    def interpret_db(symbol, value, symbols):
+        ret = ''
+        #
+        param1 = value[0]
+        param2 = value[1]
+        param3 = value[2]
+        param4 = value[3]
+        param5 = value[4]
+        param6 = value[5]
+        #
+        param2 = param2.lower()
+        if not param2 in get_allowed_db_operation():
+            return ret
+        #
+        if param2 == 'select':
+            try:
+                r = db.select(param1, 
+                    what=param5, where=param3, order=param4)
+                if r:
+                    r = list(r)
+                    r = r[0]
+                    if param6 == '1': #header/text
+                        ret = '<h3>%s</h3><p>%s</p>' %(r['a'], r['b'])
+                    elif param6 == '2': #link
+                        ret = '<a href="%s">%s</a>' %(r['a'], r['b'])
+                    return ret
+            except:
+                return ret
+        #
+        return ret
+
+    def interpret_action(symbol, symbols):
+        ret = ''
+        #
+        if not symbol in symbols.keys():
+            return ret
+        #
+        val = symbols.get(symbol, [])
+        if not isinstance(val, list):
+            return ret
+        #
+        if len(val) == 1:
+            ret = interpret_var(symbol, val, symbols)
+        elif len(val) == 2:
+            ret = interpret_if(symbol, val, symbols)
+        elif len(val) == 3:
+            ret = interpret_command(symbol, val, symbols)
+        elif len(val) == 4:
+            ret = interpret_loop(symbol, val, symbols)
+        elif len(val) == 6:
+            ret = interpret_db(symbol, val, symbols)
+        #
+        return ret
+
+    def interpret_code(user_interface, symbols):
+        height = get_height(user_interface) 
+        #
+        ret = '''<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <style>
+            html, body {
+                height  : 100%;
+                margin  : 0;
+            }
+
+'''
+        #
+        for u in user_interface:
+            ret += '''
+            .%s {
+                width   : 100%%;
+                height  : %s%%;
+                margin  : 4px;
+                padding : 4px;
+            }
+''' %(u[0], get_height_percent(height, u[1]))
+        #
+        ret += '''
+        </style>
+    </head>
+    <body>
+'''
+        #
+        for u in user_interface:
+            ret += '''
+        <div class="%s">
+        %s
+        </div>
+''' %(u[0], interpret_action(u[0], symbols))
+        #
+        ret += '''
+    </body>
+</html>
+'''
+        #
+        return ret
+
+    #
+    #
+    lines = read_file()
+    #
+    width = get_user_interface_size(lines)[1]
+    height = get_user_interface_size(lines, width)[0]
+    lines_clean = clean_up_user_interface(lines, width, height)
+    #
+    user_interface = get_user_interface_merge(lines_clean, height)
+    if not user_interface:
+        raise Exception
+    #
+    symbols = get_symbols(lines, user_interface, width, height)
+    #
+    return interpret_code(user_interface, symbols)
+    
 
 #----------------------------------------------------------------------#
 # SIMPLEDROPDOWN                                                       #
@@ -6473,6 +6766,26 @@ def handle_website_template(url_id, url, content, param):
     #
     return content
 
+def handle_website_blog(url_id, url, content, param):
+    web.header(HEADER_CONTENT, DEFAULT_CONTENT)
+    #
+    try:
+        detail = content.split(BLOG_SEPARATOR)
+        if len(detail) >= 2:
+            file_id = detail[1]
+            if isint(file_id):
+                if r_fs_ok(file_id):
+                    contents = r_fs_content(file_id)
+                    file_name, file_type, file_content = contents
+                    return pangsit(url_id, url, content,
+                        param, file_id, 
+                        file_name, file_type, file_content, 
+                        detail)
+    except:
+        pass
+    #
+    return content
+
 def handle_website(url_id, url, content, param):
     if not url_id:
         dflt()
@@ -6521,6 +6834,8 @@ def handle_website(url_id, url, content, param):
             #redir
             if content.startswith(PREFIX_REDIR_HTTP) or content.startswith(PREFIX_REDIR_HTTPS):
                 return handle_website_redir(content)
+            elif content.startswith(PREFIX_BLOG):#blog
+                return handle_website_blog(url_id, url, content, param)
             else:
                 #template
                 return handle_website_template(url_id, url, content, param)
