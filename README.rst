@@ -4,10 +4,10 @@
     SQLiteBoy
     Simple web-based management tool for SQLite database
     (with form, report, website, and many other features)
-    (c) Noprianto <nop@noprianto.com>
+    (c) Noprianto <nopri.anto@icloud.com>
     2012-2019
     License: GPL
-    Version: 1.74
+    Version: 1.75
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -123,6 +123,8 @@ Features
 - Single python file
 
 - Configurable port (default 11738 because it looks like sqliteboy)
+  (As of v1.75, it is possible to run SQLiteBoy as WSGI application,
+   please read HOW TO RUN) 
 
 - SSL Support
 
@@ -544,6 +546,13 @@ Please use https if SSL support is enabled
 As of v1.62, it is possible to run multiple SQLiteBoy instances 
 (single host, different ports / databases), as the HTTP cookie name is 
 set based on database path.
+
+As of v1.75, it is possible to run as WSGI application:
+- Please make sure that a file named data.db exists in current
+  working directory (it can be an empty file)
+- If 'application' is expected::
+
+    from sqliteboy import wsgi_application as application
 
 
 Custom Template

@@ -31,8 +31,8 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.74'
-WSITE = 'http://sqliteboy.com'
+VERSION = '1.75'
+WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
 DBN = 'sqlite'
@@ -925,6 +925,7 @@ PREFIX_REDIR_HTTP = 'http://'
 PREFIX_REDIR_HTTPS = 'https://'
 PREFIX_BLOG = 'blog:'
 BLOG_SEPARATOR = ':'
+WSGI_DEFAULT_DATABASE = 'data.db'
 
 
 #----------------------------------------------------------------------#
@@ -13175,6 +13176,61 @@ class website:
 
 
 #----------------------------------------------------------------------#
+# SETUP                                                                #
+#----------------------------------------------------------------------#
+def application_setup():
+    global app
+    global sess
+    #
+    app = web.application(URLS, globals())
+    app.notfound = notfound
+    app.internalerror = internalerror
+    #
+    web.config.session_parameters['cookie_name'] = '%s_%s' %(NAME, md5(dbfile).hexdigest())
+    #
+    sess = web.session.Session(app, MemSession(), initializer = sess_init)
+    prepsess()
+    #
+    app.add_processor(proc_access)
+    app.add_processor(proc_admin_check)
+    app.add_processor(proc_login)
+    app.add_processor(proc_nosb)
+    app.add_processor(proc_udf)
+    app.add_processor(proc_account_check)
+    app.add_processor(proc_misc)
+    app.add_processor(proc_log)
+
+def database_setup(dbfile_setup, dbfile0_setup):
+    global db
+    global dbfile
+    global dbfile0
+    #
+    dbfile = dbfile_setup
+    dbfile0 = dbfile0_setup
+    #
+    try:
+        db = web.database(
+                dbn=DBN,
+                db=dbfile,
+                check_same_thread=CHECK_SAME_THREAD
+            )
+        db.select(DEFAULT_TABLE)
+    except:
+        log('%s %s' %(_['e_connect'], dbfile), stream=sys.stderr)
+        sys.exit(2)
+
+
+#----------------------------------------------------------------------#
+# WSGI                                                                 #
+# if expected: from sqliteboy import wsgi_application as application   #
+# Please make sure that a file named data.db exists in current working #
+# directory (it can be an empty file)                                  #
+# * need more testing *                                                #
+#----------------------------------------------------------------------#
+wsgi_application = None
+
+
+#----------------------------------------------------------------------#
 # MAIN                                                                 #
 #----------------------------------------------------------------------#
 if __name__ == '__main__':
@@ -13241,36 +13297,11 @@ if __name__ == '__main__':
         log(_['e_db_static'], stream=sys.stderr)
         sys.exit(5)
     #
-    try:
-        db = web.database(
-                dbn=DBN,
-                db=dbfile,
-                check_same_thread=CHECK_SAME_THREAD
-            )
-        db.select(DEFAULT_TABLE)
-    except:
-        log('%s %s' %(_['e_connect'], dbfile), stream=sys.stderr)
-        sys.exit(2)
+    database_setup(dbfile, dbfile0)
     #
     log(dbfile)
     #
-    app = web.application(URLS, globals())
-    app.notfound = notfound
-    app.internalerror = internalerror
-    #
-    web.config.session_parameters['cookie_name'] = '%s_%s' %(NAME, md5(dbfile).hexdigest())
-    #
-    sess = web.session.Session(app, MemSession(), initializer = sess_init)
-    prepsess()
-    #
-    app.add_processor(proc_access)
-    app.add_processor(proc_admin_check)
-    app.add_processor(proc_login)
-    app.add_processor(proc_nosb)
-    app.add_processor(proc_udf)
-    app.add_processor(proc_account_check)
-    app.add_processor(proc_misc)
-    app.add_processor(proc_log)
+    application_setup()
     #
     xupdate_all = [
                         [
@@ -13302,4 +13333,10 @@ if __name__ == '__main__':
         log('', stream=sys.stderr)
         log(emsg, stream=sys.stderr)
         sys.exit(GENERAL_ERROR_CODE)
+else:
+    wsgi_db_path = os.path.join(SCURDIR, WSGI_DEFAULT_DATABASE)
+    if os.path.exists(wsgi_db_path):
+        database_setup(wsgi_db_path, WSGI_DEFAULT_DATABASE)
+        application_setup()
+        wsgi_application = app.wsgifunc()
 
