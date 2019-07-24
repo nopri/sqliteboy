@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.76'
+VERSION = '1.77'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -9618,6 +9618,9 @@ class query:
             web.header('Content-Disposition', disposition)
             return content
         else:
+            if multi == 1:
+                msg = list(msg)
+            #
             sess.query = [q, err, multi, msg, t]
             raise web.seeother('/query')
         #
