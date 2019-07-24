@@ -4,7 +4,7 @@
 # sqliteboy.py
 # Simple web-based management tool for SQLite database
 # (with form, report, website, and many other features)
-# (c) Noprianto <nop@noprianto.com>
+# (c) Noprianto <nopri.anto@icloud.com>
 # 2012-2019
 # License: GPL
 #
@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.75'
+VERSION = '1.76'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -926,6 +926,7 @@ PREFIX_REDIR_HTTPS = 'https://'
 PREFIX_BLOG = 'blog:'
 BLOG_SEPARATOR = ':'
 WSGI_DEFAULT_DATABASE = 'data.db'
+SESSION_DEFAULT_DIR = '%s-session' %(NAME)
 
 
 #----------------------------------------------------------------------#
@@ -1179,6 +1180,7 @@ rowid = '_%s___%s___%s___%s_' %(
 
 #
 sess = None
+sess_type = 0 #memory
 sess_init = {
         'var': {},
         'table': {},
@@ -1256,6 +1258,14 @@ class MemSession(web.session.Store):
         for k in kdel:
             if self.data.has_key(k):
                 del self.data[k]
+
+
+#----------------------------------------------------------------------#
+# DISKSESSION                                                          #
+#----------------------------------------------------------------------#
+class DiskSession(web.session.DiskStore):
+    def __len__(self):
+        return len(os.listdir(self.root))
 
 
 #----------------------------------------------------------------------#
@@ -2250,6 +2260,8 @@ LANGS = {
             'x_link': 'links',
             'x_link_login': 'additional/custom links at login page (please read Link Code Reference)',
             'x_url': 'url',
+            'x_session_memory': 'memory',
+            'x_session_disk': 'disk',
             'tt_info': 'info',
             'tt_insert': 'insert',
             'tt_edit': 'edit',
@@ -4318,6 +4330,12 @@ def sysinfo():
     except:
         s_reportlab = _['x_not_avail_pdf']
     #
+    sess_type_str = ''
+    if sess_type == 0:
+        sess_type_str = _['x_session_memory']
+    elif sess_type == 1:
+        sess_type_str = _['x_session_disk']
+    #
     ret = [
             (_['x_version'], s_a),
             (_['x_sqlite_version'], db.db_module.sqlite_version),
@@ -4327,7 +4345,7 @@ def sysinfo():
             s_sb,
             (_['x_admin'], s_adm),
             (_['x_allow'], allows()),
-            (_['x_session'], len(sess.store)),
+            (_['x_session'], '%s %s' %(len(sess.store), sess_type_str)),
         ]
     #
     return ret
@@ -6982,6 +7000,7 @@ $ pr_get_style = pr_get('style')
 <html>
 <head>
 <link rel='SHORTCUT ICON' href='/favicon.ico'>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>$title(data['title'], '')</title>
 <meta charset='utf-8'>
 $if data.has_key(print_data_key):
@@ -13181,6 +13200,7 @@ class website:
 def application_setup():
     global app
     global sess
+    global sess_type
     #
     app = web.application(URLS, globals())
     app.notfound = notfound
@@ -13188,7 +13208,14 @@ def application_setup():
     #
     web.config.session_parameters['cookie_name'] = '%s_%s' %(NAME, md5(dbfile).hexdigest())
     #
-    sess = web.session.Session(app, MemSession(), initializer = sess_init)
+    session_dir = os.path.join(SCURDIR, SESSION_DEFAULT_DIR)
+    if os.access(session_dir, os.F_OK|os.R_OK|os.W_OK|os.X_OK):
+        sess = web.session.Session(app, DiskSession(session_dir), 
+            initializer = sess_init)
+        sess_type = 1
+    else:
+        sess = web.session.Session(app, MemSession(), initializer = sess_init)
+        sess_type = 0
     prepsess()
     #
     app.add_processor(proc_access)
@@ -13223,9 +13250,8 @@ def database_setup(dbfile_setup, dbfile0_setup):
 #----------------------------------------------------------------------#
 # WSGI                                                                 #
 # if expected: from sqliteboy import wsgi_application as application   #
-# Please make sure that a file named data.db exists in current working #
-# directory (it can be an empty file)                                  #
-# * need more testing *                                                #
+# Please make sure that an SQLite database named data.db exists in     #
+# current working directory (or, it can be an empty file)              #
 #----------------------------------------------------------------------#
 wsgi_application = None
 
