@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.77'
+VERSION = '1.78'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -84,6 +84,8 @@ DEFAULT_VAR_MAX = 3
 DEFAULT_INDEX = '/index'
 DEFAULT_HOME = '/'
 DEFAULT_CUSTOM = '/(.*)'
+DEFAULT_LANG_WEB = 'en'
+DEFAULT_CHARSET_WEB = 'utf-8'
 APPLICATION_TITLE_MAX = 32
 BROWSE_LIMIT_ALL = [10, 25, DEFAULT_LIMIT, 100, 250, 500, 1000]
 SEQUENCE_TABLE = 'sqlite_sequence'
@@ -6990,6 +6992,58 @@ def template_table_browse(table, what='*', where=None, order=None,
     #
     return ret
 
+def template_begin(title='', style='', lang=DEFAULT_LANG_WEB, 
+        charset=DEFAULT_CHARSET_WEB):
+    style_add = ''
+    if style:
+        style_add = '<link rel="stylesheet" type="text/css" href="%s">' %(
+            style,
+        )
+    #
+    ret = '''<!DOCTYPE html>
+<html lang="%s">
+<head>
+    <title>%s</title>
+    <meta charset="%s">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    %s
+</head>
+<body>
+    ''' %(
+            lang,
+            title,
+            charset,
+            style_add,
+        )
+    #
+    return ret
+
+def template_end():
+    ret = '''</body>
+</html>
+    '''
+    #
+    return ret
+
+def template_redirect(url, title='', after=0, lang=DEFAULT_LANG_WEB):
+    ret = '''<!DOCTYPE html>
+<html lang="%s">
+<head>
+    <title>%s</title>
+    <meta http-equiv="refresh" content="%s; url=%s">
+</head>
+<body>
+</body>
+</html>
+    ''' %(
+        lang,
+        title,
+        after,
+        url,
+    )
+    #
+    return ret
+
 
 #----------------------------------------------------------------------#
 # TEMPLATE                                                             #
@@ -8851,6 +8905,9 @@ GLBL_WEB_TEMPLATE = {
     'size'      : size,
     'user'      : user,
     'table_browse': template_table_browse,
+    'begin': template_begin,
+    'end': template_end,
+    'redirect': template_redirect,
     }
 
 

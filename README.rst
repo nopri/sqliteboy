@@ -7,7 +7,7 @@
     (c) Noprianto <nopri.anto@icloud.com>
     2012-2019
     License: GPL
-    Version: 1.77
+    Version: 1.78
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -668,7 +668,29 @@ Website and Custom URL Reference
       
         table_browse(table, what='*', where=None, order=None, group=None, limit=None, offset=None) 
 
+    - begin: a function, to begin an HTML document
+      ::
+
+        begin(title='', style='', lang='en', charset='utf-8')
+
+    - end: a function, to end an HTML document
+
+    - redirect: a function, to redirect to a URL
+      ::
+
+        redirect(url, title='', after=0, lang='en')
+        
   - Please read web.py template for more information
+
+  - Example (begin, end):
+    ::
+
+        $def with (id, url, content, param)
+        $ a = begin(title='Hello')
+        $ b = end()
+        $:a
+        Hello
+        $:b
 
   - Example (custom URL:/test, /test?hello=world):
     ::
