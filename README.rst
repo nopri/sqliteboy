@@ -7,7 +7,7 @@
     (c) Noprianto <nopri.anto@icloud.com>
     2012-2019
     License: GPL
-    Version: 1.78
+    Version: 1.79
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -656,7 +656,12 @@ Website and Custom URL Reference
         $def with (id, url, content, param)
 
   - The following globals are available to template:
-  
+
+    - Note: most user-defined functions are also available. 
+      Please read USER-DEFINED FUNCTION.
+      Unavailable functions are marked with: 
+      not available in HTML template interpretation.
+
     - size: a function, requires no argument, returns database size as string
     
     - user: a function, requires no argument, returns logged in user name 
@@ -732,7 +737,7 @@ Website and Custom URL Reference
 
     - param: parameter (web.input())
 
-    - data: additional data (helper functions, UDFs, modules, etc) (dict)
+    - data: additional data (helper functions, UDFs, templates, modules, etc) (dict)
 
   - Function *must* return a list of two members:
   
@@ -796,6 +801,8 @@ Website and Custom URL Reference
 
 User-defined Function
 ========================================================================
+
+Note: please use SQLite built-in functions whenever and wherever possible.
 
 - sqliteboy_strs(s)
 
@@ -918,6 +925,16 @@ User-defined Function
          sqliteboy_time2('2012-03-28 19:20:21')
          -> 1332937221.0
 
+- sqliteboy_time2_date(s)
+  ::
+
+      sqliteboy_time2() using YYYY-MM-DD format
+
+- sqliteboy_time2_format(s, fmt)
+  ::
+
+      sqliteboy_time2() using custom format
+
 - sqliteboy_time3(f)
   ::
 
@@ -1033,6 +1050,74 @@ User-defined Function
 
       return value:
         1 (leap year) or 0 (not leap year)
+
+- sqliteboy_datetime_format(fmt)
+  ::
+
+      format date time
+      argument    :
+         fmt (format string)
+
+- sqliteboy_datetime_format_local(fmt)
+  ::
+
+      format date time (local)
+      argument    :
+         fmt (format string)
+
+- sqliteboy_date()
+  ::
+
+      get current date in YYYY-MM-DD format
+
+- sqliteboy_date_local()
+  ::
+
+      get current date (local) in YYYY-MM-DD format
+
+- sqliteboy_date_delta_format(s, fmt, n)
+  ::
+
+      get date delta (days) from date string, using custom format
+      argument    :
+         s (date string)
+         fmt (format string)
+         n (days)
+
+- sqliteboy_date_local_delta_format(s, fmt, n)
+  ::
+
+      get date delta (days) from date string, using custom format
+      (local time)
+      argument    :
+         s (date string)
+         fmt (format string)
+         n (days)
+
+- sqliteboy_date_delta(s, n)
+  ::
+
+      get date delta (days) from date string (YYYY-MM-DD)
+      argument    :
+         s (date string)
+         n (days)
+      
+- sqliteboy_date_local_delta(s, n)
+  ::
+
+      get date delta (days) from date string (YYYY-MM-DD)
+      (local time)
+      argument    :
+         s (date string)
+         n (days)
+
+- sqliteboy_today_local_delta(n)
+  ::
+
+      get date delta (days) from current date (YYYY-MM-DD)
+      (local time)
+      argument    :
+         n (days)
 
 - sqliteboy_lower(s)
 
@@ -1346,6 +1431,8 @@ User-defined Function
 - sqliteboy_lookup1(table, field, field1, value1, function, distinct)
   ::
 
+      (not available in HTML template interpretation)
+
       SELECT <function>(<field>) FROM <table> WHERE <field1>=<value1>
       and
       return function result
@@ -1396,6 +1483,8 @@ User-defined Function
 - sqliteboy_lookup2(table, field, field1, value1, order, default)
   ::
 
+      (not available in HTML template interpretation)
+
       lookup into table
       SELECT <field> FROM <table> WHERE <field1>=<value1> ORDER BY rowid asc
       or
@@ -1432,6 +1521,8 @@ User-defined Function
 - sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default)
   ::
 
+      (not available in HTML template interpretation)
+
       lookup into table
       SELECT <field> FROM <table> WHERE <field1>=<value1> and <field2>=<value2> ORDER BY rowid asc
       or
@@ -1467,6 +1558,8 @@ User-defined Function
 - sqliteboy_split1(s, separator, table, column, convert)
   ::
 
+      (not available in HTML template interpretation)
+
       split string s using separator as the delimiter string and
       insert into table (column) for each member in list
       argument    :
@@ -1491,6 +1584,8 @@ User-defined Function
 
 - sqliteboy_list_datetime1(s, n, interval, table, column, local)
   ::
+
+      (not available in HTML template interpretation)
 
       generate list of datetime starting with s (inclusive),
       as much as n, with interval,
@@ -1551,6 +1646,8 @@ User-defined Function
 - sqliteboy_if(s, a, b)
   ::
 
+      (not available in HTML template interpretation)
+
       if s, return a, else return b
       argument    :
          s (SQL query, must return column alias named 'if')
@@ -1591,6 +1688,12 @@ User-defined Function
     return value  :
         http remote address
 
+- sqliteboy_http_remote_addr_ext()
+  ::
+
+    return value  :
+        http remote address (read HTTP_X_FORWARDED_FOR)
+
 - sqliteboy_http_user_agent()
   ::
 
@@ -1609,6 +1712,8 @@ User-defined Function
 
 - sqliteboy_var_set(name, value)
   ::
+
+      (not available in HTML template interpretation)
 
       user-defined variable: set
       (max per user apply)
@@ -1633,6 +1738,8 @@ User-defined Function
 - sqliteboy_var_get(name)
   ::
 
+      (not available in HTML template interpretation)
+
       user-defined variable: get
       argument    :
          name (variable name, underscore and alphanumeric only, not case-sensitive)
@@ -1649,6 +1756,8 @@ User-defined Function
 
 - sqliteboy_var_del(name)
   ::
+
+      (not available in HTML template interpretation)
 
       user-defined variable: delete
       argument    :
@@ -1678,11 +1787,15 @@ User-defined Function
 - sqliteboy_x_user()
   ::
 
+    (not available in HTML template interpretation)
+
     return value  :
         user name (if extended feature is enabled, or '')
 
 - sqliteboy_x_profile_all(u, field, system)
   ::
+
+      (not available in HTML template interpretation)
 
       read user profile (both system and user-defined)
 
@@ -1698,6 +1811,8 @@ User-defined Function
 - sqliteboy_x_profile(u, field)
   ::
 
+      (not available in HTML template interpretation)
+
       read custom field in user-defined profile for user u
       Please read USER-DEFINED PROFILE REFERENCE section (below)
 
@@ -1711,6 +1826,8 @@ User-defined Function
 
 - sqliteboy_x_profile_system(u, field)
   ::
+
+      (not available in HTML template interpretation)
 
       read system profile for user u
       Please read SYSTEM PROFILE REFERENCE section (below)
@@ -1726,10 +1843,14 @@ User-defined Function
 - sqliteboy_x_my(field)
   ::
 
+      (not available in HTML template interpretation)
+
       alias for sqliteboy_x_profile(sqliteboy_x_user(), field)
 
 - sqliteboy_x_my_system(field)
   ::
+
+      (not available in HTML template interpretation)
 
       alias for sqliteboy_x_profile_system(sqliteboy_x_user(), field)
 
@@ -3165,7 +3286,7 @@ Python Handler Reference
 
     - user_data: list of user input (list)
 
-    - data: additional data (helper functions, UDFs, modules, etc) (dict)
+    - data: additional data (helper functions, UDFs, templates, modules, etc) (dict)
 
   - Function *must* return an integer. To get this value, developer can use
     $python_handler in custom form message. If there is exception, -1 will
@@ -3195,7 +3316,7 @@ Python Handler Reference
 
     - user_data: list of user input (list)
 
-    - data: additional data (helper functions, UDFs, modules, etc) (dict)
+    - data: additional data (helper functions, UDFs, templates, modules, etc) (dict)
 
   - Function may return an integer, list of dict or web.py database query
     result

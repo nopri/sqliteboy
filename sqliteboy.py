@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.78'
+VERSION = '1.79'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -283,6 +283,7 @@ DAYS_IN_YEAR = 365.2425
 DAYS_IN_MONTH_AVERAGE = round( (DAYS_IN_YEAR / float(12)), 2)
 DAYS_IN_MONTH_30 = 30
 DAYS_IN_MONTH_31 = 31
+SECONDS_IN_DAY = 60 * 60 * 24
 CSV_SUFFIX = '.csv'
 CSV_CTYPE = 'text/csv'
 BACKUP_BUFFER = 10 * SIZE_KB
@@ -956,6 +957,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 import time
+import datetime
 import decimal
 import random
 import string
@@ -2649,6 +2651,22 @@ def sqliteboy_time2(s):
         return 0
 SQLITE_UDF.append(('sqliteboy_time2', 1, sqliteboy_time2))
 
+def sqliteboy_time2_date(s):
+    try:
+        s = s.strip()
+        return time.mktime(time.strptime(s, PYTIME_DATE_FORMAT))
+    except:
+        return 0
+SQLITE_UDF.append(('sqliteboy_time2_date', 1, sqliteboy_time2_date))
+
+def sqliteboy_time2_format(s, fmt):
+    try:
+        s = s.strip()
+        return time.mktime(time.strptime(s, fmt))
+    except:
+        return 0
+SQLITE_UDF.append(('sqliteboy_time2_format', 2, sqliteboy_time2_format))
+
 def sqliteboy_time3(f):
     try:
         return time.strftime(PYTIME_FORMAT, time.localtime(f))
@@ -2768,6 +2786,73 @@ def sqliteboy_is_leap(n):
     #
     return ret
 SQLITE_UDF.append(('sqliteboy_is_leap', 1, sqliteboy_is_leap))
+
+def sqliteboy_datetime_format(fmt):
+    try:
+        return time.strftime(fmt, time.gmtime(sqliteboy_time()))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_datetime_format', 1, sqliteboy_datetime_format))
+
+def sqliteboy_datetime_format_local(fmt):
+    try:
+        return time.strftime(fmt, time.localtime(sqliteboy_time()))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_datetime_format_local', 1, sqliteboy_datetime_format_local))
+
+def sqliteboy_date():
+    return sqliteboy_datetime_format(PYTIME_DATE_FORMAT)
+SQLITE_UDF.append(('sqliteboy_date', 0, sqliteboy_date))
+
+def sqliteboy_date_local():
+    return sqliteboy_datetime_format_local(PYTIME_DATE_FORMAT)
+SQLITE_UDF.append(('sqliteboy_date_local', 0, sqliteboy_date_local))
+
+def sqliteboy_date_delta_format(s, fmt, n):
+    t = sqliteboy_time2_format(s, fmt)
+    t += n * SECONDS_IN_DAY
+    try:
+        return time.strftime(fmt, time.gmtime(t))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_date_delta_format', 3, sqliteboy_date_delta_format))
+
+def sqliteboy_date_local_delta_format(s, fmt, n):
+    t = sqliteboy_time2_format(s, fmt)
+    t += n * SECONDS_IN_DAY
+    try:
+        return time.strftime(fmt, time.localtime(t))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_date_local_delta_format', 3, sqliteboy_date_local_delta_format))
+
+def sqliteboy_date_delta(s, n):
+    t = sqliteboy_time2_date(s)
+    t += n * SECONDS_IN_DAY
+    try:
+        return time.strftime(PYTIME_DATE_FORMAT, time.gmtime(t))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_date_delta', 2, sqliteboy_date_delta))
+
+def sqliteboy_date_local_delta(s, n):
+    t = sqliteboy_time2_date(s)
+    t += n * SECONDS_IN_DAY
+    try:
+        return time.strftime(PYTIME_DATE_FORMAT, time.localtime(t))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_date_local_delta', 2, sqliteboy_date_local_delta))
+
+def sqliteboy_today_local_delta(n):
+    t = sqliteboy_time2_date(sqliteboy_date_local())
+    t += n * SECONDS_IN_DAY
+    try:
+        return time.strftime(PYTIME_DATE_FORMAT, time.localtime(t))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_today_local_delta', 1, sqliteboy_today_local_delta))
 
 def sqliteboy_lower(s):
     s = sqliteboy_strs(s)
@@ -3147,7 +3232,7 @@ def sqliteboy_lookup1(table, field, field1, value1, function, distinct):
         ret = str(ret)
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_lookup1', 6, sqliteboy_lookup1))
+SQLITE_UDF.append(('sqliteboy_lookup1', 6, sqliteboy_lookup1, True))
 
 def sqliteboy_lookup2(table, field, field1, value1, order, default):
     table = str(table).lower()
@@ -3185,7 +3270,7 @@ def sqliteboy_lookup2(table, field, field1, value1, order, default):
         pass
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_lookup2', 6, sqliteboy_lookup2))
+SQLITE_UDF.append(('sqliteboy_lookup2', 6, sqliteboy_lookup2, True))
 
 def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, default):
     table = str(table).lower()
@@ -3225,7 +3310,7 @@ def sqliteboy_lookup3(table, field, field1, value1, field2, value2, order, defau
         pass
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3))
+SQLITE_UDF.append(('sqliteboy_lookup3', 8, sqliteboy_lookup3, True))
 
 def sqliteboy_split1(s, separator, table, column, convert):
     ret = 0
@@ -3294,7 +3379,7 @@ def sqliteboy_split1(s, separator, table, column, convert):
         ret = count
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_split1', 5, sqliteboy_split1))
+SQLITE_UDF.append(('sqliteboy_split1', 5, sqliteboy_split1, True))
 
 def sqliteboy_list_datetime1(s, n, interval, table, column, local):
     ret = 0
@@ -3360,7 +3445,7 @@ def sqliteboy_list_datetime1(s, n, interval, table, column, local):
         ret = count
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_list_datetime1', 6, sqliteboy_list_datetime1))
+SQLITE_UDF.append(('sqliteboy_list_datetime1', 6, sqliteboy_list_datetime1, True))
 
 def sqliteboy_if(s, a, b):
     ret = ''
@@ -3379,11 +3464,18 @@ def sqliteboy_if(s, a, b):
     except:
         pass
     return ret
-SQLITE_UDF.append(('sqliteboy_if', 3, sqliteboy_if))
+SQLITE_UDF.append(('sqliteboy_if', 3, sqliteboy_if, True))
 
 def sqliteboy_http_remote_addr():
     return web.ctx.ip
 SQLITE_UDF.append(('sqliteboy_http_remote_addr', 0, sqliteboy_http_remote_addr))
+
+def sqliteboy_http_remote_addr_ext():
+    x = web.ctx.environ.get('HTTP_X_FORWARDED_FOR')
+    if x:
+        return x
+    return web.ctx.ip
+SQLITE_UDF.append(('sqliteboy_http_remote_addr_ext', 0, sqliteboy_http_remote_addr_ext))
 
 def sqliteboy_http_user_agent():
     return web.ctx.env.get('HTTP_USER_AGENT', '')
@@ -3396,17 +3488,17 @@ SQLITE_UDF.append(('sqliteboy_app_title', 0, sqliteboy_app_title))
 def sqliteboy_var_set(name, value):
     name = str(name)
     return v_set(name, value)
-SQLITE_UDF.append(('sqliteboy_var_set', 2, sqliteboy_var_set))
+SQLITE_UDF.append(('sqliteboy_var_set', 2, sqliteboy_var_set, True))
 
 def sqliteboy_var_get(name):
     name = str(name)
     return v_get(name)
-SQLITE_UDF.append(('sqliteboy_var_get', 1, sqliteboy_var_get))
+SQLITE_UDF.append(('sqliteboy_var_get', 1, sqliteboy_var_get, True))
 
 def sqliteboy_var_del(name):
     name = str(name)
     return v_del(name)
-SQLITE_UDF.append(('sqliteboy_var_del', 1, sqliteboy_var_del))
+SQLITE_UDF.append(('sqliteboy_var_del', 1, sqliteboy_var_del, True))
 
 def sqliteboy_strip_html(s):
     s = str(s)
@@ -6911,7 +7003,7 @@ def sqliteboy_x_user():
         return ''
     else:
         return user()
-SQLITE_UDF.append(('sqliteboy_x_user', 0, sqliteboy_x_user))
+SQLITE_UDF.append(('sqliteboy_x_user', 0, sqliteboy_x_user, True))
 
 def sqliteboy_x_profile_all(u, field, system):
     ret = ''
@@ -6935,40 +7027,30 @@ def sqliteboy_x_profile_all(u, field, system):
         return ret
     #
     return ret
-SQLITE_UDF.append(('sqliteboy_x_profile_all', 3, sqliteboy_x_profile_all))
+SQLITE_UDF.append(('sqliteboy_x_profile_all', 3, sqliteboy_x_profile_all, True))
 
 def sqliteboy_x_profile(u, field):
     return sqliteboy_x_profile_all(u, field, 0)
-SQLITE_UDF.append(('sqliteboy_x_profile', 2, sqliteboy_x_profile))
+SQLITE_UDF.append(('sqliteboy_x_profile', 2, sqliteboy_x_profile, True))
 
 def sqliteboy_x_profile_system(u, field):
     return sqliteboy_x_profile_all(u, field, 1)
-SQLITE_UDF.append(('sqliteboy_x_profile_system', 2, sqliteboy_x_profile_system))
+SQLITE_UDF.append(('sqliteboy_x_profile_system', 2, sqliteboy_x_profile_system, True))
 
 def sqliteboy_x_my(field):
     return sqliteboy_x_profile(sqliteboy_x_user(), field)
-SQLITE_UDF.append(('sqliteboy_x_my', 1, sqliteboy_x_my))
+SQLITE_UDF.append(('sqliteboy_x_my', 1, sqliteboy_x_my, True))
 
 def sqliteboy_x_my_system(field):
     return sqliteboy_x_profile_system(sqliteboy_x_user(), field)
-SQLITE_UDF.append(('sqliteboy_x_my_system', 1, sqliteboy_x_my_system))
-
-
-#----------------------------------------------------------------------#
-# PYTHON HANDLER                                                       #
-#----------------------------------------------------------------------#
-py_handler_udf = {}
-for i in SQLITE_UDF:
-    py_handler_udf[ i[0] ] = i[2]
-#
-PY_HANDLER_DATA = {
-                    'udf': py_handler_udf,
-                }
+SQLITE_UDF.append(('sqliteboy_x_my_system', 1, sqliteboy_x_my_system, True))
 
 
 #----------------------------------------------------------------------#
 # FUNCTION (TEMPLATE, WEBSITE)                                         #
 #----------------------------------------------------------------------#
+SQLITEBOY_WEB = []
+
 def template_table_browse(table, what='*', where=None, order=None, 
     group=None, limit=None, offset=None):
     ret = None
@@ -6991,6 +7073,7 @@ def template_table_browse(table, what='*', where=None, order=None,
         return None
     #
     return ret
+SQLITEBOY_WEB.append(('template_table_browse', template_table_browse, 'table_browse'))
 
 def template_begin(title='', style='', lang=DEFAULT_LANG_WEB, 
         charset=DEFAULT_CHARSET_WEB):
@@ -7017,6 +7100,7 @@ def template_begin(title='', style='', lang=DEFAULT_LANG_WEB,
         )
     #
     return ret
+SQLITEBOY_WEB.append(('template_begin', template_begin, 'begin'))
 
 def template_end():
     ret = '''</body>
@@ -7024,6 +7108,7 @@ def template_end():
     '''
     #
     return ret
+SQLITEBOY_WEB.append(('template_end', template_end, 'end'))
 
 def template_redirect(url, title='', after=0, lang=DEFAULT_LANG_WEB):
     ret = '''<!DOCTYPE html>
@@ -7043,6 +7128,24 @@ def template_redirect(url, title='', after=0, lang=DEFAULT_LANG_WEB):
     )
     #
     return ret
+SQLITEBOY_WEB.append(('template_redirect', template_redirect, 'redirect'))
+
+
+#----------------------------------------------------------------------#
+# PYTHON HANDLER                                                       #
+#----------------------------------------------------------------------#
+py_handler_udf = {}
+for i in SQLITE_UDF:
+    py_handler_udf[ i[0] ] = i[2]
+#
+py_handler_template = {}
+for i in SQLITEBOY_WEB:
+    py_handler_template[ i[0] ] = i[1]
+#
+PY_HANDLER_DATA = {
+                    'udf': py_handler_udf,
+                    'template': py_handler_template,
+                }
 
 
 #----------------------------------------------------------------------#
@@ -8904,11 +9007,13 @@ T = web.template.Template(T_BASE, globals=GLBL, filename=DEFAULT_T_BASE)
 GLBL_WEB_TEMPLATE = {
     'size'      : size,
     'user'      : user,
-    'table_browse': template_table_browse,
-    'begin': template_begin,
-    'end': template_end,
-    'redirect': template_redirect,
     }
+for i in SQLITEBOY_WEB:
+    if len(i) == 3:
+        GLBL_WEB_TEMPLATE[ i[2] ] = i[1]
+for i in SQLITE_UDF:
+    if len(i) == 3:
+        GLBL_WEB_TEMPLATE[ i[0] ] = i[2]
 
 
 #----------------------------------------------------------------------#
