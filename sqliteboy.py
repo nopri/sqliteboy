@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.79'
+VERSION = '1.80'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -283,6 +283,7 @@ DAYS_IN_YEAR = 365.2425
 DAYS_IN_MONTH_AVERAGE = round( (DAYS_IN_YEAR / float(12)), 2)
 DAYS_IN_MONTH_30 = 30
 DAYS_IN_MONTH_31 = 31
+SECONDS_IN_HOUR = 60 * 60
 SECONDS_IN_DAY = 60 * 60 * 24
 CSV_SUFFIX = '.csv'
 CSV_CTYPE = 'text/csv'
@@ -2810,6 +2811,7 @@ def sqliteboy_date_local():
 SQLITE_UDF.append(('sqliteboy_date_local', 0, sqliteboy_date_local))
 
 def sqliteboy_date_delta_format(s, fmt, n):
+    n = sqliteboy_as_float(n)
     t = sqliteboy_time2_format(s, fmt)
     t += n * SECONDS_IN_DAY
     try:
@@ -2819,6 +2821,7 @@ def sqliteboy_date_delta_format(s, fmt, n):
 SQLITE_UDF.append(('sqliteboy_date_delta_format', 3, sqliteboy_date_delta_format))
 
 def sqliteboy_date_local_delta_format(s, fmt, n):
+    n = sqliteboy_as_float(n)
     t = sqliteboy_time2_format(s, fmt)
     t += n * SECONDS_IN_DAY
     try:
@@ -2828,6 +2831,7 @@ def sqliteboy_date_local_delta_format(s, fmt, n):
 SQLITE_UDF.append(('sqliteboy_date_local_delta_format', 3, sqliteboy_date_local_delta_format))
 
 def sqliteboy_date_delta(s, n):
+    n = sqliteboy_as_float(n)
     t = sqliteboy_time2_date(s)
     t += n * SECONDS_IN_DAY
     try:
@@ -2837,6 +2841,7 @@ def sqliteboy_date_delta(s, n):
 SQLITE_UDF.append(('sqliteboy_date_delta', 2, sqliteboy_date_delta))
 
 def sqliteboy_date_local_delta(s, n):
+    n = sqliteboy_as_float(n)
     t = sqliteboy_time2_date(s)
     t += n * SECONDS_IN_DAY
     try:
@@ -2846,6 +2851,7 @@ def sqliteboy_date_local_delta(s, n):
 SQLITE_UDF.append(('sqliteboy_date_local_delta', 2, sqliteboy_date_local_delta))
 
 def sqliteboy_today_local_delta(n):
+    n = sqliteboy_as_float(n)
     t = sqliteboy_time2_date(sqliteboy_date_local())
     t += n * SECONDS_IN_DAY
     try:
@@ -2853,6 +2859,16 @@ def sqliteboy_today_local_delta(n):
     except:
         return ''
 SQLITE_UDF.append(('sqliteboy_today_local_delta', 1, sqliteboy_today_local_delta))
+
+def sqliteboy_today_local_delta_hour(n):
+    n = sqliteboy_as_float(n)
+    t = sqliteboy_time2(sqliteboy_time3a())
+    t += n * SECONDS_IN_HOUR
+    try:
+        return time.strftime(PYTIME_DATE_FORMAT, time.localtime(t))
+    except:
+        return ''
+SQLITE_UDF.append(('sqliteboy_today_local_delta_hour', 1, sqliteboy_today_local_delta_hour))
 
 def sqliteboy_lower(s):
     s = sqliteboy_strs(s)
@@ -7130,6 +7146,22 @@ def template_redirect(url, title='', after=0, lang=DEFAULT_LANG_WEB):
     return ret
 SQLITEBOY_WEB.append(('template_redirect', template_redirect, 'redirect'))
 
+def template_redirect_check(check, url, title_redirect='', after=0, 
+        lang=DEFAULT_LANG_WEB, title='', style='',
+        charset=DEFAULT_CHARSET_WEB):
+    if not check:
+        return template_redirect(url, title_redirect, after, lang)
+    else:
+        return template_begin(title, style, lang, charset)
+SQLITEBOY_WEB.append(('template_redirect_check', template_redirect_check, 'redirect_check'))
+
+def template_redirect_user(url, title_redirect='', after=0, 
+        lang=DEFAULT_LANG_WEB, title='', style='',
+        charset=DEFAULT_CHARSET_WEB):
+    return template_redirect_check(user(), url, title_redirect, after,
+        lang, title, style, charset)
+SQLITEBOY_WEB.append(('template_redirect_user', template_redirect_user, 'redirect_user'))
+
 
 #----------------------------------------------------------------------#
 # PYTHON HANDLER                                                       #
@@ -7140,7 +7172,7 @@ for i in SQLITE_UDF:
 #
 py_handler_template = {}
 for i in SQLITEBOY_WEB:
-    py_handler_template[ i[0] ] = i[1]
+    py_handler_template[ i[2] ] = i[1]
 #
 PY_HANDLER_DATA = {
                     'udf': py_handler_udf,

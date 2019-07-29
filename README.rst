@@ -7,7 +7,7 @@
     (c) Noprianto <nopri.anto@icloud.com>
     2012-2019
     License: GPL
-    Version: 1.79
+    Version: 1.80
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -685,6 +685,20 @@ Website and Custom URL Reference
 
         redirect(url, title='', after=0, lang='en')
         
+    - redirect_check: a function, to redirect to a URL, 
+      if a condition is false. Otherwise, begin an HTML document.
+      ::
+
+        redirect_check(check, url, title_redirect='', after=0, 
+        lang='en', title='', style='', charset='utf-8')
+
+    - redirect_user: a function, to redirect to a URL, 
+      if user is not logged in. Otherwise, begin an HTML document.
+      ::
+
+        redirect_user(url, title_redirect='', after=0, 
+        lang='en', title='', style='', charset='utf-8')
+
   - Please read web.py template for more information
 
   - Example (begin, end):
@@ -1118,6 +1132,14 @@ Note: please use SQLite built-in functions whenever and wherever possible.
       (local time)
       argument    :
          n (days)
+
+- sqliteboy_today_local_delta_hour(n)
+  ::
+
+      get date delta (days) from current date/time (YYYY-MM-DD)
+      (local time)
+      argument    :
+         n (hours)
 
 - sqliteboy_lower(s)
 
