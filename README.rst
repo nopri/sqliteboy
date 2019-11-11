@@ -7,7 +7,7 @@
     (c) Noprianto <nopri.anto@icloud.com>
     2012-2019
     License: GPL
-    Version: 1.80
+    Version: 1.81
 
     SQLiteBoy is an independent product, developed separately from the
     SQLite core library, which is maintained by SQLite.org.
@@ -422,7 +422,9 @@ Features
 
   - Simple notes
 
-  - Content as SQL Query (admin), calculator
+  - Content as SQL Query (admin), calculator, source code
+
+  - Please read Interpreter below
 
 - Calculator (Extended feature, new in v0.50)
 
@@ -431,6 +433,10 @@ Features
   - Valid characters: 0123456789.-+*/()
 
   - Maximum length: 36
+
+- Interpreter (Extended feature, new in v1.81)
+
+  - Please read MONKEY PROGRAMMING LANGUAGE
 
 - User-defined function
 
@@ -3583,6 +3589,26 @@ Logs
 - To log only specific URLs (and discard everything else), please set in
   System configuration (new in v1.71). Please start each URL with / and 
   separate URLs with whitespace.
+
+
+Monkey Programming Language
+========================================================================
+
+- Monkey programming language interpreter (new in v1.81)
+
+- Availability:
+
+  - interpreter (link)
+
+  - notes
+
+- Initial environments (as monkey identifiers):
+
+  - SQLITEBOY_NAME
+  
+  - SQLITEBOY_VERSION_STRING
+
+  - SQLITEBOY_VERSION_INTEGER
 
 
 
