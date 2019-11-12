@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.81'
+VERSION = '1.82'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -1282,16 +1282,16 @@ class DiskSession(web.session.DiskStore):
 #
 # Simple implementation of The Monkey Programming Language
 # interpreter in Python
-# monkey.py
+# Monkey.py
 # (c) Noprianto <nopri.anto@icloud.com>, 2019
 # Website: nopri.github.io
 # License: MIT
-# Version: 0.7
+# Version: 0.8
 #
 # Compatible with Python 2 and Python 3
 # Minimum Python version: 2.3
 #
-# Based on code (in Go programming language), in book:
+# Based on code (in Go programming language) in book:
 # WRITING AN INTERPRETER IN GO
 #
 #
@@ -1299,7 +1299,7 @@ class DiskSession(web.session.DiskStore):
 # - Standalone
 #   - No command line argument: interactive
 #       python monkey.py
-#       monkey.py 0.7
+#       Monkey.py 0.8
 #       Press ENTER to quit
 #       >> let hello = "Hello World"
 #       >> hello
@@ -1330,8 +1330,8 @@ class DiskSession(web.session.DiskStore):
 #
 #    d = {'hello': 'Hello, World', 'test': True}
 #    e = MonkeyEnvironment.from_dictionary(d)
-#    o = StringIO()
-#    MonkeyUtil.evaluator_string('puts(hello); puts(test); ERROR;', e, output=o)
+#    o = StringIO() 
+#    Monkey.evaluator_string('puts(hello); puts(test); ERROR;', e, output=o)
 #    r = o.getvalue()
 #    print(r)
 #
@@ -1343,11 +1343,11 @@ class DiskSession(web.session.DiskStore):
 #
 #
 
-import sys
-import os
+#import sys
+#import os
 
-MONKEYPY_VERSION = '0.7'
-MONKEYPY_TITLE = 'monkey.py %s' %(MONKEYPY_VERSION)
+MONKEYPY_VERSION = '0.8'
+MONKEYPY_TITLE = 'Monkey.py %s' %(MONKEYPY_VERSION)
 MONKEYPY_MESSAGE = 'Press ENTER to quit'
 MONKEYPY_LINESEP = os.linesep
 
@@ -2523,7 +2523,7 @@ class MonkeyEnvironment:
         for k in self.store.keys():
             v = self.store.get(k)
             if v is not None:
-                MonkeyUtil.output('%s: %s' %(
+                Monkey.output('%s: %s' %(
                         k,
                         v.inspect(),
                     )
@@ -2691,7 +2691,7 @@ class MonkeyBuiltinFunctions:
 
     def puts(evaluator, args):
         for a in args:
-            MonkeyUtil.output(a.inspect_value(), evaluator.output)
+            Monkey.output(a.inspect_value(), evaluator.output)
         #
         return evaluator.NULL
     puts = staticmethod(puts)
@@ -3078,7 +3078,7 @@ class MonkeyEvaluator:
     new = staticmethod(new)
 
 
-class MonkeyUtil:
+class Monkey:
     PROMPT = '>> '
 
     def input(s):
@@ -3096,10 +3096,10 @@ class MonkeyUtil:
     output = staticmethod(output)
 
     def lexer():
-        MonkeyUtil.output(MONKEYPY_TITLE)
-        MonkeyUtil.output(MONKEYPY_MESSAGE)
+        Monkey.output(MONKEYPY_TITLE)
+        Monkey.output(MONKEYPY_MESSAGE)
         while True:
-            inp = MonkeyUtil.input(MonkeyUtil.PROMPT).strip()
+            inp = Monkey.input(Monkey.PROMPT).strip()
             if not inp:
                 break
             l = MonkeyLexer.new(inp)
@@ -3107,15 +3107,15 @@ class MonkeyUtil:
                 t = l.next_token()
                 if t.type == MonkeyToken.EOF:
                     break
-                MonkeyUtil.output(
+                Monkey.output(
                     'Type: %s, Literal: %s' %(t.type, t.literal))
     lexer = staticmethod(lexer)
 
     def parser():
-        MonkeyUtil.output(MONKEYPY_TITLE)
-        MonkeyUtil.output(MONKEYPY_MESSAGE)
+        Monkey.output(MONKEYPY_TITLE)
+        Monkey.output(MONKEYPY_MESSAGE)
         while True:
-            inp = MonkeyUtil.input(MonkeyUtil.PROMPT).strip()
+            inp = Monkey.input(Monkey.PROMPT).strip()
             if not inp:
                 break
             l = MonkeyLexer.new(inp)
@@ -3123,23 +3123,23 @@ class MonkeyUtil:
             program = p.parse_program()
             #
             if p.errors:
-                MonkeyUtil.print_parse_errors(p.errors)
+                Monkey.print_parse_errors(p.errors)
                 continue
             #
-            MonkeyUtil.output(program.string())
+            Monkey.output(program.string())
     parser = staticmethod(parser)
 
     def print_parse_errors(e, output=sys.stdout):
         for i in e:
-            MonkeyUtil.output('PARSER ERROR: %s' %(i), output)
+            Monkey.output('PARSER ERROR: %s' %(i), output)
     print_parse_errors = staticmethod(print_parse_errors)
 
     def evaluator():
-        MonkeyUtil.output(MONKEYPY_TITLE)
-        MonkeyUtil.output(MONKEYPY_MESSAGE)
+        Monkey.output(MONKEYPY_TITLE)
+        Monkey.output(MONKEYPY_MESSAGE)
         env = MonkeyEnvironment.new()
         while True:
-            inp = MonkeyUtil.input(MonkeyUtil.PROMPT).strip()
+            inp = Monkey.input(Monkey.PROMPT).strip()
             if not inp:
                 break
             l = MonkeyLexer.new(inp)
@@ -3147,13 +3147,13 @@ class MonkeyUtil:
             program = p.parse_program()
             #
             if p.errors:
-                MonkeyUtil.print_parse_errors(p.errors)
+                Monkey.print_parse_errors(p.errors)
                 continue
             #
             evaluator = MonkeyEvaluator.new()
             evaluated = evaluator.eval(program, env)
             if evaluated:
-                MonkeyUtil.output(evaluated.inspect())
+                Monkey.output(evaluated.inspect())
     evaluator = staticmethod(evaluator)
 
     def evaluator_string(s, environ=None, output=sys.stdout):
@@ -3166,34 +3166,35 @@ class MonkeyUtil:
         program = p.parse_program()
         #
         if p.errors:
-            MonkeyUtil.print_parse_errors(p.errors, output)
+            Monkey.print_parse_errors(p.errors, output)
             return
         #
         evaluator = MonkeyEvaluator.new()
         evaluator.output = output
         evaluated = evaluator.eval(program, env)
         if evaluated:
-            MonkeyUtil.output(evaluated.inspect(), output)
+            Monkey.output(evaluated.inspect(), output)
     evaluator_string = staticmethod(evaluator_string)
 
+    def main(argv):
+        if len(argv) < 2:
+            Monkey.evaluator()
+        else:
+            t = argv[1]
+            s = t
+            if os.path.exists(t):
+                try:
+                    s = open(t).read()
+                except:
+                    pass
+            #
+            if s:
+                Monkey.evaluator_string(s)
+    main = staticmethod(main)
 
-def monkey_main(argv):
-    if len(argv) < 2:
-        MonkeyUtil.evaluator()
-    else:
-        t = argv[1]
-        s = t
-        if os.path.exists(t):
-            try:
-                s = open(t).read()
-            except:
-                pass
-        #
-        if s:
-            MonkeyUtil.evaluator_string(s)
 
 #if __name__ == '__main__':
-#    monkey_main(sys.argv)
+#    Monkey.main(sys.argv)
 
 
 #----------------------------------------------------------------------#
@@ -14156,7 +14157,7 @@ class interpreter:
         try:
             e = MonkeyEnvironment.from_dictionary(d)
             out = cStringIO.StringIO()
-            MonkeyUtil.evaluator_string(q, e, out)
+            Monkey.evaluator_string(q, e, out)
             msg = out.getvalue()
             err = _['th_ok']
             error = 0
