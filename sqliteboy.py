@@ -10,7 +10,7 @@
 #
 # SQLiteBoy is an independent product, developed separately from the
 # SQLite core library, which is maintained by SQLite.org.
-# Neither SQLiteBoy.com nor SQLite.org take any responsibility for the
+# Neither noprianto.com nor SQLite.org take any responsibility for the
 # work of the other.
 #
 #
@@ -31,7 +31,7 @@
 #----------------------------------------------------------------------#
 NAME = 'sqliteboy'
 APP_DESC = 'Simple web-based management tool for SQLite database (with form, report, website, and many other features)'
-VERSION = '1.82'
+VERSION = '1.83'
 WSITE = 'https://github.com/nopri/sqliteboy'
 TITLE = NAME + ' ' + VERSION
 TITLE_DEFAULT = NAME
@@ -1286,7 +1286,7 @@ class DiskSession(web.session.DiskStore):
 # (c) Noprianto <nopri.anto@icloud.com>, 2019
 # Website: nopri.github.io
 # License: MIT
-# Version: 0.8
+# Version: 0.9
 #
 # Compatible with Python 2 and Python 3
 # Minimum Python version: 2.3
@@ -1294,12 +1294,14 @@ class DiskSession(web.session.DiskStore):
 # Based on code (in Go programming language) in book:
 # WRITING AN INTERPRETER IN GO
 #
+# For Monkey Programming Language interpreter in Java, please
+# download Monkey.java or Monkey.jar (minimum Java version: 5.0). 
 #
 # How to use monkey.py:
 # - Standalone
 #   - No command line argument: interactive
 #       python monkey.py
-#       Monkey.py 0.8
+#       Monkey.py 0.9
 #       Press ENTER to quit
 #       >> let hello = "Hello World"
 #       >> hello
@@ -1346,7 +1348,7 @@ class DiskSession(web.session.DiskStore):
 #import sys
 #import os
 
-MONKEYPY_VERSION = '0.8'
+MONKEYPY_VERSION = '0.9'
 MONKEYPY_TITLE = 'Monkey.py %s' %(MONKEYPY_VERSION)
 MONKEYPY_MESSAGE = 'Press ENTER to quit'
 MONKEYPY_LINESEP = os.linesep
@@ -2549,9 +2551,7 @@ class MonkeyEnvironment:
             v = d.get(k)
             key = None
             value = None
-            if type(k) == type('') or \
-                type(k) == type(1) or \
-                type(k) == type(True):
+            if type(k) == type(''):
                 key = k
             else:
                 key = str(k)
@@ -2860,9 +2860,9 @@ class MonkeyEvaluator:
             right.type() == MonkeyObject.STRING_OBJ:
             return self.eval_string_infix_expression(operator, left, right)
         elif operator == '==':
-            return self.get_boolean(left.value == right.value)
+            return self.get_boolean(left == right)
         elif operator == '!=':
-            return self.get_boolean(left.value != right.value)
+            return self.get_boolean(left != right)
         elif left.type() != right.type():
             return self.new_error('type mismatch: %s %s %s' %(
                 left.type(), operator, right.type()))
